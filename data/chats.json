@@ -1,0 +1,36 @@
+{
+  "chats": [
+    {
+      "id": "demo-maya",
+      "name": "Maya R.",
+      "messages": [
+        {
+          "author": "player",
+          "text": "Hi, can you send me the Juwa link?",
+          "createdAt": "2026-05-06T00:00:00.000Z"
+        },
+        {
+          "author": "operator",
+          "text": "Yes. Tap JW1 or JW2.0 in the Games section.",
+          "createdAt": "2026-05-06T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "demo-andre",
+      "name": "Andre T.",
+      "messages": [
+        {
+          "author": "player",
+          "text": "How do I claim the welcome bonus?",
+          "createdAt": "2026-05-06T00:00:00.000Z"
+        },
+        {
+          "author": "operator",
+          "text": "Click Claim Bonus and I can help you from chat.",
+          "createdAt": "2026-05-06T00:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}
