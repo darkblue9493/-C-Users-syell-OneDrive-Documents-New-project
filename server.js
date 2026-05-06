@@ -85,11 +85,17 @@ function readBody(request) {
 
 function publicFilePath(urlPath) {
   const cleanPath = decodeURIComponent(urlPath.split("?")[0]);
-  const filePath = cleanPath === "/" ? path.join(root, "index.html") : path.join(root, cleanPath);
+  const routeMap = {
+    "/": "index.html",
+    "/admin": "admin.html",
+    "/admin.html": "admin.html",
+  };
+  const filePath = path.join(root, routeMap[cleanPath] || cleanPath.replace(/^\/+/, ""));
   const resolved = path.resolve(filePath);
   if (!resolved.startsWith(root)) return null;
   return resolved;
 }
+
 
 async function handleApi(request, response, urlPath) {
   if (request.method === "GET" && urlPath === "/api/chats") {
