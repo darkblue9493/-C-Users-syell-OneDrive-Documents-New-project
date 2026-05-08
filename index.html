@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>South Diamond</title>
+    <meta
+      name="description"
+      content="South Diamond is a polished social gaming destination for slots, table games, tournaments, and daily bonus play."
+    />
+    <meta name="theme-color" content="#f6c85f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="South Diamond" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/app-icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="player-site">
+    <div class="coin-rain" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <aside class="promo-ticker" aria-label="South Diamond special offer">
+      <div class="promo-track">
+        <span class="promo-icon" aria-hidden="true">SD</span>
+        <p>
+          <span>All Players Get</span>
+          <strong>50 Coins</strong>
+          <span>for just</span>
+          <strong>10!</strong>
+        </p>
+        <a href="#signup">Claim Offer</a>
+      </div>
+      <div class="promo-track" aria-hidden="true">
+        <span class="promo-icon">SD</span>
+        <p>
+          <span>All Players Get</span>
+          <strong>50 Coins</strong>
+          <span>for just</span>
+          <strong>10!</strong>
+        </p>
+        <a href="#signup">Claim Offer</a>
+      </div>
+    </aside>
+
+    <header class="site-header" data-header>
+      <a class="brand" href="#top" aria-label="South Diamond home">
+        <span class="brand-mark"></span>
+        <span>South Diamond</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span class="sr-only">Menu</span>
+      </button>
+      <nav class="site-nav" id="site-nav" data-nav>
+        <a href="#games">Games</a>
+        <a href="#bonus">Bonus</a>
+        <a href="#how">How It Works</a>
+        <a href="#signup" data-chat-nav>Chat</a>
+        <a class="nav-payment-button is-hidden" href="#bonus" data-player-only>Payment</a>
+        <a class="points-pill is-hidden" href="#points" data-player-only><span data-player-points>0</span> pts</a>
+        <div class="top-social is-hidden" data-player-only aria-label="Social contact links">
+          <a class="mini-social whatsapp" href="https://wa.me/14783355614?text=Hi%20South%20Diamond%2C%20I%20need%20help%20getting%20started." target="_blank" rel="noopener" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.1 4a7.9 7.9 0 0 0-6.8 11.9L4 20l4.2-1.2A7.9 7.9 0 1 0 12.1 4Zm4.6 11.2c-.2.6-1.2 1.1-1.7 1.2-.5.1-1.1.1-1.8-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.8-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 1-2.2.2-.3.6-.4.8-.4h.6c.2 0 .5 0 .7.5.2.6.8 2 .9 2.1.1.2.1.4 0 .6-.1.2-.2.4-.4.6-.2.2-.4.4-.5.5-.2.2-.4.4-.2.7.2.3.8 1.3 1.7 2.1 1.2 1.1 2.1 1.4 2.5 1.6.3.2.5.1.7-.1.2-.2.8-.9 1-1.2.2-.3.4-.3.7-.2.3.1 1.8.8 2.1 1 .3.1.5.2.6.4.1 0 .1.3 0 .5Z"/></svg>
+          </a>
+          <a class="mini-social facebook" href="https://www.facebook.com/profile.php?id=61564737208913" target="_blank" rel="noopener" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.2 8.1V6.7c0-.7.4-.9.9-.9h1.9V2.5L14.4 2.5c-3.1 0-4.7 1.8-4.7 4.3v1.3H7.1v3.6h2.6V22h4.1V11.7h2.8l.5-3.6h-3Z"/></svg>
+          </a>
+          <a class="mini-social instagram" href="https://ig.me/m/4783355614" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9a5.5 5.5 0 0 1-5.5 5.5h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm0 3A2.5 2.5 0 0 0 5 7.5v9A2.5 2.5 0 0 0 7.5 19h9a2.5 2.5 0 0 0 2.5-2.5v-9A2.5 2.5 0 0 0 16.5 5h-9Zm4.5 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 2.6a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm4.4-3.2a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/></svg>
+          </a>
+        </div>
+        <a class="player-pill is-hidden" href="#profile" data-player-only>
+          <img class="nav-avatar is-hidden" data-player-avatar-nav alt="" />
+          <span data-player-name-display>Player</span>
+        </a>
+        <button class="logout-button is-hidden" type="button" data-player-only data-player-logout>Log Out</button>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero account-hero" aria-label="South Diamond">
+        <div class="hero-content">
+          <p class="eyebrow">Online casino-style games, rewards, and live support</p>
+          <h1>South Diamond</h1>
+          <p class="hero-copy">
+            Sign up at the top, enter the lobby, choose your favorite online game room, and message support when you need help getting started.
+          </p>
+          <div class="opening-game-showcase" aria-label="Featured online casino-style games">
+            <a class="opening-game-card opening-game-card-main" href="#signup" data-lobby-card>
+              <span>Slots</span>
+              <strong>777</strong>
+              <small>Daily bonus rooms</small>
+            </a>
+            <a class="opening-game-card" href="#signup" data-lobby-card>
+              <span>Fish Tables</span>
+              <strong>Juwa</strong>
+              <small>Fast arcade action</small>
+            </a>
+            <a class="opening-game-card" href="#signup" data-lobby-card>
+              <span>Game Rooms</span>
+              <strong>Vault</strong>
+              <small>Game Vault links</small>
+            </a>
+            <a class="opening-game-card" href="#signup" data-lobby-card>
+              <span>VIP Lobby</span>
+              <strong>Orion</strong>
+              <small>Support chat ready</small>
+            </a>
+          </div>
+          <div class="hero-actions">
+            <a class="button primary" href="#games">Explore Games</a>
+            <a class="button secondary" href="#winners">Recent Winners</a>
+          </div>
+          <p class="fine-print">For entertainment. No purchase necessary. 18+ only.</p>
+        </div>
+        <section class="player-auth" id="signup" data-player-auth aria-label="Player account">
+          <div class="login-card player-auth-card">
+            <a class="brand auth-logo" href="#top" aria-label="South Diamond home">
+              <span class="brand-mark"></span>
+              <span>South Diamond</span>
+            </a>
+            <div>
+              <p class="section-kicker">Player access</p>
+              <h2>Enter the lobby</h2>
+              <p>First time here? Create your player account. Coming back? Log in with your email and password.</p>
+            </div>
+            <div class="auth-tabs" role="tablist" aria-label="Player account forms">
+              <button class="is-active" type="button" data-auth-tab="signup">Sign Up</button>
+              <button type="button" data-auth-tab="login">Log In</button>
+              <button type="button" data-auth-tab="reset">Forgot Password</button>
+            </div>
+            <form class="login-form auth-panel is-active" data-player-signup>
+              <label for="signup-username">Username</label>
+              <input id="signup-username" name="username" type="text" autocomplete="username" required />
+              <label for="signup-phone">Phone number</label>
+              <input id="signup-phone" name="phone" type="tel" autocomplete="tel" required />
+              <label for="signup-date-of-birth">Date of birth</label>
+              <input id="signup-date-of-birth" name="dateOfBirth" type="date" required />
+              <label for="signup-email">Email</label>
+              <input id="signup-email" name="email" type="email" autocomplete="email" required />
+              <label for="signup-password">Password</label>
+              <input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
+              <button class="button primary" type="submit">Create Account</button>
+            </form>
+            <form class="login-form auth-panel" data-player-login>
+              <label for="login-email">Email</label>
+              <input id="login-email" name="email" type="email" autocomplete="email" required />
+              <label for="login-password-player">Password</label>
+              <input id="login-password-player" name="password" type="password" autocomplete="current-password" required />
+              <button class="button primary" type="submit">Log In</button>
+            </form>
+            <form class="login-form auth-panel" data-player-reset>
+              <label for="reset-email">Email</label>
+              <input id="reset-email" name="email" type="email" autocomplete="email" required />
+              <label for="reset-password">New password</label>
+              <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
+              <button class="button primary" type="submit">Reset Password</button>
+            </form>
+            <p class="login-error" data-player-auth-message role="alert"></p>
+          </div>
+        </section>
+      </section>
+
+      <section class="hero casino-showcase" aria-label="Casino game showcase">
+        <div class="hero-stage">
+          <div class="chip chip-one">777</div>
+          <div class="chip chip-two">VIP</div>
+          <div class="diamond-card">
+            <span>Daily Bonus</span>
+            <strong>25,000</strong>
+            <small>Gold Coins</small>
+          </div>
+          <div class="slot-panel">
+            <span>South</span>
+            <strong>DIAMOND</strong>
+            <div class="slot-reels">
+              <i>7</i>
+              <i>&diams;</i>
+              <i>7</i>
+            </div>
+          </div>
+        </div>
+        <div class="hero-content">
+          <p class="eyebrow">Premium online game rooms</p>
+          <h2>Slots, fish tables, sweeps-style games, and fast lobby links.</h2>
+          <p class="hero-copy">
+            South Diamond brings your favorite online gaming apps together in one clean lobby: Juwa, Game Vault, Orion Stars, Golden Dragon, Ultra Panda, Fire Kirin, Panda Master, and more.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#signup">Play Now</a>
+            <a class="button secondary" href="#games">Explore Games</a>
+          </div>
+          <p class="fine-print">For entertainment. No purchase necessary. 18+ only.</p>
+        </div>
+      </section>
+
+      <section class="stats section">
+        <div class="section-inner stat-grid">
+          <article>
+            <span>100+</span>
+            <p>Casino-style games</p>
+          </article>
+          <article>
+            <span>24/7</span>
+            <p>Daily reward drops</p>
+          </article>
+          <article>
+            <span>18+</span>
+            <p>Adults-only community</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="games section" id="games">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="section-kicker">Featured games</p>
+            <h2>Choose your game room.</h2>
+          </div>
+          <div class="game-link-grid">
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Juwa.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="JUWA game lobby artwork" />
+                <b>JUWA</b>
+              </div>
+              <p>JUWA</p>
+              <h3>JUWA</h3>
+              <span>Download and enter the classic JUWA lobby.</span>
+              <a class="game-link" href="https://dl.juwa777.com/" target="_blank" rel="noopener">Open Link</a>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Juwa 2.0.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="JUWA 2.0 slots artwork" />
+                <b>2.0</b>
+              </div>
+              <p>JUWA2.0</p>
+              <h3>JUWA 2.0</h3>
+              <span>Mobile JUWA 2.0 access for returning players.</span>
+              <a class="game-link" href="https://m.juwa2.com/" target="_blank" rel="noopener">Open Link</a>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Game Vault.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="Game Vault game lobby artwork" />
+                <b>GV</b>
+              </div>
+              <p>GAME VAULT</p>
+              <h3>GAME VAULT</h3>
+              <span>Download Game Vault and open the main lobby.</span>
+              <a class="game-link" href="https://download.gamevault999.com/" target="_blank" rel="noopener">Open Link</a>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/FireKirin.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="Fire Kirin jackpot artwork" />
+                <b>FK</b>
+              </div>
+              <p>FIREKIRIN</p>
+              <h3>FIREKIRIN</h3>
+              <span>Open the FireKirin start page.</span>
+              <a class="game-link" href="http://start.firekirin.xyz:8580/" target="_blank" rel="noopener">Open Link</a>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Milkyway.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="Milky Way 777 casino artwork" />
+                <b>MW</b>
+              </div>
+              <p>MILKYWAY</p>
+              <h3>MILKYWAY</h3>
+              <span>Launch the Milkyway app portal.</span>
+              <a class="game-link" href="https://milkywayapp.xyz/" target="_blank" rel="noopener">Open Link</a>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Pandamaster.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="Panda Master game artwork" />
+                <b>PM</b>
+              </div>
+              <p>PANDAMASTER</p>
+              <h3>PANDAMASTER</h3>
+              <span>Choose app access or browser play.</span>
+              <div class="game-link-row">
+                <a class="game-link" href="https://pandamaster.vip:8888/index.html" target="_blank" rel="noopener">App</a>
+                <a class="game-link" href="http://web.pandamaster.vip/game/pandamaster/" target="_blank" rel="noopener">Browser</a>
+              </div>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Ultrapanda.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="Ultra Panda game artwork" />
+                <b>UP</b>
+              </div>
+              <p>ULTRAPANDA</p>
+              <h3>ULTRAPANDA</h3>
+              <span>Open the Ultra Panda mobile portal.</span>
+              <a class="game-link" href="http://www.ultrapanda.mobi/" target="_blank" rel="noopener">Open Link</a>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Orion stars.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="Orion Stars 777 artwork" />
+                <b>OS</b>
+              </div>
+              <p>ORIONSTAR</p>
+              <h3>ORIONSTAR</h3>
+              <span>Android download and Orion Star website access.</span>
+              <div class="game-link-row">
+                <a class="game-link" href="https://www.orions.cc/android" target="_blank" rel="noopener">Android</a>
+                <a class="game-link" href="http://start.orionstars.vip:8580/index.html" target="_blank" rel="noopener">Website</a>
+              </div>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Vblink.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="Vblink game artwork" />
+                <b>VB</b>
+              </div>
+              <p>VBLINK</p>
+              <h3>VBLINK</h3>
+              <span>Open the VBLINK club portal.</span>
+              <a class="game-link" href="http://www.vblink777.club/" target="_blank" rel="noopener">Open Link</a>
+            </article>
+            <article class="game-card">
+              <div class="game-brand-media">
+                <img src="assets/games/Golden Dragon.png" onerror="this.onerror=null;this.src='assets/hero-gaming.png';" alt="Golden Dragon game artwork" />
+                <b>GD</b>
+              </div>
+              <p>GOLDEN DRAGON</p>
+              <h3>GOLDEN DRAGON</h3>
+              <span>Open the Golden Dragon mobile portal.</span>
+              <a class="game-link" href="http://www.playgd.mobi" target="_blank" rel="noopener">Open Link</a>
+            </article>
+            <a class="portal-game-tile fish dragon-conqueror" href="#signup" data-lobby-card>
+              <span>Fish</span>
+              <strong>Dragon Conqueror</strong>
+              <small>Message support to enter</small>
+            </a>
+            <a class="portal-game-tile fish ocean-monster alt" href="#signup" data-lobby-card>
+              <span>Fish</span>
+              <strong>Ocean Monster</strong>
+              <small>Fast fish-table action</small>
+            </a>
+            <a class="portal-game-tile sevens diamond-777" href="#signup" data-lobby-card>
+              <span>777</span>
+              <strong>Diamond 777</strong>
+              <small>Classic slot energy</small>
+            </a>
+            <a class="portal-game-tile sevens lucky-777 alt" href="#signup" data-lobby-card>
+              <span>777</span>
+              <strong>Lucky 777</strong>
+              <small>Bright bonus rounds</small>
+            </a>
+            <a class="portal-game-tile sevens glow" href="#signup" data-lobby-card>
+              <span>777</span>
+              <strong>Royal Spin</strong>
+              <small>Jackpot-style play</small>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="rooms section">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="section-kicker">Game styles</p>
+            <h2>A lobby built for the games players ask for most.</h2>
+          </div>
+          <div class="room-grid">
+            <article class="room-card">
+              <span>01</span>
+              <h3>Fish Tables</h3>
+              <p>Fast action rooms for players who like arcade-style rounds, bright effects, and quick sessions.</p>
+            </article>
+            <article class="room-card">
+              <span>02</span>
+              <h3>Slots</h3>
+              <p>Classic reels, bonus symbols, jackpot-style themes, and daily login momentum.</p>
+            </article>
+            <article class="room-card">
+              <span>03</span>
+              <h3>Table Classics</h3>
+              <p>Card and table-style games for players who want a calmer, familiar casino feel.</p>
+            </article>
+            <article class="room-card">
+              <span>04</span>
+              <h3>VIP Help</h3>
+              <p>Message support from the chat area when you need help with links, login, or game access.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="winners section" id="winners">
+        <div class="section-inner winners-grid">
+          <div>
+            <p class="section-kicker">Recent winners</p>
+            <h2>Fresh wins from the South Diamond lobby.</h2>
+            <p>Sample winner board for the homepage. Update the names and amounts anytime for your real promotions.</p>
+          </div>
+          <div class="winner-list">
+            <article>
+              <span>Today</span>
+              <strong>Maria K.</strong>
+              <p>Golden Dragon bonus round</p>
+              <b>$850</b>
+            </article>
+            <article>
+              <span>Today</span>
+              <strong>Dre M.</strong>
+              <p>Orion Stars fish table streak</p>
+              <b>$1,240</b>
+            </article>
+            <article>
+              <span>Yesterday</span>
+              <strong>Tasha R.</strong>
+              <p>Ultra Panda slot session</p>
+              <b>$620</b>
+            </article>
+            <article>
+              <span>Yesterday</span>
+              <strong>Kevin P.</strong>
+              <p>Game Vault lucky spin</p>
+              <b>$970</b>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile section is-hidden" id="profile" data-player-only>
+        <div class="section-inner profile-grid">
+          <div>
+            <p class="section-kicker">Player profile</p>
+            <h2>Manage your account.</h2>
+            <p>Update your phone number, change your password, and add a profile picture for support chats.</p>
+          </div>
+          <div class="profile-card">
+            <div class="profile-preview">
+              <div class="profile-avatar" data-player-avatar-preview>SD</div>
+              <div>
+                <strong data-profile-username>Player</strong>
+                <span data-profile-email>player@email.com</span>
+              </div>
+            </div>
+            <form class="login-form" data-profile-form>
+              <label for="profile-phone">Phone number</label>
+              <input id="profile-phone" name="phone" type="tel" autocomplete="tel" required />
+              <label for="profile-password">New password</label>
+              <input id="profile-password" name="password" type="password" autocomplete="new-password" minlength="6" placeholder="Leave blank to keep current password" />
+              <button class="button primary" type="submit">Save Profile</button>
+              <p class="login-error" data-profile-status role="alert"></p>
+            </form>
+            <form class="upload-form" data-avatar-form>
+              <label for="profile-avatar-file">Profile picture</label>
+              <input id="profile-avatar-file" data-avatar-file type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+              <button class="button secondary" type="submit">Upload Picture</button>
+              <p data-avatar-status></p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="bonus section" id="bonus">
+        <div class="section-inner bonus-grid">
+          <div>
+            <p class="section-kicker">Welcome bonus</p>
+            <h2>Claim your South Diamond starter pack.</h2>
+            <p>
+              New members can unlock a starter bundle, daily coin refills, and special event entries after creating a free account.
+            </p>
+            <div class="points-rule-banner" id="points" data-player-only>
+              <span>Points Account</span>
+              <strong><b data-player-points-display>0</b> available points</strong>
+              <p>For every 10 points deposit, 1 point will be added. Minimum redemption is 20 points.</p>
+            </div>
+          </div>
+          <div class="bonus-card">
+            <span>Starter Pack</span>
+            <a class="sticky-offer-banner" href="#signup" aria-label="Claim South Diamond offer">
+              <span class="offer-badge-top">Special</span>
+              <span class="offer-badge-offer">Offer</span>
+              <span class="offer-badge-coins"><strong>50</strong> Coins</span>
+              <span class="offer-badge-price">For just <strong>10</strong></span>
+              <b>Claim Now</b>
+            </a>
+            <p>Plus daily login boosts and tournament invites.</p>
+            <div class="payment-actions is-hidden" data-player-only>
+              <div class="payment-choice"><strong>$5</strong><a href="https://buy.stripe.com/6oUcN52Z844U2wOfVV63K0a" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="5">Tierlock</button></div>
+              <div class="payment-choice"><strong>$7</strong><a href="https://buy.stripe.com/bJe14ndDM0SI0oGdNN63K02" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="7">Tierlock</button></div>
+              <div class="payment-choice"><strong>$10</strong><a href="https://buy.stripe.com/8x2aEX43cdFu7R8eRR63K08" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="10">Tierlock</button></div>
+              <div class="payment-choice"><strong>$13</strong><a href="https://buy.stripe.com/cNi5kD6bk9pe3AS39963K03" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="13">Tierlock</button></div>
+              <div class="payment-choice"><strong>$15</strong><a href="https://buy.stripe.com/28E4gzgPY1WMfjAdNN63K09" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="15">Tierlock</button></div>
+              <div class="payment-choice"><strong>$16</strong><a href="https://buy.stripe.com/aFa5kD6bk8la8Vc4dd63K06" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="16">Tierlock</button></div>
+              <div class="payment-choice"><strong>$18</strong><a href="https://buy.stripe.com/dRm7sLbvE1WM0oG25563K04" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="18">Tierlock</button></div>
+              <div class="payment-choice"><strong>$20</strong><a href="https://buy.stripe.com/fZu6oH43ceJygnE6ll63K0b" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="20">Tierlock</button></div>
+              <div class="payment-choice"><strong>$25</strong><a href="https://buy.stripe.com/00wcN50R08ladbs9xx63K0c" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="25">Tierlock</button></div>
+              <div class="payment-choice"><strong>$30</strong><a href="https://buy.stripe.com/bJeaEXczIdFuc7o8tt63K0d" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="30">Tierlock</button></div>
+              <div class="payment-choice"><strong>$40</strong><a href="https://buy.stripe.com/fZu9ATdDMcBq4EWaBB63K0e" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="40">Tierlock</button></div>
+              <div class="payment-choice"><strong>$50</strong><a href="https://buy.stripe.com/14A14n0R0cBqgnE7pp63K0f" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="50">Tierlock</button></div>
+              <div class="payment-choice"><strong>$100</strong><a href="https://buy.stripe.com/9B6bJ12Z8ati7R8eRR63K0n" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="100">Tierlock</button></div>
+            </div>
+            <p class="locked-note" data-guest-only>Sign up or log in at the top to unlock payment and screenshot upload.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="how section" id="how">
+        <div class="section-inner guide-grid">
+          <div>
+            <p class="section-kicker">How it works</p>
+            <h2>Three quick steps to get into the room.</h2>
+          </div>
+          <ol class="steps">
+            <li>
+              <span>Create Account</span>
+              <p>Set up your profile and confirm you are eligible to play.</p>
+            </li>
+            <li>
+              <span>Collect Coins</span>
+              <p>Grab your welcome bundle, daily bonuses, and event rewards.</p>
+            </li>
+            <li>
+              <span>Choose Games</span>
+              <p>Play slots, cards, and tables while climbing seasonal leaderboards.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="quote section">
+        <div class="section-inner quote-inner">
+          <blockquote>
+            "Bright lights, smooth games, and a fresh reason to log in every day."
+          </blockquote>
+          <p>South Diamond player promise</p>
+        </div>
+      </section>
+
+      <section class="chat section" id="chat">
+        <div class="section-inner chat-grid">
+          <div>
+            <p class="section-kicker">Player chat</p>
+            <h2>Message South Diamond support.</h2>
+            <p>
+              Send your name and question here. South Diamond support will reply as soon as possible.
+            </p>
+            <div class="social-chat-list" aria-label="External chat options">
+              <a class="social-chat whatsapp" href="https://wa.me/14783355614?text=Hi%20South%20Diamond%2C%20I%20need%20help%20getting%20started." target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.1 4a7.9 7.9 0 0 0-6.8 11.9L4 20l4.2-1.2A7.9 7.9 0 1 0 12.1 4Zm4.6 11.2c-.2.6-1.2 1.1-1.7 1.2-.5.1-1.1.1-1.8-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.8-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 1-2.2.2-.3.6-.4.8-.4h.6c.2 0 .5 0 .7.5.2.6.8 2 .9 2.1.1.2.1.4 0 .6-.1.2-.2.4-.4.6-.2.2-.4.4-.5.5-.2.2-.4.4-.2.7.2.3.8 1.3 1.7 2.1 1.2 1.1 2.1 1.4 2.5 1.6.3.2.5.1.7-.1.2-.2.8-.9 1-1.2.2-.3.4-.3.7-.2.3.1 1.8.8 2.1 1 .3.1.5.2.6.4.1 0 .1.3 0 .5Z"/></svg>
+                <span>WhatsApp</span>
+              </a>
+              <a class="social-chat facebook" href="https://www.facebook.com/profile.php?id=61564737208913" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.2 8.1V6.7c0-.7.4-.9.9-.9h1.9V2.5L14.4 2.5c-3.1 0-4.7 1.8-4.7 4.3v1.3H7.1v3.6h2.6V22h4.1V11.7h2.8l.5-3.6h-3Z"/></svg>
+                <span>Facebook</span>
+              </a>
+              <a class="social-chat instagram" href="https://ig.me/m/4783355614" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9a5.5 5.5 0 0 1-5.5 5.5h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm0 3A2.5 2.5 0 0 0 5 7.5v9A2.5 2.5 0 0 0 7.5 19h9a2.5 2.5 0 0 0 2.5-2.5v-9A2.5 2.5 0 0 0 16.5 5h-9Zm4.5 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 2.6a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm4.4-3.2a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/></svg>
+                <span>Instagram</span>
+              </a>
+            </div>
+          </div>
+          <div class="chat-window floating-player-chat is-hidden" aria-label="South Diamond player chat" data-player-only data-player-chat>
+            <div class="chat-topbar">
+              <div>
+                <span class="status-dot"></span>
+                <strong>South Diamond Support</strong>
+              </div>
+              <button class="chat-widget-toggle" type="button" data-chat-toggle aria-expanded="true">Minimize</button>
+            </div>
+            <div class="chat-messages" data-player-messages aria-live="polite"></div>
+            <form class="chat-form player-chat-form is-hidden" data-player-only data-player-form>
+              <label class="sr-only" for="player-message">Message</label>
+              <input id="player-message" data-player-input type="text" placeholder="Type your message..." autocomplete="off" />
+              <label class="chat-attach-button" for="payment-screenshot" aria-label="Attach image or file" title="Attach image or file">+</label>
+              <button class="button primary" type="submit">Send</button>
+            </form>
+            <form class="upload-form is-hidden" data-player-only data-upload-form>
+              <label class="sr-only" for="payment-screenshot">Attach payment screenshot or image</label>
+              <input id="payment-screenshot" class="sr-only" data-upload-file type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+              <button class="button secondary" type="submit">Upload Image</button>
+              <p data-upload-status></p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="join section" id="join">
+        <div class="section-inner join-inner">
+          <div>
+            <p class="section-kicker">Join South Diamond</p>
+            <h2>Your seat is waiting.</h2>
+            <p>Launch the lobby, claim your starter pack, and make your next game night feel a little more golden.</p>
+          </div>
+          <a class="button primary" href="#signup">Enter Lobby</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>(c) 2026 South Diamond. Social play only. 18+.</p>
+      <a href="#top">Back to top</a>
+    </footer>
+
+    <div class="welcome-modal is-hidden" data-welcome-modal role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+      <div class="welcome-card">
+        <button class="welcome-close" type="button" data-welcome-close aria-label="Close welcome">x</button>
+        <p class="section-kicker">Welcome back</p>
+        <h2 id="welcome-title">South Diamond lobby is open.</h2>
+        <p>You have <strong data-welcome-points>0</strong> available points. Deposit 10 points to earn 1 point. Minimum redemption is 20 points.</p>
+        <div class="welcome-actions">
+          <a class="button primary" href="#bonus" data-welcome-payment>Payment</a>
+          <button class="button secondary" type="button" data-welcome-chat>Chat Support</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
