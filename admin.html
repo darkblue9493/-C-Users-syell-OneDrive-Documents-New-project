@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>South Diamond Admin</title>
+    <meta name="description" content="South Diamond operator chat desk." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="admin-body">
+    <header class="site-header is-scrolled">
+      <a class="brand" href="/admin9493" aria-label="South Diamond admin home">
+        <span class="brand-mark"></span>
+        <span>South Diamond Admin</span>
+      </a>
+      <nav class="site-nav">
+        <button class="logout-button" type="button" data-logout>Log Out</button>
+      </nav>
+    </header>
+
+    <main class="admin-main">
+      <section class="section">
+        <div class="section-inner admin-shell">
+          <div class="admin-hero-panel">
+            <p class="section-kicker">Operator desk</p>
+            <h1>South Diamond dashboard.</h1>
+            <p class="admin-copy">
+              Track player signups, active accounts, support chats, payment screenshots, and game-room agent links from one private portal.
+            </p>
+          </div>
+          <div class="dashboard-grid" data-dashboard-stats>
+            <article><span>Total Players</span><strong data-stat="totalUsers">0</strong></article>
+            <article><span>Registered Today</span><strong data-stat="usersToday">0</strong></article>
+            <article><span>Active 24h</span><strong data-stat="activePlayers">0</strong></article>
+            <article><span>Open Chats</span><strong data-stat="openChats">0</strong></article>
+            <article><span>Total Messages</span><strong data-stat="totalMessages">0</strong></article>
+            <article><span>Screenshots</span><strong data-stat="imageUploads">0</strong></article>
+            <article><span>Total Points</span><strong data-stat="totalPoints">0</strong></article>
+            <article><span>Redeemed Points</span><strong data-stat="redeemedPoints">0</strong></article>
+          </div>
+
+          <section class="admin-control-center" aria-label="Admin control center">
+            <aside class="admin-control-menu">
+              <button class="is-active" type="button" data-admin-panel-button="players">Players List</button>
+              <button type="button" data-admin-panel-button="transactions">Transaction History</button>
+              <button type="button" data-admin-panel-button="add">Add Points</button>
+              <button type="button" data-admin-panel-button="redeem">Redeem Points</button>
+            </aside>
+            <div class="admin-control-panels">
+              <section class="admin-control-panel is-active" data-admin-panel="players">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>Registered Players</strong>
+                  </div>
+                  <div class="admin-panel-actions">
+                    <a class="game-link admin-export-link" href="/api/admin/users.csv" target="_blank" rel="noopener">Export Excel</a>
+                    <small data-admin-user-count>0 players</small>
+                  </div>
+                </div>
+                <div class="admin-search-row">
+                  <label class="sr-only" for="players-search">Search players</label>
+                  <input id="players-search" type="search" placeholder="Search players..." data-admin-search="players" />
+                </div>
+                <div class="registered-list" data-admin-users></div>
+              </section>
+
+              <section class="admin-control-panel" data-admin-panel="transactions">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>Point Transactions</strong>
+                  </div>
+                  <small data-points-count>0 transactions</small>
+                </div>
+                <div class="admin-search-row">
+                  <label class="sr-only" for="transactions-search">Search transactions</label>
+                  <input id="transactions-search" type="search" placeholder="Search transactions..." data-admin-search="transactions" />
+                </div>
+                <div class="points-transaction-list" data-points-transactions></div>
+              </section>
+
+              <section class="admin-control-panel" data-admin-panel="add">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>Add Points</strong>
+                  </div>
+                  <small>Credit player balance</small>
+                </div>
+                <div class="admin-search-row">
+                  <label class="sr-only" for="add-search">Search players to add points</label>
+                  <input id="add-search" type="search" placeholder="Search players to add points..." data-admin-search="add" />
+                </div>
+                <div class="points-action-list" data-points-add-list></div>
+              </section>
+
+              <section class="admin-control-panel" data-admin-panel="redeem">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>Redeem Points</strong>
+                  </div>
+                  <small>Remove points from player balance</small>
+                </div>
+                <div class="admin-search-row">
+                  <label class="sr-only" for="redeem-search">Search players to redeem points</label>
+                  <input id="redeem-search" type="search" placeholder="Search players to redeem points..." data-admin-search="redeem" />
+                </div>
+                <div class="points-action-list" data-points-redeem-list></div>
+              </section>
+            </div>
+          </section>
+
+          <div class="admin-layout">
+            <aside class="admin-sidebar">
+              <section class="agent-panel" aria-label="Agent links">
+                <p class="section-kicker">Agent links</p>
+                <div class="agent-link-list">
+                  <a href="https://ht.juwa777.com/userManagement" target="_blank" rel="noopener">JW1</a>
+                  <a href="https://agent.juwa2.com/" target="_blank" rel="noopener">JW2.0</a>
+                  <a href="https://agent.gamevault999.com/userManagement" target="_blank" rel="noopener">GV</a>
+                  <a href="https://firekirin.xyz:8888/Store.aspx" target="_blank" rel="noopener">FK</a>
+                  <a href="https://milkywayapp.xyz:8781/Store.aspx" target="_blank" rel="noopener">MW</a>
+                  <a href="https://pandamaster.vip/default.aspx" target="_blank" rel="noopener">PM</a>
+                  <a href="https://ht.ultrapanda.mobi/#/login" target="_blank" rel="noopener">UP</a>
+                  <a href="https://orionstars.vip:8781/Store.aspx" target="_blank" rel="noopener">OS</a>
+                  <a href="https://gm.vblink777.club/#/login?redirect=%2Fmanage-user%2Fsearch" target="_blank" rel="noopener">VB</a>
+                  <a href="https://pos.goldendragoncity.com/pos/2264799" target="_blank" rel="noopener">GD</a>
+                </div>
+              </section>
+              <button class="button secondary admin-clear" type="button" data-delete-chat>Delete Selected Chat</button>
+            </aside>
+          <div class="admin-workspace">
+            <div class="chat-dashboard admin-dashboard" aria-label="South Diamond admin inbox">
+              <aside class="chat-inbox" aria-label="Player conversations" data-admin-inbox></aside>
+              <div class="chat-window" aria-label="Selected player conversation">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot" data-admin-chat-status></span>
+                    <strong data-admin-name>No player selected</strong>
+                  </div>
+                  <small data-admin-count>0 chats</small>
+                </div>
+                <div class="chat-messages" data-admin-messages aria-live="polite"></div>
+                <form class="chat-form" data-admin-form>
+                  <label class="sr-only" for="admin-reply">Reply</label>
+                  <input id="admin-reply" data-admin-input type="text" placeholder="Type your reply..." autocomplete="off" />
+                  <button class="button primary" type="submit">Reply</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
