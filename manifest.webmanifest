@@ -1,0 +1,31 @@
+{
+  "name": "South Diamond",
+  "short_name": "South Diamond",
+  "description": "South Diamond player lobby, games, payments, and support chat.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070707",
+  "theme_color": "#f6c85f",
+  "icons": [
+    {
+      "src": "assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Player Chat",
+      "short_name": "Chat",
+      "url": "/#chat"
+    },
+    {
+      "name": "Payments",
+      "short_name": "Pay",
+      "url": "/#bonus"
+    }
+  ]
+}
