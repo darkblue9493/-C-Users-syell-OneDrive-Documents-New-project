@@ -23,13 +23,13 @@ const maintenanceMode = String(process.env.MAINTENANCE_MODE || "").toLowerCase()
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const useSupabase = Boolean(supabaseUrl && supabaseServiceKey);
-const sessions = new Set();
+const sessions = new Map();
 const playerSessions = new Map();
 const adminLoginAttempts = new Map();
 const pendingAdminLogins = new Map();
 const maxJsonBodyBytes = 8_000_000;
 const playerSessionMaxAge = 60 * 60 * 24 * 400;
-const adminSessionMaxAge = 60 * 60 * 24 * 400;
+const adminSessionMaxAge = 60 * 60 * 2;
 const referralBonusPoints = 10;
 
 const mimeTypes = {
@@ -80,6 +80,7 @@ function normalizeDatabase(data) {
   normalized.users = normalized.users.map((user) => ({
     ...user,
     points: Number.isFinite(Number(user.points)) ? Number(user.points) : 0,
+    isVip: Boolean(user.isVip),
     adminNote: user.adminNote || "",
     referralCode: normalizeReferralCode(user.referralCode) || createReferralCode(user),
     referredBy: user.referredBy || null,
@@ -110,7 +111,8 @@ function normalizeDatabase(data) {
 function loadAdminSessions(data) {
   sessions.clear();
   (data.adminSessions || []).forEach((session) => {
-    if (session?.token) sessions.add(session.token);
+    const expiresAt = session?.expiresAt ? new Date(session.expiresAt).getTime() : 0;
+    if (session?.token && expiresAt > Date.now()) sessions.set(session.token, expiresAt);
   });
 }
 
@@ -406,7 +408,14 @@ function parseCookies(request) {
 
 function isAdminRequest(request) {
   const cookies = parseCookies(request);
-  return Boolean(cookies.sd_admin_session && sessions.has(cookies.sd_admin_session));
+  const token = cookies.sd_admin_session;
+  const expiresAt = token ? sessions.get(token) : 0;
+  if (!token || !expiresAt) return false;
+  if (expiresAt <= Date.now()) {
+    sessions.delete(token);
+    return false;
+  }
+  return true;
 }
 
 function clientKey(request) {
@@ -615,6 +624,7 @@ function sanitizeUser(user) {
     email: user.email,
     dateOfBirth: user.dateOfBirth || null,
     points: Number.isFinite(Number(user.points)) ? Number(user.points) : 0,
+    isVip: Boolean(user.isVip),
     avatarUrl: user.avatarUrl || null,
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt,
@@ -822,6 +832,7 @@ async function handleApi(request, response, urlPath, url) {
       {
         token,
         createdAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + adminSessionMaxAge * 1000).toISOString(),
         ip: clientKey(request),
         userAgent: String(request.headers["user-agent"] || ""),
@@ -834,6 +845,25 @@ async function handleApi(request, response, urlPath, url) {
     response.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8",
       "Set-Cookie": `sd_admin_session=${token}; HttpOnly${secureCookiePart(request)}; SameSite=Lax; Path=/; Max-Age=${adminSessionMaxAge}`,
+      "Cache-Control": "no-store",
+    });
+    response.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/keepalive") {
+    if (!requireAdmin(request, response)) return;
+    const cookies = parseCookies(request);
+    const data = await readDatabase();
+    const session = (data.adminSessions || []).find((item) => item.token === cookies.sd_admin_session);
+    if (!session) return sendJson(response, 401, { error: "Admin login is required." });
+    const now = new Date();
+    session.lastActiveAt = now.toISOString();
+    session.expiresAt = new Date(now.getTime() + adminSessionMaxAge * 1000).toISOString();
+    await writeDatabase(data);
+    response.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Set-Cookie": `sd_admin_session=${cookies.sd_admin_session}; HttpOnly${secureCookiePart(request)}; SameSite=Lax; Path=/; Max-Age=${adminSessionMaxAge}`,
       "Cache-Control": "no-store",
     });
     response.end(JSON.stringify({ ok: true }));
@@ -972,9 +1002,10 @@ async function handleApi(request, response, urlPath, url) {
     }
     const data = await readDatabase();
     const rows = [
-      ["Username", "Phone", "Date of Birth", "Email", "Available Points", "Joined", "Last Login", "Chat ID"],
+      ["Username", "VIP", "Phone", "Date of Birth", "Email", "Available Points", "Joined", "Last Login", "Chat ID"],
       ...data.users.map((user) => [
         user.username,
+        user.isVip ? "Yes" : "No",
         user.phone,
         user.dateOfBirth || "",
         user.email,
@@ -1056,6 +1087,25 @@ async function handleApi(request, response, urlPath, url) {
     return sendJson(response, 200, { user: sanitizeUser(user) });
   }
 
+  if (request.method === "POST" && urlPath === "/api/admin/player-vip") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const userId = String(body.userId || "");
+    const data = await readDatabase();
+    const user = data.users.find((item) => item.id === userId);
+    if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    user.isVip = Boolean(body.isVip);
+    const chat = data.chats.find((item) => item.id === user.chatId || item.userId === user.id);
+    if (chat) chat.name = user.username;
+    addActivity(data, "vip-player", `${user.isVip ? "Marked" : "Removed"} VIP for ${user.username}`, {
+      userId: user.id,
+      username: user.username,
+      isVip: user.isVip,
+    });
+    await writeDatabase(data);
+    return sendJson(response, 200, { user: sanitizeUser(user) });
+  }
+
   if (request.method === "POST" && urlPath === "/api/player/signup") {
     const body = await readBody(request);
     const username = String(body.username || "").trim();
@@ -1091,6 +1141,7 @@ async function handleApi(request, response, urlPath, url) {
       email,
       dateOfBirth: parsedDateOfBirth.value,
       points: 0,
+      isVip: false,
       passwordHash: hashPassword(password),
       createdAt: new Date().toISOString(),
       lastLoginAt: new Date().toISOString(),
@@ -1414,6 +1465,39 @@ async function handleApi(request, response, urlPath, url) {
     addActivity(data, "chat-reply", `Replied to ${chat.name}`, { threadId: chat.id, username: chat.name });
     await writeDatabase(data);
     return sendJson(response, 200, { chat, chats: data.chats });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/broadcast") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const text = String(body.message || "").trim().slice(0, 1000);
+    const userIds = Array.isArray(body.userIds) ? [...new Set(body.userIds.map((id) => String(id)))] : [];
+    if (!text) return sendJson(response, 400, { error: "Broadcast message is required." });
+    if (!userIds.length) return sendJson(response, 400, { error: "Choose at least one player." });
+
+    const data = await readDatabase();
+    const selectedUsers = data.users.filter((user) => userIds.includes(user.id));
+    if (!selectedUsers.length) return sendJson(response, 404, { error: "No matching players were found." });
+
+    const createdAt = new Date().toISOString();
+    selectedUsers.forEach((user, index) => {
+      const chat = ensurePlayerChatThread(data, user);
+      chat.messages.push({
+        id: `msg-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+        author: "operator",
+        text,
+        createdAt,
+        broadcast: true,
+      });
+      chat.lastReadByAdminAt = createdAt;
+      moveChatToTop(data.chats, chat.id);
+    });
+    addActivity(data, "broadcast", `Broadcast sent to ${selectedUsers.length} players`, {
+      count: selectedUsers.length,
+      userIds: selectedUsers.map((user) => user.id),
+    });
+    await writeDatabase(data);
+    return sendJson(response, 200, { sent: selectedUsers.length, chats: data.chats });
   }
 
   if (request.method === "DELETE" && urlPath === "/api/chats") {

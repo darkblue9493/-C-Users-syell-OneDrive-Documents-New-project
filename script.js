@@ -116,6 +116,9 @@ async function api(path, options = {}) {
     ...options,
   }).finally(() => clearTimeout(timeout));
   const data = await response.json().catch(() => ({}));
+  if (!response.ok && response.status === 401 && isAdminPage) {
+    location.href = "/login9493";
+  }
   if (!response.ok) throw new Error(data.error || "Something went wrong.");
   return data;
 }
@@ -225,6 +228,7 @@ const playerForm = document.querySelector("[data-player-form]");
 const playerMessages = document.querySelector("[data-player-messages]");
 const playerInput = document.querySelector("[data-player-input]");
 const playerAvatarNav = document.querySelector("[data-player-avatar-nav]");
+const playerVipBadge = document.querySelector("[data-player-vip-badge]");
 const profileSection = document.querySelector("[data-profile-panel]");
 const profileOpenLinks = document.querySelectorAll("[data-profile-open]");
 const profileForm = document.querySelector("[data-profile-form]");
@@ -233,6 +237,7 @@ const profilePassword = document.querySelector("#profile-password");
 const profileStatus = document.querySelector("[data-profile-status]");
 const profileUsername = document.querySelector("[data-profile-username]");
 const profileEmail = document.querySelector("[data-profile-email]");
+const profileVipBadge = document.querySelector("[data-profile-vip-badge]");
 const profileAvatarPreview = document.querySelector("[data-player-avatar-preview]");
 const playerPointTransactions = document.querySelector("[data-player-point-transactions]");
 const avatarForm = document.querySelector("[data-avatar-form]");
@@ -269,10 +274,12 @@ const referralCodeFromUrl = (() => {
 })();
 const adminSearchState = {
   players: "",
+  vip: "",
   transactions: "",
   add: "",
   redeem: "",
   activity: "",
+  broadcast: "",
 };
 
 let adminPlayerFilter = "all";
@@ -282,6 +289,12 @@ function setAuthMessage(text, isSuccess = false) {
   if (!playerAuthMessage) return;
   playerAuthMessage.textContent = text;
   playerAuthMessage.style.color = isSuccess ? "#52ef9f" : "";
+}
+
+function updatePlayerVipBadges(user) {
+  const isVip = Boolean(user?.isVip);
+  playerVipBadge?.classList.toggle("is-hidden", !isVip);
+  profileVipBadge?.classList.toggle("is-hidden", !isVip);
 }
 
 function referralUrlFor(user) {
@@ -302,6 +315,7 @@ function showPlayerApp(user) {
   guestOnlyItems.forEach((item) => item.classList.add("is-hidden"));
   minimizePlayerChat();
   if (playerNameDisplay) playerNameDisplay.textContent = user.username;
+  updatePlayerVipBadges(user);
   playerPointsDisplay.forEach((item) => {
     item.textContent = user.points ?? 0;
   });
@@ -320,6 +334,7 @@ function showPlayerAuth() {
   profileSection?.classList.add("is-hidden");
   guestOnlyItems.forEach((item) => item.classList.remove("is-hidden"));
   if (playerNameDisplay) playerNameDisplay.textContent = "Guest";
+  updatePlayerVipBadges(null);
   playerPointsDisplay.forEach((item) => {
     item.textContent = "0";
   });
@@ -337,6 +352,7 @@ function renderProfile(user) {
   if (!user) {
     profileUsername.textContent = "Player";
     profileEmail.textContent = "";
+    updatePlayerVipBadges(null);
     if (referralLinkInput) referralLinkInput.value = "";
     if (referralStatus) referralStatus.textContent = "";
     if (profilePhone) profilePhone.value = "";
@@ -354,6 +370,7 @@ function renderProfile(user) {
 
   profileUsername.textContent = user.username;
   profileEmail.textContent = user.email;
+  updatePlayerVipBadges(user);
   if (referralLinkInput) referralLinkInput.value = referralUrlFor(user);
   if (referralStatus) referralStatus.textContent = "";
   if (profilePhone) profilePhone.value = user.phone || "";
@@ -902,13 +919,20 @@ const adminForm = document.querySelector("[data-admin-form]");
 const adminInput = document.querySelector("[data-admin-input]");
 const deleteChat = document.querySelector("[data-delete-chat]");
 const adminUsers = document.querySelector("[data-admin-users]");
+const adminVipUsers = document.querySelector("[data-admin-vip-users]");
 const adminUserCount = document.querySelector("[data-admin-user-count]");
+const adminVipCount = document.querySelector("[data-vip-count]");
 const dashboardStats = document.querySelector("[data-dashboard-stats]");
 const pointsTransactions = document.querySelector("[data-points-transactions]");
 const pointsCount = document.querySelector("[data-points-count]");
 const pointsAddList = document.querySelector("[data-points-add-list]");
 const pointsRedeemList = document.querySelector("[data-points-redeem-list]");
 const adminActivityList = document.querySelector("[data-admin-activity]");
+const broadcastUsers = document.querySelector("[data-broadcast-users]");
+const broadcastForm = document.querySelector("[data-broadcast-form]");
+const broadcastCount = document.querySelector("[data-broadcast-count]");
+const broadcastStatus = document.querySelector("[data-broadcast-status]");
+const broadcastSelectAll = document.querySelector("[data-broadcast-select-all]");
 const adminPanelButtons = document.querySelectorAll("[data-admin-panel-button]");
 const adminPanels = document.querySelectorAll("[data-admin-panel]");
 const adminChatJumps = document.querySelectorAll("[data-admin-chat-jump]");
@@ -951,14 +975,21 @@ let adminHasRenderedOnce = false;
 let adminRenderInFlight = false;
 let adminRenderQueued = false;
 let adminSearchRenderTimer = null;
+const adminBroadcastExcludedUserIds = new Set();
+const adminIdleLimitMs = 2 * 60 * 60 * 1000;
+const adminKeepAliveMs = 5 * 60 * 1000;
+let adminLastActivityAt = Date.now();
+let adminLastKeepAliveAt = 0;
 
 const adminPanelTitles = {
   overview: "Overview",
   activity: "Live Activity",
   players: "All Players",
+  vip: "VIP Players",
   add: "Add Points",
   redeem: "Redeem Points",
   transactions: "Transactions",
+  broadcast: "Broadcast",
   agents: "Agent Links",
 };
 
@@ -1010,6 +1041,34 @@ async function requireAdminSession() {
   }
 }
 
+async function logoutAdmin(reason = "") {
+  await api("/api/admin/logout", { method: "POST" }).catch(() => {});
+  const suffix = reason ? `?reason=${encodeURIComponent(reason)}` : "";
+  location.href = `/login9493${suffix}`;
+}
+
+function markAdminActivity() {
+  adminLastActivityAt = Date.now();
+}
+
+function setupAdminIdleLogout() {
+  if (!isAdminPage || !canUseApi) return;
+  ["click", "keydown", "pointerdown", "touchstart", "input", "scroll"].forEach((eventName) => {
+    window.addEventListener(eventName, markAdminActivity, { passive: true });
+  });
+  setInterval(async () => {
+    const idleFor = Date.now() - adminLastActivityAt;
+    if (idleFor >= adminIdleLimitMs) {
+      await logoutAdmin("inactive");
+      return;
+    }
+    if (!document.hidden && Date.now() - adminLastKeepAliveAt >= adminKeepAliveMs) {
+      adminLastKeepAliveAt = Date.now();
+      await api("/api/admin/keepalive", { method: "POST" }).catch(() => {});
+    }
+  }, 60 * 1000);
+}
+
 function playerPresence(user) {
   const activeTime = user.lastActiveAt || user.lastLoginAt || user.createdAt;
   const timestamp = activeTime ? new Date(activeTime).getTime() : 0;
@@ -1047,6 +1106,47 @@ function playAdminAlert() {
   } catch {
     // Browser may block sound until the page has user interaction.
   }
+}
+
+function createAdminPlayerRow(user) {
+  const presence = playerPresence(user);
+  const item = document.createElement("article");
+  item.className = `registered-player admin-player-row${user.isVip ? " is-vip-player" : ""}`;
+  item.innerHTML = `
+    <div class="registered-player-identity">
+      <span class="player-presence-dot"></span>
+      <button class="vip-star-button" type="button" data-toggle-vip aria-label="Toggle VIP player"></button>
+      <button class="registered-player-name" type="button" data-view-user></button>
+    </div>
+    <span class="admin-player-email"></span>
+    <span class="admin-player-phone"></span>
+    <strong class="admin-player-points"></strong>
+    <span class="admin-player-joined"></span>
+    <span class="status-pill admin-player-status"></span>
+    <div class="admin-player-actions">
+      <button class="admin-mini-button gold" type="button" data-view-user>View</button>
+      <button class="admin-mini-button green" type="button" data-quick-add-points>+ Pts</button>
+      <button class="admin-mini-button blue" type="button" data-quick-reset-password>Pwd</button>
+      <button class="admin-mini-button neutral" type="button" data-open-user-chat>Chat</button>
+    </div>
+  `;
+  item.dataset.userId = user.id;
+  setPresenceDot(item.querySelector(".player-presence-dot"), presence);
+  item.querySelectorAll("[data-view-user], [data-open-user-chat], [data-quick-add-points], [data-quick-reset-password], [data-toggle-vip]").forEach((button) => {
+    button.dataset.userId = user.id;
+  });
+  const vipButton = item.querySelector("[data-toggle-vip]");
+  vipButton.textContent = user.isVip ? "★" : "☆";
+  vipButton.classList.toggle("is-vip", Boolean(user.isVip));
+  vipButton.title = user.isVip ? "Remove from VIP players" : "Add to VIP players";
+  item.querySelector(".registered-player-name").textContent = user.username;
+  item.querySelector(".admin-player-email").textContent = user.email;
+  item.querySelector(".admin-player-phone").textContent = user.phone || "-";
+  item.querySelector(".admin-player-points").textContent = user.points ?? 0;
+  item.querySelector(".admin-player-joined").textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-";
+  item.querySelector(".admin-player-status").textContent = presence.label;
+  item.querySelector(".admin-player-status").classList.add(presence.className);
+  return item;
 }
 
 function renderUsers(users) {
@@ -1095,43 +1195,42 @@ function renderUsers(users) {
       <span>Actions</span>
     </div>
   `;
-  visibleUsers.forEach((user) => {
-    const presence = playerPresence(user);
-    const item = document.createElement("article");
-    item.className = "registered-player admin-player-row";
-    item.innerHTML = `
-      <div class="registered-player-identity">
-        <span class="player-presence-dot"></span>
-        <button class="registered-player-name" type="button" data-view-user></button>
-      </div>
-      <span class="admin-player-email"></span>
-      <span class="admin-player-phone"></span>
-      <strong class="admin-player-points"></strong>
-      <span class="admin-player-joined"></span>
-      <span class="status-pill admin-player-status"></span>
-      <div class="admin-player-actions">
-        <button class="admin-mini-button gold" type="button" data-view-user>View</button>
-        <button class="admin-mini-button green" type="button" data-quick-add-points>+ Pts</button>
-        <button class="admin-mini-button blue" type="button" data-quick-reset-password>Pwd</button>
-        <button class="admin-mini-button neutral" type="button" data-open-user-chat>Chat</button>
-      </div>
-    `;
-    item.dataset.userId = user.id;
-    setPresenceDot(item.querySelector(".player-presence-dot"), presence);
-    item.querySelectorAll("[data-view-user], [data-open-user-chat], [data-quick-add-points], [data-quick-reset-password]").forEach((button) => {
-      button.dataset.userId = user.id;
-    });
-    item.querySelector(".registered-player-name").textContent = user.username;
-    item.querySelector(".admin-player-email").textContent = user.email;
-    item.querySelector(".admin-player-phone").textContent = user.phone || "-";
-    item.querySelector(".admin-player-points").textContent = user.points ?? 0;
-    item.querySelector(".admin-player-joined").textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-";
-    item.querySelector(".admin-player-status").textContent = presence.label;
-    item.querySelector(".admin-player-status").classList.add(presence.className);
-    table.appendChild(item);
-  });
+  visibleUsers.forEach((user) => table.appendChild(createAdminPlayerRow(user)));
   adminUsers.appendChild(table);
   renderPointsActionLists(users);
+}
+
+function renderVipUsers(users) {
+  if (!adminVipUsers) return;
+  const vipUsers = users.filter((user) => user.isVip);
+  const visibleUsers = filterItems(vipUsers, adminSearchState.vip, (user) => [
+    user.username,
+    user.email,
+    user.phone,
+    user.points,
+    user.createdAt,
+  ]);
+  if (adminVipCount) adminVipCount.textContent = `${visibleUsers.length}/${vipUsers.length} VIP player${vipUsers.length === 1 ? "" : "s"}`;
+  adminVipUsers.innerHTML = "";
+  if (!visibleUsers.length) {
+    adminVipUsers.innerHTML = `<div class="admin-player-empty">No VIP players yet. Click the star beside a player to add them here.</div>`;
+    return;
+  }
+  const table = document.createElement("div");
+  table.className = "admin-player-table";
+  table.innerHTML = `
+    <div class="admin-player-table-head" aria-hidden="true">
+      <span>Username</span>
+      <span>Email</span>
+      <span>Phone</span>
+      <span>Points</span>
+      <span>Joined</span>
+      <span>Status</span>
+      <span>Actions</span>
+    </div>
+  `;
+  visibleUsers.forEach((user) => table.appendChild(createAdminPlayerRow(user)));
+  adminVipUsers.appendChild(table);
 }
 
 function getAdminUser(userId) {
@@ -1148,6 +1247,7 @@ function openAdminPlayerModal(userId, focusTarget = "") {
   activeModalUserId = user.id;
   const presence = playerPresence(user);
   modalUsername.textContent = user.username || "Player";
+  modalUsername.classList.toggle("is-vip-name", Boolean(user.isVip));
   modalEmail.textContent = user.email || "-";
   modalPhone.textContent = user.phone || "-";
   modalDob.textContent = user.dateOfBirth ? new Date(`${user.dateOfBirth}T00:00:00`).toLocaleDateString() : "Not provided";
@@ -1216,6 +1316,59 @@ function renderPointsActionLists(users) {
       pointsRedeemList.querySelectorAll("[data-points-user]")[index].dataset.userId = user.id;
     });
   }
+}
+
+function getBroadcastVisibleUsers(users) {
+  return filterItems(users, adminSearchState.broadcast, (user) => [
+    user.username,
+    user.email,
+    user.phone,
+    user.points,
+    user.createdAt,
+  ]);
+}
+
+function updateBroadcastCount(users = adminUsersCache) {
+  if (!broadcastCount) return;
+  const selectedCount = users.filter((user) => !adminBroadcastExcludedUserIds.has(user.id)).length;
+  broadcastCount.textContent = `${selectedCount}/${users.length} selected`;
+  if (broadcastSelectAll) {
+    const visibleUsers = getBroadcastVisibleUsers(users);
+    broadcastSelectAll.checked = Boolean(visibleUsers.length) && visibleUsers.every((user) => !adminBroadcastExcludedUserIds.has(user.id));
+    broadcastSelectAll.indeterminate = visibleUsers.some((user) => !adminBroadcastExcludedUserIds.has(user.id)) && !broadcastSelectAll.checked;
+  }
+}
+
+function renderBroadcastUsers(users) {
+  if (!broadcastUsers) return;
+  const visibleUsers = getBroadcastVisibleUsers(users);
+  updateBroadcastCount(users);
+  broadcastUsers.innerHTML = "";
+  if (!visibleUsers.length) {
+    broadcastUsers.innerHTML = `<article class="broadcast-player-card empty">No matching players.</article>`;
+    return;
+  }
+  visibleUsers.forEach((user) => {
+    const checked = !adminBroadcastExcludedUserIds.has(user.id);
+    const presence = playerPresence(user);
+    const row = document.createElement("label");
+    row.className = `broadcast-player-card${checked ? " is-selected" : ""}`;
+    row.innerHTML = `
+      <input type="checkbox" data-broadcast-user />
+      <span class="player-presence-dot"></span>
+      <strong></strong>
+      <small></small>
+      <b></b>
+    `;
+    const input = row.querySelector("[data-broadcast-user]");
+    input.dataset.userId = user.id;
+    input.checked = checked;
+    setPresenceDot(row.querySelector(".player-presence-dot"), presence);
+    row.querySelector("strong").textContent = user.username || "Player";
+    row.querySelector("small").textContent = user.email || user.phone || "No email";
+    row.querySelector("b").textContent = `${user.points ?? 0} pts`;
+    broadcastUsers.appendChild(row);
+  });
 }
 
 function renderPointTransactions(transactions = []) {
@@ -1311,9 +1464,10 @@ async function renderAdmin() {
   const users = userData.users || [];
   adminUsersCache = users;
   const isPlayerFormActive = Boolean(
-    document.activeElement?.closest("[data-reset-user]") ||
+      document.activeElement?.closest("[data-reset-user]") ||
       document.activeElement?.closest("[data-points-user]") ||
       document.activeElement?.closest("[data-note-user]") ||
+      document.activeElement?.closest("[data-broadcast-form]") ||
       document.activeElement?.closest("[data-player-modal]")
   );
   if (!isPlayerFormActive) {
@@ -1321,9 +1475,11 @@ async function renderAdmin() {
   } else if (adminUserCount) {
     adminUserCount.textContent = `${users.length} player${users.length === 1 ? "" : "s"}`;
   }
+  renderVipUsers(users);
   renderDashboard(dashboardData.stats || {});
   renderPointTransactions(pointsData.transactions || []);
   renderActivity(activityData.activity || []);
+  renderBroadcastUsers(users);
 
   const unreadTotal = chats.reduce((total, chat) => total + (Number(chat.unreadForAdmin) || 0), 0);
   adminUnreadBadges.forEach((badge) => {
@@ -1347,6 +1503,7 @@ async function renderAdmin() {
     const presence = playerPresence(chatUser || { createdAt: 0 });
     const button = document.createElement("button");
     button.className = `inbox-player${chat.id === activeAdminThread ? " is-active" : ""}`;
+    button.classList.toggle("is-vip-player", Boolean(chatUser?.isVip));
     button.type = "button";
     button.dataset.threadId = chat.id;
     button.innerHTML = `<span class="inbox-player-name"><span class="inbox-avatar"></span><i class="player-presence-dot"></i><b></b><em class="inbox-unread is-hidden"></em></span><small></small>`;
@@ -1364,6 +1521,7 @@ async function renderAdmin() {
   const selected = chats.find((chat) => chat.id === activeAdminThread);
   if (!selected) {
     adminName.textContent = "No player selected";
+    adminName.classList.remove("is-vip-name");
     setPresenceDot(adminChatStatus, { className: "offline", label: "Offline" });
     adminMessages.dataset.messageScope = "empty";
     adminMessages.innerHTML = `<article class="message player"><span>Inbox</span><p>No messages yet.</p></article>`;
@@ -1373,6 +1531,7 @@ async function renderAdmin() {
   const selectedUser = users.find((user) => user.id === selected.userId || user.chatId === selected.id);
   setPresenceDot(adminChatStatus, playerPresence(selectedUser || { createdAt: 0 }));
   adminName.textContent = selected.name;
+  adminName.classList.toggle("is-vip-name", Boolean(selectedUser?.isVip));
   adminMessages.dataset.messageScope = selected.id;
   renderMessages(adminMessages, selected.messages);
   } finally {
@@ -1395,40 +1554,63 @@ async function openAdminChatForUser(userId) {
   adminInput?.focus();
 }
 
+async function handleAdminPlayerListClick(event) {
+  const vipButton = event.target.closest("[data-toggle-vip]");
+  if (vipButton) {
+    const user = getAdminUser(vipButton.dataset.userId);
+    if (!user) return;
+    vipButton.disabled = true;
+    try {
+      await api("/api/admin/player-vip", {
+        method: "POST",
+        body: JSON.stringify({ userId: user.id, isVip: !user.isVip }),
+      });
+      await renderAdmin();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      vipButton.disabled = false;
+    }
+    return;
+  }
+
+  const viewButton = event.target.closest("[data-view-user]");
+  if (viewButton) {
+    openAdminPlayerModal(viewButton.dataset.userId);
+    return;
+  }
+
+  const quickAddButton = event.target.closest("[data-quick-add-points]");
+  if (quickAddButton) {
+    openAdminPlayerModal(quickAddButton.dataset.userId, "points");
+    return;
+  }
+
+  const quickResetButton = event.target.closest("[data-quick-reset-password]");
+  if (quickResetButton) {
+    openAdminPlayerModal(quickResetButton.dataset.userId, "password");
+    return;
+  }
+
+  const button = event.target.closest("[data-open-user-chat]");
+  if (!button) return;
+  button.disabled = true;
+  try {
+    await openAdminChatForUser(button.dataset.userId);
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 if (adminInbox && adminForm) {
+  setupAdminIdleLogout();
   requireAdminSession().then(renderAdmin);
 
   if (adminUsers) {
-    adminUsers.addEventListener("click", async (event) => {
-      const viewButton = event.target.closest("[data-view-user]");
-      if (viewButton) {
-        openAdminPlayerModal(viewButton.dataset.userId);
-        return;
-      }
-
-      const quickAddButton = event.target.closest("[data-quick-add-points]");
-      if (quickAddButton) {
-        openAdminPlayerModal(quickAddButton.dataset.userId, "points");
-        return;
-      }
-
-      const quickResetButton = event.target.closest("[data-quick-reset-password]");
-      if (quickResetButton) {
-        openAdminPlayerModal(quickResetButton.dataset.userId, "password");
-        return;
-      }
-
-      const button = event.target.closest("[data-open-user-chat]");
-      if (!button) return;
-      button.disabled = true;
-      try {
-        await openAdminChatForUser(button.dataset.userId);
-      } catch (error) {
-        alert(error.message);
-      } finally {
-        button.disabled = false;
-      }
-    });
+    adminUsers.addEventListener("click", handleAdminPlayerListClick);
+    adminVipUsers?.addEventListener("click", handleAdminPlayerListClick);
 
     adminUsers.addEventListener("submit", async (event) => {
       const form = event.target.closest("[data-reset-user]");
@@ -1514,6 +1696,56 @@ if (adminInbox && adminForm) {
         submitter.textContent = buttonText;
       }
     });
+  });
+
+  broadcastUsers?.addEventListener("change", (event) => {
+    const checkbox = event.target.closest("[data-broadcast-user]");
+    if (!checkbox) return;
+    if (checkbox.checked) adminBroadcastExcludedUserIds.delete(checkbox.dataset.userId);
+    else adminBroadcastExcludedUserIds.add(checkbox.dataset.userId);
+    checkbox.closest(".broadcast-player-card")?.classList.toggle("is-selected", checkbox.checked);
+    updateBroadcastCount();
+  });
+
+  broadcastSelectAll?.addEventListener("change", () => {
+    const visibleUsers = getBroadcastVisibleUsers(adminUsersCache);
+    visibleUsers.forEach((user) => {
+      if (broadcastSelectAll.checked) adminBroadcastExcludedUserIds.delete(user.id);
+      else adminBroadcastExcludedUserIds.add(user.id);
+    });
+    renderBroadcastUsers(adminUsersCache);
+  });
+
+  broadcastForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = broadcastForm.message.value.trim();
+    const userIds = adminUsersCache.filter((user) => !adminBroadcastExcludedUserIds.has(user.id)).map((user) => user.id);
+    if (!message) return;
+    if (!userIds.length) {
+      if (broadcastStatus) broadcastStatus.textContent = "Choose at least one player.";
+      return;
+    }
+    const button = broadcastForm.querySelector("button[type='submit']");
+    const buttonText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Sending";
+    if (broadcastStatus) broadcastStatus.textContent = "";
+    try {
+      const data = await api("/api/admin/broadcast", {
+        method: "POST",
+        body: JSON.stringify({ message, userIds }),
+      });
+      broadcastForm.reset();
+      adminBroadcastExcludedUserIds.clear();
+      if (broadcastStatus) broadcastStatus.textContent = `Broadcast sent to ${data.sent} player${data.sent === 1 ? "" : "s"}.`;
+      await renderAdmin();
+    } catch (error) {
+      if (broadcastStatus) broadcastStatus.textContent = error.message;
+      else alert(error.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = buttonText;
+    }
   });
 
   adminInbox.addEventListener("click", async (event) => {
@@ -1794,7 +2026,6 @@ if (logoutButton) {
   logoutButton.addEventListener("click", async () => {
     logoutButton.disabled = true;
     logoutButton.textContent = "Logging Out...";
-    await api("/api/admin/logout", { method: "POST" }).catch(() => {});
-    location.href = "/login9493";
+    await logoutAdmin();
   });
 }

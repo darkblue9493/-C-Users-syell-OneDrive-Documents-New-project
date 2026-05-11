@@ -26,12 +26,14 @@
         <button type="button" data-admin-panel-button="activity"><span>LA</span>Live Activity</button>
         <span class="admin-nav-label">Players</span>
         <button type="button" data-admin-panel-button="players"><span>AP</span>All Players</button>
+        <button type="button" data-admin-panel-button="vip"><span>VIP</span>VIP Players</button>
         <button type="button" data-admin-panel-button="add"><span>AD</span>Add Points</button>
         <button type="button" data-admin-panel-button="redeem"><span>RD</span>Redeem Points</button>
         <span class="admin-nav-label">Payments</span>
         <button type="button" data-admin-panel-button="transactions"><span>TR</span>Transactions</button>
         <button type="button" data-admin-chat-jump><span>MS</span>Messages <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b></button>
         <span class="admin-nav-label">Content</span>
+        <button type="button" data-admin-panel-button="broadcast"><span>BC</span>Broadcast</button>
         <button type="button" data-admin-panel-button="agents"><span>AL</span>Agent Links</button>
       </nav>
     </header>
@@ -103,6 +105,21 @@
                 <div class="registered-list" data-admin-users></div>
               </section>
 
+              <section class="admin-control-panel" data-admin-panel="vip">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>VIP Players</strong>
+                  </div>
+                  <small data-vip-count>0 VIP players</small>
+                </div>
+                <div class="admin-search-row">
+                  <label class="sr-only" for="vip-search">Search VIP players</label>
+                  <input id="vip-search" type="search" placeholder="Search VIP players..." data-admin-search="vip" />
+                </div>
+                <div class="registered-list" data-admin-vip-users></div>
+              </section>
+
               <section class="admin-control-panel" data-admin-panel="transactions">
                 <div class="chat-topbar">
                   <div>
@@ -161,6 +178,33 @@
                   <input id="activity-search" type="search" placeholder="Search activity..." data-admin-search="activity" />
                 </div>
                 <div class="activity-list" data-admin-activity></div>
+              </section>
+
+              <section class="admin-control-panel" data-admin-panel="broadcast">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>Broadcast Message</strong>
+                  </div>
+                  <small data-broadcast-count>0 selected</small>
+                </div>
+                <form class="broadcast-panel" data-broadcast-form>
+                  <label for="broadcast-message">Message to players</label>
+                  <textarea id="broadcast-message" name="message" rows="4" maxlength="1000" placeholder="Type one message to send to selected players..." required></textarea>
+                  <div class="broadcast-actions">
+                    <label class="broadcast-select-all">
+                      <input type="checkbox" data-broadcast-select-all checked />
+                      <span>Select all visible players</span>
+                    </label>
+                    <button class="button primary" type="submit">Send Broadcast</button>
+                  </div>
+                  <p class="broadcast-status" data-broadcast-status></p>
+                </form>
+                <div class="admin-search-row">
+                  <label class="sr-only" for="broadcast-search">Search broadcast players</label>
+                  <input id="broadcast-search" type="search" placeholder="Search players to include or remove..." data-admin-search="broadcast" />
+                </div>
+                <div class="broadcast-player-list" data-broadcast-users></div>
               </section>
 
               <section class="admin-control-panel" data-admin-panel="agents">

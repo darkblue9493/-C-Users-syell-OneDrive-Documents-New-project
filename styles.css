@@ -4576,7 +4576,7 @@ body.is-player-logged-in [data-guest-only] {
 }
 
 .registered-player-identity {
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
 }
 
@@ -5144,11 +5144,301 @@ body.is-player-logged-in [data-guest-only] {
 .admin-body .registered-list,
 .admin-body .points-transaction-list,
 .admin-body .points-action-list,
-.admin-body .activity-list {
+.admin-body .activity-list,
+.admin-body .broadcast-player-list {
   max-height: min(680px, 68vh);
   overflow: auto;
   scrollbar-color: rgba(255, 214, 64, 0.38) transparent;
   scrollbar-width: thin;
+}
+
+.broadcast-panel {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-bottom: 1px solid var(--admin-border);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(255, 214, 64, 0.1), transparent 30%),
+    #111119;
+}
+
+.broadcast-panel label,
+.broadcast-status {
+  color: #ffe600;
+  font-weight: 900;
+}
+
+.broadcast-panel textarea {
+  width: 100%;
+  min-height: 128px;
+  resize: vertical;
+  border: 1px solid rgba(255, 214, 64, 0.22);
+  border-radius: 14px;
+  color: #fff8df;
+  background: rgba(0, 0, 0, 0.42);
+  font: inherit;
+  line-height: 1.5;
+  padding: 14px 16px;
+}
+
+.broadcast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.broadcast-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff8df;
+}
+
+.broadcast-select-all input,
+.broadcast-player-card input {
+  accent-color: #f6c85f;
+}
+
+.broadcast-status {
+  min-height: 22px;
+  margin: 0;
+  color: #52ef9f;
+}
+
+.broadcast-player-list {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  background: #111119;
+}
+
+.broadcast-player-card {
+  display: grid;
+  grid-template-columns: auto 12px minmax(0, 1fr) minmax(150px, auto) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  border: 1px solid rgba(255, 214, 64, 0.12);
+  border-radius: 14px;
+  color: #fff8df;
+  background: rgba(255, 248, 223, 0.035);
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.broadcast-player-card.is-selected {
+  border-color: rgba(82, 239, 159, 0.3);
+  background: rgba(82, 239, 159, 0.08);
+}
+
+.broadcast-player-card strong,
+.broadcast-player-card small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.broadcast-player-card small {
+  color: #9d927e;
+}
+
+.broadcast-player-card b {
+  color: #ffe600;
+}
+
+.broadcast-player-card.empty {
+  display: block;
+  color: #9d927e;
+  cursor: default;
+}
+
+.vip-badge {
+  display: inline-flex;
+  width: max-content;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid rgba(255, 214, 64, 0.38);
+  border-radius: 999px;
+  color: #190f04;
+  background: linear-gradient(135deg, #f6c85f, #ffdf8b);
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0 9px;
+}
+
+.vip-star-button {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255, 214, 64, 0.22);
+  border-radius: 999px;
+  color: rgba(255, 248, 223, 0.58);
+  background: rgba(255, 248, 223, 0.04);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vip-star-button:hover,
+.vip-star-button.is-vip {
+  color: #190f04;
+  background: linear-gradient(135deg, #f6c85f, #ffdf8b);
+}
+
+.registered-player.is-vip-player {
+  background:
+    linear-gradient(90deg, rgba(255, 214, 64, 0.08), transparent 42%),
+    #14141c;
+}
+
+.messenger-chat .inbox-player.is-vip-player .inbox-player-name b::after,
+.is-vip-name::after {
+  content: " ★ VIP";
+  color: #ffe600;
+  font-size: 0.78em;
+  font-weight: 900;
+}
+
+.player-pill .vip-badge {
+  margin-left: 6px;
+}
+
+/* Professional admin login */
+.admin-body .login-main {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  place-items: center;
+  padding: clamp(20px, 4vw, 56px);
+  background:
+    linear-gradient(90deg, rgba(255, 214, 64, 0.045) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 214, 64, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 16% 18%, rgba(246, 200, 95, 0.2), transparent 28%),
+    radial-gradient(circle at 84% 16%, rgba(166, 31, 54, 0.26), transparent 30%),
+    radial-gradient(circle at 70% 90%, rgba(246, 200, 95, 0.12), transparent 32%),
+    #050509;
+  background-size: 86px 86px, 86px 86px, auto, auto, auto, auto;
+}
+
+.admin-body .login-main::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(0, 0, 0, 0.1) 0 44%, rgba(255, 214, 64, 0.08) 44% 45%, transparent 45%),
+    radial-gradient(circle at 50% 50%, transparent 0 46%, rgba(255, 214, 64, 0.1) 47%, transparent 48%),
+    radial-gradient(circle at 50% 50%, rgba(255, 214, 64, 0.08), transparent 34%);
+  opacity: 0.82;
+}
+
+.admin-body .login-main::after {
+  content: "SECURE ADMIN";
+  position: absolute;
+  right: clamp(18px, 5vw, 72px);
+  bottom: clamp(18px, 5vw, 72px);
+  color: rgba(255, 248, 223, 0.055);
+  font-size: clamp(3rem, 9vw, 9rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.8;
+  text-align: right;
+  pointer-events: none;
+}
+
+.admin-body .login-card {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
+  gap: 24px;
+  border-radius: 22px;
+  border-color: rgba(255, 214, 64, 0.26);
+  background:
+    linear-gradient(145deg, rgba(255, 214, 64, 0.11), rgba(166, 31, 54, 0.08)),
+    rgba(17, 17, 25, 0.92);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 248, 223, 0.06);
+  backdrop-filter: blur(18px);
+}
+
+.admin-body .login-card::before {
+  content: "2-hour idle security";
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border: 1px solid rgba(82, 239, 159, 0.24);
+  border-radius: 999px;
+  color: #52ef9f;
+  background: rgba(82, 239, 159, 0.09);
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0 12px;
+}
+
+.admin-body .login-card .brand {
+  width: max-content;
+  padding-right: 170px;
+}
+
+.admin-body .login-card h1 {
+  max-width: 620px;
+  color: #fff8df;
+  font-size: clamp(3.2rem, 8vw, 7.4rem);
+  letter-spacing: 0;
+}
+
+.admin-body .login-card p {
+  max-width: 620px;
+  color: #d9c998;
+  font-size: 1.06rem;
+}
+
+.admin-body .login-form {
+  gap: 12px;
+}
+
+.admin-body .login-form input {
+  min-height: 58px;
+  border-radius: 14px;
+  border-color: rgba(255, 214, 64, 0.24);
+  background: rgba(0, 0, 0, 0.54);
+}
+
+.admin-body .login-form .button.primary,
+.admin-body .admin-reset-password-panel .button.primary {
+  min-height: 58px;
+  border-radius: 14px;
+}
+
+.admin-body .admin-login-actions .link-button {
+  color: #ffdf8b;
+}
+
+@media (max-width: 720px) {
+  .admin-body .login-card {
+    width: 100%;
+    padding: 26px 20px;
+  }
+
+  .admin-body .login-card::before {
+    position: static;
+    width: max-content;
+    order: -1;
+  }
+
+  .admin-body .login-card .brand {
+    padding-right: 0;
+  }
+
+  .admin-body .login-card h1 {
+    font-size: clamp(2.6rem, 15vw, 4.6rem);
+  }
 }
 
 @media (max-width: 1180px) {
@@ -5241,5 +5531,14 @@ body.is-player-logged-in [data-guest-only] {
 
   .admin-body .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .broadcast-player-card {
+    grid-template-columns: auto 12px minmax(0, 1fr);
+  }
+
+  .broadcast-player-card small,
+  .broadcast-player-card b {
+    grid-column: 3;
   }
 }
