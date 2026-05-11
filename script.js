@@ -948,6 +948,9 @@ let adminUsersCache = [];
 let pendingAdminLoginId = null;
 let lastAdminUnreadTotal = 0;
 let adminHasRenderedOnce = false;
+let adminRenderInFlight = false;
+let adminRenderQueued = false;
+let adminSearchRenderTimer = null;
 
 const adminPanelTitles = {
   overview: "Overview",
@@ -984,7 +987,8 @@ adminRefresh?.addEventListener("click", () => renderAdmin());
 document.querySelectorAll("[data-admin-search]").forEach((input) => {
   input.addEventListener("input", () => {
     adminSearchState[input.dataset.adminSearch] = input.value;
-    renderAdmin();
+    clearTimeout(adminSearchRenderTimer);
+    adminSearchRenderTimer = setTimeout(renderAdmin, 160);
   });
 });
 
@@ -1287,12 +1291,20 @@ function latestChatTime(chat) {
 
 async function renderAdmin() {
   if (!adminInbox || !adminMessages) return;
+  if (adminRenderInFlight) {
+    adminRenderQueued = true;
+    return;
+  }
 
-  const chatData = await api("/api/chats").catch(() => ({ chats: [] }));
-  const userData = await api("/api/admin/users").catch(() => ({ users: [] }));
-  const dashboardData = await api("/api/admin/dashboard").catch(() => ({ stats: {} }));
-  const pointsData = await api("/api/admin/points").catch(() => ({ transactions: [] }));
-  const activityData = await api("/api/admin/activity").catch(() => ({ activity: [] }));
+  adminRenderInFlight = true;
+  try {
+  const [chatData, userData, dashboardData, pointsData, activityData] = await Promise.all([
+    api("/api/chats").catch(() => ({ chats: [] })),
+    api("/api/admin/users").catch(() => ({ users: [] })),
+    api("/api/admin/dashboard").catch(() => ({ stats: {} })),
+    api("/api/admin/points").catch(() => ({ transactions: [] })),
+    api("/api/admin/activity").catch(() => ({ activity: [] })),
+  ]);
   const chats = (chatData.chats || [])
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
     .sort((a, b) => latestChatTime(b) - latestChatTime(a));
@@ -1363,6 +1375,13 @@ async function renderAdmin() {
   adminName.textContent = selected.name;
   adminMessages.dataset.messageScope = selected.id;
   renderMessages(adminMessages, selected.messages);
+  } finally {
+    adminRenderInFlight = false;
+    if (adminRenderQueued) {
+      adminRenderQueued = false;
+      renderAdmin();
+    }
+  }
 }
 
 async function openAdminChatForUser(userId) {
@@ -1558,7 +1577,9 @@ if (adminInbox && adminForm) {
     renderAdmin();
   });
 
-  setInterval(renderAdmin, 2500);
+  setInterval(() => {
+    if (!document.hidden) renderAdmin();
+  }, 3500);
 }
 
 closePlayerModal?.addEventListener("click", closeAdminPlayerModal);

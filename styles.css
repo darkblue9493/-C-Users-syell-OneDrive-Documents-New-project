@@ -4973,3 +4973,273 @@ body.is-player-logged-in [data-guest-only] {
     grid-template-columns: 1fr;
   }
 }
+
+/* Admin professional polish and scroll fixes */
+.admin-body {
+  --admin-bg: #07070c;
+  --admin-sidebar: #0d0d14;
+  --admin-card: #15151d;
+  --admin-card-2: #1b1a22;
+  --admin-border: rgba(255, 214, 64, 0.2);
+}
+
+.admin-body .admin-brand span,
+.admin-body .admin-brand small,
+.admin-nav-label,
+.admin-topbar h1,
+.admin-body .chat-topbar strong,
+.chat-section-heading h2,
+.admin-player-table-head,
+.admin-mini-button,
+.admin-action-button,
+.status-pill {
+  letter-spacing: 0;
+}
+
+.admin-body .site-header.admin-side-nav {
+  width: 300px;
+  border-right: 1px solid var(--admin-border);
+}
+
+.admin-body .admin-brand {
+  padding: 24px 22px 26px;
+}
+
+.admin-body .admin-brand span {
+  font-size: 1.45rem;
+}
+
+.admin-body .admin-nav {
+  gap: 6px;
+  padding: 16px 14px 28px;
+}
+
+.admin-body .admin-nav button,
+.admin-body .admin-nav a {
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  min-height: 52px;
+  padding: 0 14px;
+  border-radius: 12px;
+}
+
+.admin-body .admin-nav span:not(.admin-nav-label) {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+}
+
+.admin-body .admin-main {
+  margin-left: 300px;
+  background-size: 96px 96px;
+}
+
+.admin-body .section-inner.admin-shell {
+  gap: 24px;
+  padding: 0 32px 42px;
+}
+
+.admin-topbar {
+  min-height: 72px;
+  margin: 0 -32px;
+  padding: 0 32px;
+}
+
+.admin-topbar-actions {
+  gap: 10px;
+}
+
+.admin-topbar-actions .game-link,
+.admin-topbar-actions .logout-button {
+  min-height: 42px;
+  border-radius: 12px;
+}
+
+.admin-body .admin-control-center,
+.admin-body .admin-layout,
+.admin-dashboard.messenger-chat {
+  border-radius: 18px;
+}
+
+.admin-body .dashboard-grid {
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 14px;
+  padding: 20px;
+}
+
+.admin-body .dashboard-grid article {
+  min-height: 108px;
+  border-radius: 14px;
+}
+
+.admin-body .dashboard-grid strong {
+  font-size: clamp(2rem, 3.2vw, 3.2rem);
+}
+
+.chat-section-heading {
+  padding: 10px 0 0;
+}
+
+.admin-dashboard.messenger-chat {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  height: clamp(560px, calc(100vh - 180px), 820px);
+  max-height: calc(100vh - 150px);
+  min-height: 560px;
+  overflow: hidden;
+}
+
+.admin-dashboard.messenger-chat .chat-inbox,
+.admin-dashboard.messenger-chat .chat-window,
+.admin-dashboard.messenger-chat .chat-messages {
+  min-height: 0;
+}
+
+.admin-dashboard.messenger-chat .chat-inbox {
+  height: 100%;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  scrollbar-color: rgba(255, 214, 64, 0.38) transparent;
+  scrollbar-width: thin;
+}
+
+.admin-dashboard.messenger-chat .chat-window {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.admin-dashboard.messenger-chat .chat-messages {
+  flex: 1 1 auto;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-dashboard.messenger-chat .inbox-player {
+  min-height: 68px;
+  padding: 10px 12px;
+}
+
+.admin-dashboard.messenger-chat .inbox-player-name {
+  grid-template-columns: 46px 12px minmax(0, 1fr) auto;
+}
+
+.admin-dashboard.messenger-chat .inbox-player small {
+  padding-left: 58px;
+}
+
+.admin-dashboard.messenger-chat .chat-topbar {
+  flex: 0 0 auto;
+  min-height: 72px;
+  padding: 16px 22px;
+}
+
+.admin-dashboard.messenger-chat .chat-form {
+  flex: 0 0 auto;
+}
+
+.admin-body .registered-list,
+.admin-body .points-transaction-list,
+.admin-body .points-action-list,
+.admin-body .activity-list {
+  max-height: min(680px, 68vh);
+  overflow: auto;
+  scrollbar-color: rgba(255, 214, 64, 0.38) transparent;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 1180px) {
+  .admin-body .site-header.admin-side-nav {
+    width: 270px;
+  }
+
+  .admin-body .admin-main {
+    margin-left: 270px;
+  }
+
+  .admin-body .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .admin-body .site-header.admin-side-nav {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    max-height: 58vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--admin-border);
+  }
+
+  .admin-body .admin-main {
+    margin-left: 0;
+  }
+
+  .admin-body .admin-brand {
+    padding: 18px 18px 14px;
+  }
+
+  .admin-body .admin-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .admin-nav-label {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+  }
+
+  .admin-body .section-inner.admin-shell {
+    padding: 0 12px 28px;
+  }
+
+  .admin-topbar {
+    margin: 0 -12px;
+    padding: 0 12px;
+  }
+
+  .admin-topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .admin-dashboard.messenger-chat {
+    grid-template-columns: 1fr;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .admin-dashboard.messenger-chat .chat-inbox {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    max-height: 320px;
+    overflow-y: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .admin-dashboard.messenger-chat .chat-inbox::before {
+    display: block;
+  }
+
+  .admin-dashboard.messenger-chat .chat-window {
+    min-height: min(620px, 78vh);
+  }
+
+  .admin-dashboard.messenger-chat .chat-messages {
+    min-height: 300px;
+    max-height: none;
+  }
+
+  .admin-body .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
