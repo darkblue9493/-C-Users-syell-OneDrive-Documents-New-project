@@ -5364,26 +5364,9 @@ body.is-player-logged-in [data-guest-only] {
   backdrop-filter: blur(18px);
 }
 
-.admin-body .login-card::before {
-  content: "2-hour idle security";
-  position: absolute;
-  top: 22px;
-  right: 22px;
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  border: 1px solid rgba(82, 239, 159, 0.24);
-  border-radius: 999px;
-  color: #52ef9f;
-  background: rgba(82, 239, 159, 0.09);
-  font-size: 0.78rem;
-  font-weight: 900;
-  padding: 0 12px;
-}
-
 .admin-body .login-card .brand {
   width: max-content;
-  padding-right: 170px;
+  padding-right: 0;
 }
 
 .admin-body .login-card h1 {
@@ -5424,12 +5407,6 @@ body.is-player-logged-in [data-guest-only] {
   .admin-body .login-card {
     width: 100%;
     padding: 26px 20px;
-  }
-
-  .admin-body .login-card::before {
-    position: static;
-    width: max-content;
-    order: -1;
   }
 
   .admin-body .login-card .brand {
