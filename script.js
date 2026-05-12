@@ -119,7 +119,11 @@ async function api(path, options = {}) {
   if (!response.ok && response.status === 401 && isAdminPage) {
     location.href = "/login9493";
   }
-  if (!response.ok) throw new Error(data.error || "Something went wrong.");
+  if (!response.ok) {
+    const error = new Error(data.error || "Something went wrong.");
+    Object.assign(error, data);
+    throw error;
+  }
   return data;
 }
 
@@ -262,9 +266,17 @@ const referralSignupNote = document.querySelector("[data-referral-signup-note]")
 const referralLinkInput = document.querySelector("[data-referral-link]");
 const copyReferralButton = document.querySelector("[data-copy-referral]");
 const referralStatus = document.querySelector("[data-referral-status]");
+const spinTriggers = document.querySelectorAll("[data-spin-trigger]");
+const spinModal = document.querySelector("[data-spin-modal]");
+const spinClose = document.querySelector("[data-spin-close]");
+const spinWheel = document.querySelector("[data-spin-wheel]");
+const spinButton = document.querySelector("[data-spin-button]");
+const spinResult = document.querySelector("[data-spin-result]");
 
 let currentPlayer = null;
 let hasOpenedPlayerChat = false;
+let hasCheckedDailySpin = false;
+let spinRotation = 0;
 const referralCodeFromUrl = (() => {
   try {
     return new URLSearchParams(window.location.search).get("ref") || "";
@@ -280,6 +292,7 @@ const adminSearchState = {
   redeem: "",
   activity: "",
   broadcast: "",
+  spin: "",
 };
 
 let adminPlayerFilter = "all";
@@ -322,6 +335,7 @@ function showPlayerApp(user) {
   renderProfile(user);
   if (shouldShowWelcome) showWelcomeModal(user);
   shouldShowWelcome = false;
+  maybeShowDailySpin();
 }
 
 function showPlayerAuth() {
@@ -485,6 +499,120 @@ function showWelcomeModal(user) {
 
 function closeWelcomeModal() {
   welcomeModal?.classList.add("is-hidden");
+}
+
+function updateCurrentPlayer(user) {
+  if (!user) return;
+  currentPlayer = user;
+  playerPointsDisplay.forEach((item) => {
+    item.textContent = user.points ?? 0;
+  });
+  renderProfile(user);
+}
+
+function openSpinModal(message = "") {
+  if (!spinModal) return;
+  if (spinResult) spinResult.textContent = message;
+  if (spinButton) {
+    spinButton.disabled = false;
+    spinButton.textContent = "Spin";
+  }
+  spinModal.classList.remove("is-hidden");
+  spinModal.setAttribute("aria-hidden", "false");
+}
+
+function closeSpinModal() {
+  spinModal?.classList.add("is-hidden");
+  spinModal?.setAttribute("aria-hidden", "true");
+}
+
+function formatNextSpin(value) {
+  if (!value) return "";
+  const next = new Date(value);
+  if (Number.isNaN(next.getTime())) return "";
+  return `Next spin opens ${next.toLocaleString()}.`;
+}
+
+async function maybeShowDailySpin() {
+  if (!currentPlayer || hasCheckedDailySpin || !canUseApi || !spinModal) return;
+  hasCheckedDailySpin = true;
+  try {
+    const data = await api("/api/player/spin-status");
+    if (data.eligible) openSpinModal("Your daily spin is ready.");
+  } catch {
+    // Keep the page smooth if the spin status cannot load.
+  }
+}
+
+async function openSpinForPlayer() {
+  if (!currentPlayer) {
+    document.querySelector('[data-auth-tab="login"]')?.click();
+    playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  openSpinModal("Checking your daily spin...");
+  try {
+    const data = await api("/api/player/spin-status");
+    if (data.eligible) {
+      if (spinResult) spinResult.textContent = "Your daily spin is ready.";
+      return;
+    }
+    if (spinButton) {
+      spinButton.disabled = true;
+      spinButton.textContent = "Come Back Tomorrow";
+    }
+    if (spinResult) spinResult.textContent = `Daily spin already used. ${formatNextSpin(data.nextSpinAt)}`;
+  } catch (error) {
+    if (spinResult) spinResult.textContent = error.message;
+  }
+}
+
+function prizeToRotation(prize) {
+  const centers = {
+    0: 36,
+    1: 108,
+    3: 180,
+    5: 252,
+    10: 324,
+  };
+  const center = centers[String(prize)] ?? 36;
+  spinRotation += 360 * 18 + (360 - center) + Math.floor(Math.random() * 20 - 10);
+  return spinRotation;
+}
+
+async function runSpinWheel() {
+  if (!currentPlayer) {
+    closeSpinModal();
+    document.querySelector('[data-auth-tab="login"]')?.click();
+    playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  if (!spinButton || !spinWheel) return;
+  spinButton.disabled = true;
+  spinButton.textContent = "Spinning...";
+  if (spinResult) spinResult.textContent = "Wheel is spinning. Good luck!";
+  try {
+    const data = await api("/api/player/spin", { method: "POST", body: JSON.stringify({}) });
+    spinWheel.classList.add("is-spinning");
+    spinWheel.style.transitionDuration = "20s";
+    spinWheel.style.transform = `rotate(${prizeToRotation(data.prize)}deg)`;
+    window.setTimeout(() => {
+      spinWheel.classList.remove("is-spinning");
+      updateCurrentPlayer(data.user);
+      refreshPlayerPointTransactions();
+      if (spinResult) {
+        spinResult.textContent =
+          data.prize > 0
+            ? `You won ${data.prize} point${data.prize === 1 ? "" : "s"}. Added to your account.`
+            : "Better luck next time. Come back tomorrow.";
+      }
+      spinButton.textContent = "Come Back Tomorrow";
+    }, 20000);
+  } catch (error) {
+    if (spinResult) spinResult.textContent = `${error.message} ${formatNextSpin(error.nextSpinAt)}`.trim();
+    spinButton.disabled = false;
+    spinButton.textContent = "Spin";
+  }
 }
 
 authTabs.forEach((tab) => {
@@ -910,6 +1038,18 @@ welcomeModal?.addEventListener("click", (event) => {
   if (event.target === welcomeModal) closeWelcomeModal();
 });
 
+spinTriggers.forEach((trigger) => {
+  trigger.addEventListener("click", () => {
+    openSpinForPlayer();
+  });
+});
+
+spinClose?.addEventListener("click", closeSpinModal);
+spinButton?.addEventListener("click", runSpinWheel);
+spinModal?.addEventListener("click", (event) => {
+  if (event.target === spinModal) closeSpinModal();
+});
+
 const adminInbox = document.querySelector("[data-admin-inbox]");
 const adminMessages = document.querySelector("[data-admin-messages]");
 const adminName = document.querySelector("[data-admin-name]");
@@ -933,6 +1073,11 @@ const broadcastForm = document.querySelector("[data-broadcast-form]");
 const broadcastCount = document.querySelector("[data-broadcast-count]");
 const broadcastStatus = document.querySelector("[data-broadcast-status]");
 const broadcastSelectAll = document.querySelector("[data-broadcast-select-all]");
+const spinSettingsForm = document.querySelector("[data-spin-settings-form]");
+const spinSettingsStatus = document.querySelector("[data-spin-settings-status]");
+const spinAdminStats = document.querySelector("[data-spin-admin-stats]");
+const spinAwardsList = document.querySelector("[data-spin-awards]");
+const spinDate = document.querySelector("[data-spin-date]");
 const adminPanelButtons = document.querySelectorAll("[data-admin-panel-button]");
 const adminPanels = document.querySelectorAll("[data-admin-panel]");
 const adminChatJumps = document.querySelectorAll("[data-admin-chat-jump]");
@@ -988,6 +1133,7 @@ const adminPanelTitles = {
   vip: "VIP Players",
   add: "Add Points",
   redeem: "Redeem Points",
+  spin: "Spin Wheel",
   transactions: "Transactions",
   broadcast: "Broadcast",
   agents: "Agent Links",
@@ -1404,6 +1550,45 @@ function renderPointTransactions(transactions = []) {
   });
 }
 
+function renderSpinAdmin(data = {}) {
+  const settings = data.settings?.limits || {};
+  const counts = data.counts || {};
+  if (spinDate) spinDate.textContent = data.date ? `Today: ${data.date}` : "Daily prize controls";
+  if (spinSettingsForm) {
+    ["10", "5", "3", "1"].forEach((points) => {
+      const input = spinSettingsForm.elements[points];
+      if (input && document.activeElement !== input) input.value = settings[points] ?? "";
+    });
+  }
+  if (spinAdminStats) {
+    spinAdminStats.innerHTML = ["10", "5", "3", "1", "0"]
+      .map((points) => {
+        const label = points === "0" ? "Better luck" : `${points} point`;
+        const limit = points === "0" ? "No limit" : `${counts[points] || 0}/${settings[points] ?? 0}`;
+        return `<article><span>${label}</span><strong>${limit}</strong></article>`;
+      })
+      .join("");
+  }
+  if (spinAwardsList) {
+    const awards = data.awards || [];
+    spinAwardsList.innerHTML = "";
+    if (!awards.length) {
+      spinAwardsList.innerHTML = `<article class="points-transaction empty">No spin results yet today.</article>`;
+      return;
+    }
+    awards.slice(0, 60).forEach((award) => {
+      const item = document.createElement("article");
+      item.className = `points-transaction ${award.prize > 0 ? "add" : "redeem"}`;
+      item.innerHTML = `<div><strong></strong><span></span></div><b></b><small></small>`;
+      item.querySelector("strong").textContent = award.username || "Player";
+      item.querySelector("span").textContent = award.prize > 0 ? "Daily spin reward" : "Better luck next time";
+      item.querySelector("b").textContent = award.prize > 0 ? `+${award.prize}` : "0";
+      item.querySelector("small").textContent = award.createdAt ? new Date(award.createdAt).toLocaleString() : "";
+      spinAwardsList.appendChild(item);
+    });
+  }
+}
+
 function renderActivity(activity = []) {
   if (!adminActivityList) return;
   const visibleActivity = filterItems(activity, adminSearchState.activity, (item) => [
@@ -1451,12 +1636,13 @@ async function renderAdmin() {
 
   adminRenderInFlight = true;
   try {
-  const [chatData, userData, dashboardData, pointsData, activityData] = await Promise.all([
+  const [chatData, userData, dashboardData, pointsData, activityData, spinData] = await Promise.all([
     api("/api/chats").catch(() => ({ chats: [] })),
     api("/api/admin/users").catch(() => ({ users: [] })),
     api("/api/admin/dashboard").catch(() => ({ stats: {} })),
     api("/api/admin/points").catch(() => ({ transactions: [] })),
     api("/api/admin/activity").catch(() => ({ activity: [] })),
+    api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
   ]);
   const chats = (chatData.chats || [])
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
@@ -1468,6 +1654,7 @@ async function renderAdmin() {
       document.activeElement?.closest("[data-points-user]") ||
       document.activeElement?.closest("[data-note-user]") ||
       document.activeElement?.closest("[data-broadcast-form]") ||
+      document.activeElement?.closest("[data-spin-settings-form]") ||
       document.activeElement?.closest("[data-player-modal]")
   );
   if (!isPlayerFormActive) {
@@ -1480,6 +1667,7 @@ async function renderAdmin() {
   renderPointTransactions(pointsData.transactions || []);
   renderActivity(activityData.activity || []);
   renderBroadcastUsers(users);
+  renderSpinAdmin(spinData);
 
   const unreadTotal = chats.reduce((total, chat) => total + (Number(chat.unreadForAdmin) || 0), 0);
   adminUnreadBadges.forEach((badge) => {
@@ -1741,6 +1929,33 @@ if (adminInbox && adminForm) {
       await renderAdmin();
     } catch (error) {
       if (broadcastStatus) broadcastStatus.textContent = error.message;
+      else alert(error.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = buttonText;
+    }
+  });
+
+  spinSettingsForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = spinSettingsForm.querySelector("button[type='submit']");
+    const buttonText = button.textContent;
+    const limits = {};
+    ["10", "5", "3", "1"].forEach((points) => {
+      limits[points] = Number(spinSettingsForm.elements[points].value);
+    });
+    button.disabled = true;
+    button.textContent = "Saving";
+    if (spinSettingsStatus) spinSettingsStatus.textContent = "";
+    try {
+      const data = await api("/api/admin/spin-wheel-settings", {
+        method: "POST",
+        body: JSON.stringify({ limits }),
+      });
+      renderSpinAdmin(data);
+      if (spinSettingsStatus) spinSettingsStatus.textContent = "Spin limits saved.";
+    } catch (error) {
+      if (spinSettingsStatus) spinSettingsStatus.textContent = error.message;
       else alert(error.message);
     } finally {
       button.disabled = false;

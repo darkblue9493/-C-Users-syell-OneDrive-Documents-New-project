@@ -2615,6 +2615,90 @@ blockquote {
   grid-template-columns: repeat(5, minmax(120px, 1fr));
 }
 
+.spin-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 360px) 1fr;
+  gap: 18px;
+  padding: 18px;
+  background: #13131b;
+}
+
+.spin-admin-settings {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px;
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 90% 8%, rgba(255, 230, 0, 0.14), transparent 24%),
+    #101018;
+}
+
+.spin-admin-settings label {
+  display: grid;
+  gap: 7px;
+  color: var(--admin-muted);
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.spin-admin-settings input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  color: var(--cream);
+  background: #07070d;
+  font: inherit;
+  font-weight: 900;
+  padding: 0 12px;
+}
+
+.spin-admin-settings p {
+  min-height: 22px;
+  margin: 0;
+  color: #52ef9f;
+  font-weight: 800;
+}
+
+.spin-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.spin-admin-stats article {
+  display: grid;
+  gap: 8px;
+  min-height: 94px;
+  align-content: center;
+  padding: 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: #171720;
+}
+
+.spin-admin-stats span {
+  color: var(--admin-muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.spin-admin-stats strong {
+  color: #ffe600;
+  font-size: 1.55rem;
+}
+
+.spin-awards-list {
+  max-height: 420px;
+  overflow: auto;
+}
+
 .chat-section-heading {
   display: flex;
   align-items: end;
@@ -3562,6 +3646,166 @@ body.is-player-logged-in [data-guest-only] {
   cursor: pointer;
 }
 
+.spin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(246, 200, 95, 0.24), transparent 34%),
+    rgba(0, 0, 0, 0.78);
+}
+
+.spin-card {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  width: min(560px, 100%);
+  padding: clamp(22px, 4vw, 38px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 226, 142, 0.38);
+  border-radius: 18px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 223, 139, 0.2), transparent 28%),
+    radial-gradient(circle at 80% 22%, rgba(31, 181, 107, 0.12), transparent 26%),
+    linear-gradient(145deg, #21150b, #070707 72%);
+  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.72), 0 0 38px rgba(246, 200, 95, 0.22);
+}
+
+.spin-card::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, transparent, rgba(255, 223, 139, 0.16), transparent 22%);
+  animation: spin-shine 8s linear infinite;
+  pointer-events: none;
+}
+
+.spin-card > * {
+  position: relative;
+}
+
+.spin-card h2 {
+  margin: 0;
+  font-size: clamp(2.1rem, 8vw, 4rem);
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.spin-copy,
+.spin-result {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.spin-stage {
+  position: relative;
+  width: min(360px, 82vw);
+  aspect-ratio: 1;
+  margin: 4px auto;
+  filter: drop-shadow(0 20px 34px rgba(0, 0, 0, 0.55));
+}
+
+.spin-wheel {
+  position: absolute;
+  inset: 0;
+  border: 9px solid #ffdf8b;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle, transparent 0 12px, rgba(255, 255, 255, 0.04) 13px 14px),
+    conic-gradient(
+      from -90deg,
+      #1fb56b 0 72deg,
+      #f6c85f 72deg 144deg,
+      #8b1e33 144deg 216deg,
+      #2b62d9 216deg 288deg,
+      #111111 288deg 360deg
+    );
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.45), 0 0 34px rgba(255, 223, 139, 0.36);
+  transition: transform 20s cubic-bezier(0.08, 0.78, 0.12, 1);
+}
+
+.spin-wheel::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px dashed rgba(255, 247, 223, 0.6);
+  border-radius: inherit;
+}
+
+.spin-pointer {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 34px solid var(--gold-2);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+}
+
+.spin-center {
+  position: absolute;
+  inset: 50%;
+  z-index: 2;
+  display: grid;
+  width: 88px;
+  height: 88px;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border: 6px solid rgba(255, 247, 223, 0.86);
+  border-radius: 50%;
+  color: #2a1703;
+  background: radial-gradient(circle at 35% 28%, #fff5b8, #f6c85f 58%, #a56c10);
+  font-size: 1.45rem;
+  font-weight: 1000;
+  box-shadow: 0 0 24px rgba(255, 223, 139, 0.6);
+}
+
+.spin-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 92px;
+  margin-left: -46px;
+  margin-top: -14px;
+  color: #fff7df;
+  font-size: 0.82rem;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.85);
+  text-transform: uppercase;
+}
+
+.spin-label-better { transform: rotate(36deg) translateY(-118px) rotate(-36deg); }
+.spin-label-one { transform: rotate(108deg) translateY(-118px) rotate(-108deg); }
+.spin-label-three { transform: rotate(180deg) translateY(-118px) rotate(-180deg); }
+.spin-label-five { transform: rotate(252deg) translateY(-118px) rotate(-252deg); }
+.spin-label-ten { transform: rotate(324deg) translateY(-118px) rotate(-324deg); }
+
+.spin-button {
+  min-height: 58px;
+  font-size: 1.05rem;
+}
+
+.spin-button:disabled {
+  cursor: wait;
+  opacity: 0.86;
+}
+
+@keyframes spin-shine {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .join {
   background: var(--night);
 }
@@ -3618,6 +3862,14 @@ body.is-player-logged-in [data-guest-only] {
 
   .opening-game-showcase {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .spin-admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spin-admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
 }
@@ -5517,5 +5769,37 @@ body.is-player-logged-in [data-guest-only] {
   .broadcast-player-card small,
   .broadcast-player-card b {
     grid-column: 3;
+  }
+}
+
+@media (max-width: 540px) {
+  .spin-card {
+    padding: 20px 14px;
+  }
+
+  .spin-stage {
+    width: min(292px, 84vw);
+  }
+
+  .spin-center {
+    width: 70px;
+    height: 70px;
+    font-size: 1.1rem;
+  }
+
+  .spin-label {
+    width: 74px;
+    margin-left: -37px;
+    font-size: 0.66rem;
+  }
+
+  .spin-label-better { transform: rotate(36deg) translateY(-94px) rotate(-36deg); }
+  .spin-label-one { transform: rotate(108deg) translateY(-94px) rotate(-108deg); }
+  .spin-label-three { transform: rotate(180deg) translateY(-94px) rotate(-180deg); }
+  .spin-label-five { transform: rotate(252deg) translateY(-94px) rotate(-252deg); }
+  .spin-label-ten { transform: rotate(324deg) translateY(-94px) rotate(-324deg); }
+
+  .spin-admin-stats {
+    grid-template-columns: 1fr;
   }
 }

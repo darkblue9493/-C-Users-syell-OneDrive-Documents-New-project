@@ -31,6 +31,13 @@ const maxJsonBodyBytes = 8_000_000;
 const playerSessionMaxAge = 60 * 60 * 24 * 400;
 const adminSessionMaxAge = 60 * 60 * 2;
 const referralBonusPoints = 10;
+const spinCooldownMs = 24 * 60 * 60 * 1000;
+const defaultSpinLimits = {
+  10: 1,
+  5: 2,
+  3: 3,
+  1: 10,
+};
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -56,6 +63,8 @@ function starterDatabase() {
     adminSessions: [],
     adminPasswordHash: "",
     adminPasswordResetTokens: [],
+    spinSettings: { limits: { ...defaultSpinLimits } },
+    spinWheel: { date: currentSpinDateKey(), awards: [] },
   };
 }
 
@@ -68,6 +77,8 @@ function normalizeDatabase(data) {
   if (!Array.isArray(normalized.adminSessions)) normalized.adminSessions = [];
   if (!Array.isArray(normalized.adminPasswordResetTokens)) normalized.adminPasswordResetTokens = [];
   if (typeof normalized.adminPasswordHash !== "string") normalized.adminPasswordHash = "";
+  normalized.spinSettings = normalizeSpinSettings(normalized.spinSettings);
+  normalized.spinWheel = normalizeSpinWheel(normalized.spinWheel);
   const now = Date.now();
   normalized.adminSessions = normalized.adminSessions.filter((session) => {
     const expiresAt = session?.expiresAt ? new Date(session.expiresAt).getTime() : 0;
@@ -84,6 +95,7 @@ function normalizeDatabase(data) {
     adminNote: user.adminNote || "",
     referralCode: normalizeReferralCode(user.referralCode) || createReferralCode(user),
     referredBy: user.referredBy || null,
+    spinLastAt: user.spinLastAt || null,
     playerSessionTokens: Array.isArray(user.playerSessionTokens)
       ? user.playerSessionTokens
       : user.playerSessionToken
@@ -289,6 +301,94 @@ function addActivity(data, type, text, details = {}) {
     createdAt: new Date().toISOString(),
   });
   data.activityLog = data.activityLog.slice(0, 300);
+}
+
+function currentSpinDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type) => parts.find((part) => part.type === type)?.value || "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function normalizeSpinSettings(settings) {
+  const source = settings && typeof settings === "object" ? settings : {};
+  const sourceLimits = source.limits && typeof source.limits === "object" ? source.limits : source;
+  return {
+    limits: Object.fromEntries(
+      Object.entries(defaultSpinLimits).map(([points, fallback]) => {
+        const value = Number(sourceLimits[points]);
+        return [points, Number.isInteger(value) && value >= 0 ? Math.min(value, 1000) : fallback];
+      })
+    ),
+  };
+}
+
+function normalizeSpinWheel(spinWheel) {
+  const wheel = spinWheel && typeof spinWheel === "object" ? spinWheel : {};
+  return {
+    date: typeof wheel.date === "string" && wheel.date ? wheel.date : currentSpinDateKey(),
+    awards: Array.isArray(wheel.awards) ? wheel.awards : [],
+  };
+}
+
+function ensureSpinWheelToday(data) {
+  const today = currentSpinDateKey();
+  data.spinSettings = normalizeSpinSettings(data.spinSettings);
+  data.spinWheel = normalizeSpinWheel(data.spinWheel);
+  if (data.spinWheel.date !== today) {
+    data.spinWheel = { date: today, awards: [] };
+    return true;
+  }
+  return false;
+}
+
+function spinAwardCounts(data) {
+  ensureSpinWheelToday(data);
+  return (data.spinWheel.awards || []).reduce(
+    (counts, award) => {
+      const prize = String(Number(award.prize) || 0);
+      if (Object.prototype.hasOwnProperty.call(counts, prize)) counts[prize] += 1;
+      return counts;
+    },
+    { 10: 0, 5: 0, 3: 0, 1: 0, 0: 0 }
+  );
+}
+
+function sanitizeSpinAward(award) {
+  return {
+    id: award.id,
+    userId: award.userId,
+    username: award.username,
+    prize: Number(award.prize) || 0,
+    createdAt: award.createdAt,
+  };
+}
+
+function spinStatusForUser(data, user) {
+  const now = Date.now();
+  const lastSpin = user?.spinLastAt ? new Date(user.spinLastAt).getTime() : 0;
+  const nextSpinAt = lastSpin ? new Date(lastSpin + spinCooldownMs).toISOString() : null;
+  const eligible = !lastSpin || now - lastSpin >= spinCooldownMs;
+  return {
+    eligible,
+    nextSpinAt: eligible ? null : nextSpinAt,
+    settings: data.spinSettings,
+    counts: spinAwardCounts(data),
+  };
+}
+
+function pickSpinPrize(data) {
+  const limits = normalizeSpinSettings(data.spinSettings).limits;
+  const counts = spinAwardCounts(data);
+  const available = [0, 0, 0, 0, 1, 1, 3, 5, 10].filter((prize) => {
+    if (prize === 0) return true;
+    return counts[String(prize)] < limits[String(prize)];
+  });
+  return available[Math.floor(Math.random() * available.length)] || 0;
 }
 
 function createAdminCode() {
@@ -633,6 +733,7 @@ function sanitizeUser(user) {
     adminNote: user.adminNote || "",
     referralCode: user.referralCode || createReferralCode(user),
     referredBy: user.referredBy || null,
+    spinLastAt: user.spinLastAt || null,
   };
 }
 
@@ -950,6 +1051,36 @@ async function handleApi(request, response, urlPath, url) {
     });
   }
 
+  if (request.method === "GET" && urlPath === "/api/admin/spin-wheel") {
+    if (!requireAdmin(request, response)) return;
+    const data = await readDatabase();
+    const resetToday = ensureSpinWheelToday(data);
+    if (resetToday) await writeDatabase(data);
+    return sendJson(response, 200, {
+      settings: data.spinSettings,
+      counts: spinAwardCounts(data),
+      date: data.spinWheel.date,
+      awards: (data.spinWheel.awards || []).slice(0, 120).map(sanitizeSpinAward),
+    });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/spin-wheel-settings") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const nextSettings = normalizeSpinSettings({ limits: body.limits || body });
+    const data = await readDatabase();
+    ensureSpinWheelToday(data);
+    data.spinSettings = nextSettings;
+    addActivity(data, "spin-settings", "Updated daily spin wheel prize limits", { limits: nextSettings.limits });
+    await writeDatabase(data);
+    return sendJson(response, 200, {
+      settings: data.spinSettings,
+      counts: spinAwardCounts(data),
+      date: data.spinWheel.date,
+      awards: (data.spinWheel.awards || []).slice(0, 120).map(sanitizeSpinAward),
+    });
+  }
+
   if (request.method === "POST" && urlPath === "/api/admin/points") {
     if (!requireAdmin(request, response)) return;
     const body = await readBody(request);
@@ -1104,6 +1235,79 @@ async function handleApi(request, response, urlPath, url) {
     });
     await writeDatabase(data);
     return sendJson(response, 200, { user: sanitizeUser(user) });
+  }
+
+  if (request.method === "GET" && urlPath === "/api/player/spin-status") {
+    const sessionUser = await requirePlayer(request, response);
+    if (!sessionUser) return;
+    const data = await readDatabase();
+    const user = data.users.find((item) => item.id === sessionUser.id);
+    if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    const resetToday = ensureSpinWheelToday(data);
+    if (resetToday) await writeDatabase(data);
+    return sendJson(response, 200, spinStatusForUser(data, user));
+  }
+
+  if (request.method === "POST" && urlPath === "/api/player/spin") {
+    const sessionUser = await requirePlayer(request, response);
+    if (!sessionUser) return;
+    const data = await readDatabase();
+    const user = data.users.find((item) => item.id === sessionUser.id);
+    if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    ensureSpinWheelToday(data);
+    const status = spinStatusForUser(data, user);
+    if (!status.eligible) {
+      return sendJson(response, 429, {
+        error: "Daily spin already used. Come back in 24 hours.",
+        ...status,
+      });
+    }
+
+    const prize = pickSpinPrize(data);
+    const createdAt = new Date().toISOString();
+    user.spinLastAt = createdAt;
+    user.lastActiveAt = createdAt;
+    if (!Array.isArray(data.spinWheel.awards)) data.spinWheel.awards = [];
+    const award = {
+      id: `spin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      userId: user.id,
+      username: user.username,
+      prize,
+      createdAt,
+    };
+    data.spinWheel.awards.unshift(award);
+    data.spinWheel.awards = data.spinWheel.awards.slice(0, 500);
+
+    let transaction = null;
+    if (prize > 0) {
+      user.points = (Number(user.points) || 0) + prize;
+      transaction = {
+        id: `points-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        userId: user.id,
+        username: user.username,
+        type: "add",
+        points: prize,
+        balanceAfter: user.points,
+        note: "Daily spin wheel reward",
+        createdAt,
+      };
+      data.pointTransactions.unshift(transaction);
+    }
+
+    addActivity(
+      data,
+      "daily-spin",
+      prize > 0 ? `${user.username} won ${prize} points on the daily spin` : `${user.username} spun better luck next time`,
+      { userId: user.id, username: user.username, prize }
+    );
+    await writeDatabase(data);
+    return sendJson(response, 200, {
+      prize,
+      label: prize > 0 ? `${prize} points` : "Better luck next time",
+      user: sanitizeUser(user),
+      transaction: transaction ? sanitizePointTransaction(transaction) : null,
+      ...spinStatusForUser(data, user),
+    });
   }
 
   if (request.method === "POST" && urlPath === "/api/player/signup") {

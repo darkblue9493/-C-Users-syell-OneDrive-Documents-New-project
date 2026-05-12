@@ -126,6 +126,7 @@
           </div>
           <div class="hero-actions">
             <a class="button primary" href="#games">Explore Games</a>
+            <button class="button secondary" type="button" data-spin-trigger>Daily Spin</button>
             <a class="button secondary" href="#winners">Recent Winners</a>
           </div>
           <p class="fine-print">For entertainment. No purchase necessary. 18+ only.</p>
@@ -208,6 +209,7 @@
           <div class="hero-actions">
             <a class="button primary" href="#signup">Play Now</a>
             <a class="button secondary" href="#games">Explore Games</a>
+            <button class="button secondary" type="button" data-spin-trigger>Spin Bonus</button>
           </div>
           <p class="fine-print">For entertainment. No purchase necessary. 18+ only.</p>
         </div>
@@ -644,6 +646,28 @@
           <a class="button primary" href="#bonus" data-welcome-payment>Payment</a>
           <button class="button secondary" type="button" data-welcome-chat>Chat Support</button>
         </div>
+      </div>
+    </div>
+
+    <div class="spin-modal is-hidden" data-spin-modal role="dialog" aria-modal="true" aria-labelledby="spin-title">
+      <div class="spin-card">
+        <button class="welcome-close" type="button" data-spin-close aria-label="Close spin wheel">x</button>
+        <p class="section-kicker">Daily bonus wheel</p>
+        <h2 id="spin-title">Spin for points</h2>
+        <p class="spin-copy">One spin every 24 hours. Win points automatically in your South Diamond account.</p>
+        <div class="spin-stage" aria-hidden="true">
+          <div class="spin-pointer"></div>
+          <div class="spin-wheel" data-spin-wheel>
+            <span class="spin-label spin-label-better">Better Luck</span>
+            <span class="spin-label spin-label-one">1 Point</span>
+            <span class="spin-label spin-label-three">3 Points</span>
+            <span class="spin-label spin-label-five">5 Points</span>
+            <span class="spin-label spin-label-ten">10 Points</span>
+          </div>
+          <div class="spin-center">SD</div>
+        </div>
+        <button class="button primary spin-button" type="button" data-spin-button>Spin</button>
+        <p class="spin-result" data-spin-result></p>
       </div>
     </div>
 

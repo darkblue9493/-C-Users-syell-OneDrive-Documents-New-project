@@ -29,6 +29,7 @@
         <button type="button" data-admin-panel-button="vip"><span>VIP</span>VIP Players</button>
         <button type="button" data-admin-panel-button="add"><span>AD</span>Add Points</button>
         <button type="button" data-admin-panel-button="redeem"><span>RD</span>Redeem Points</button>
+        <button type="button" data-admin-panel-button="spin"><span>SW</span>Spin Wheel</button>
         <span class="admin-nav-label">Payments</span>
         <button type="button" data-admin-panel-button="transactions"><span>TR</span>Transactions</button>
         <button type="button" data-admin-chat-jump><span>MS</span>Messages <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b></button>
@@ -163,6 +164,42 @@
                   <input id="redeem-search" type="search" placeholder="Search players to redeem points..." data-admin-search="redeem" />
                 </div>
                 <div class="points-action-list" data-points-redeem-list></div>
+              </section>
+
+              <section class="admin-control-panel" data-admin-panel="spin">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>Spin Wheel</strong>
+                  </div>
+                  <small data-spin-date>Daily prize controls</small>
+                </div>
+                <div class="spin-admin-grid">
+                  <form class="spin-admin-settings" data-spin-settings-form>
+                    <label>
+                      <span>10 point winners per day</span>
+                      <input name="10" type="number" min="0" step="1" value="1" />
+                    </label>
+                    <label>
+                      <span>5 point winners per day</span>
+                      <input name="5" type="number" min="0" step="1" value="2" />
+                    </label>
+                    <label>
+                      <span>3 point winners per day</span>
+                      <input name="3" type="number" min="0" step="1" value="3" />
+                    </label>
+                    <label>
+                      <span>1 point winners per day</span>
+                      <input name="1" type="number" min="0" step="1" value="10" />
+                    </label>
+                    <button class="button primary" type="submit">Save Spin Limits</button>
+                    <p data-spin-settings-status></p>
+                  </form>
+                  <div>
+                    <div class="spin-admin-stats" data-spin-admin-stats></div>
+                    <div class="points-transaction-list spin-awards-list" data-spin-awards></div>
+                  </div>
+                </div>
               </section>
 
               <section class="admin-control-panel" data-admin-panel="activity">
