@@ -9,7 +9,7 @@ const dataDir = process.env.DATA_DIR || path.join(root, "data");
 const dbPath = path.join(dataDir, "chats.json");
 const uploadDir = path.join(dataDir, "uploads");
 const adminUsername = process.env.ADMIN_USERNAME || "admin";
-const adminPassword = process.env.ADMIN_PASSWORD || "southdiamond";
+const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
 const adminPath = "/admin9493";
 const adminLoginPath = "/login9493";
 const adminExportToken = process.env.ADMIN_EXPORT_TOKEN || "";
@@ -30,6 +30,7 @@ const pendingAdminLogins = new Map();
 const maxJsonBodyBytes = 8_000_000;
 const playerSessionMaxAge = 60 * 60 * 24 * 400;
 const adminSessionMaxAge = 60 * 60 * 2;
+const signupBonusPoints = 5;
 const referralBonusPoints = 10;
 const spinCooldownMs = 24 * 60 * 60 * 1000;
 const defaultSpinLimits = {
@@ -41,22 +42,113 @@ const defaultSpinLimits = {
 const defaultSlotSettings = {
   dailyPayoutLimit: 25,
 };
-const slotGameSymbols = {
-  buffalo: ["BUF", "CACT", "A", "K", "Q", "SD", "DIA"],
-  diamond: ["7", "DIA", "BAR", "A", "K", "SD", "STAR"],
-  dragon: ["DRG", "FIRE", "CROWN", "A", "K", "SD", "GOLD"],
-  ocean: ["FISH", "SHARK", "PEARL", "A", "K", "SD", "DIA"],
-  jungle: ["TIGER", "WILD", "GOLD", "A", "K", "SD", "STAR"],
-  neon: ["7", "BOLT", "DIA", "A", "K", "SD", "DICE"],
-};
 const slotGameNames = {
   buffalo: "Buffalo Rush",
   diamond: "Diamond 777",
-  dragon: "Dragon Gold",
-  ocean: "Ocean Pearls",
+  dragon: "Dragon Conqueror",
+  ocean: "Ocean Monster",
   jungle: "Jungle Fortune",
   neon: "Neon Reels",
 };
+const slotGameThemes = {
+  buffalo: {
+    symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
+    weights: [2, 3, 6, 8, 11, 12, 12, 5],
+    pays: {
+      BUF: { 3: 9, 4: 32, 5: 120 },
+      BISON: { 3: 7, 4: 24, 5: 90 },
+      EAGLE: { 3: 5, 4: 16, 5: 55 },
+      CACT: { 3: 4, 4: 11, 5: 35 },
+      A: { 3: 3, 4: 8, 5: 24 },
+      K: { 3: 2.5, 4: 6, 5: 18 },
+      Q: { 3: 2, 4: 5, 5: 14 },
+      SD: { 3: 4, 4: 14, 5: 70 },
+    },
+  },
+  diamond: {
+    symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
+    weights: [2, 3, 6, 8, 10, 12, 12, 5],
+    pays: {
+      777: { 3: 12, 4: 45, 5: 160 },
+      DIA: { 3: 8, 4: 28, 5: 110 },
+      BAR: { 3: 6, 4: 18, 5: 60 },
+      BELL: { 3: 4, 4: 12, 5: 38 },
+      CHERRY: { 3: 3, 4: 8, 5: 24 },
+      A: { 3: 2.5, 4: 6, 5: 18 },
+      K: { 3: 2, 4: 5, 5: 14 },
+      SD: { 3: 4, 4: 14, 5: 70 },
+    },
+  },
+  dragon: {
+    symbols: ["DRG", "FIRE", "SWORD", "GOLD", "PALACE", "A", "K", "SD"],
+    weights: [2, 4, 6, 8, 9, 12, 12, 5],
+    pays: {
+      DRG: { 3: 11, 4: 40, 5: 145 },
+      FIRE: { 3: 7, 4: 26, 5: 95 },
+      SWORD: { 3: 5, 4: 17, 5: 58 },
+      GOLD: { 3: 4, 4: 12, 5: 38 },
+      PALACE: { 3: 3, 4: 8, 5: 24 },
+      A: { 3: 2.5, 4: 6, 5: 18 },
+      K: { 3: 2, 4: 5, 5: 14 },
+      SD: { 3: 4, 4: 14, 5: 70 },
+    },
+  },
+  ocean: {
+    symbols: ["OCEAN", "SHARK", "CRAB", "PEARL", "FISH", "A", "K", "SD"],
+    weights: [2, 4, 6, 8, 10, 12, 12, 5],
+    pays: {
+      OCEAN: { 3: 10, 4: 36, 5: 130 },
+      SHARK: { 3: 7, 4: 24, 5: 88 },
+      CRAB: { 3: 5, 4: 16, 5: 54 },
+      PEARL: { 3: 4, 4: 12, 5: 36 },
+      FISH: { 3: 3, 4: 8, 5: 24 },
+      A: { 3: 2.5, 4: 6, 5: 18 },
+      K: { 3: 2, 4: 5, 5: 14 },
+      SD: { 3: 4, 4: 14, 5: 70 },
+    },
+  },
+  jungle: {
+    symbols: ["TIGER", "LEOP", "GOLD", "MASK", "LEAF", "A", "K", "SD"],
+    weights: [2, 4, 6, 8, 10, 12, 12, 5],
+    pays: {
+      TIGER: { 3: 10, 4: 36, 5: 132 },
+      LEOP: { 3: 7, 4: 25, 5: 92 },
+      GOLD: { 3: 5, 4: 16, 5: 55 },
+      MASK: { 3: 4, 4: 11, 5: 34 },
+      LEAF: { 3: 3, 4: 8, 5: 24 },
+      A: { 3: 2.5, 4: 6, 5: 18 },
+      K: { 3: 2, 4: 5, 5: 14 },
+      SD: { 3: 4, 4: 14, 5: 70 },
+    },
+  },
+  neon: {
+    symbols: ["777", "BOLT", "DICE", "ROUL", "DIA", "A", "K", "SD"],
+    weights: [2, 4, 6, 8, 9, 12, 12, 5],
+    pays: {
+      777: { 3: 12, 4: 44, 5: 150 },
+      BOLT: { 3: 7, 4: 25, 5: 88 },
+      DICE: { 3: 5, 4: 16, 5: 54 },
+      ROUL: { 3: 4, 4: 12, 5: 36 },
+      DIA: { 3: 3, 4: 8, 5: 24 },
+      A: { 3: 2.5, 4: 6, 5: 18 },
+      K: { 3: 2, 4: 5, 5: 14 },
+      SD: { 3: 4, 4: 14, 5: 70 },
+    },
+  },
+};
+const slotGameSymbols = Object.fromEntries(Object.entries(slotGameThemes).map(([key, theme]) => [key, theme.symbols]));
+const slotPaylines = [
+  [1, 1, 1, 1, 1],
+  [0, 0, 0, 0, 0],
+  [2, 2, 2, 2, 2],
+  [0, 1, 2, 1, 0],
+  [2, 1, 0, 1, 2],
+  [0, 0, 1, 2, 2],
+  [2, 2, 1, 0, 0],
+  [1, 0, 0, 0, 1],
+  [1, 2, 2, 2, 1],
+  [0, 1, 1, 1, 2],
+];
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -464,6 +556,68 @@ function calculateSlotWin(result, bet) {
 
 function createLosingSlotResult(symbols) {
   return symbols.filter((symbol) => symbol !== "SD").slice(0, 5);
+}
+
+function pickWeightedSlotSymbol(theme) {
+  const symbols = theme.symbols || slotGameThemes.buffalo.symbols;
+  const weights = theme.weights || symbols.map(() => 1);
+  const total = weights.reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0) || symbols.length;
+  let roll = Math.random() * total;
+  for (let index = 0; index < symbols.length; index += 1) {
+    roll -= Math.max(0, Number(weights[index]) || 0);
+    if (roll <= 0) return symbols[index];
+  }
+  return symbols[symbols.length - 1] || "SD";
+}
+
+function spinSlotGrid(theme) {
+  return Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => pickWeightedSlotSymbol(theme)));
+}
+
+function evaluateSlotGrid(grid, theme, bet) {
+  const wins = [];
+  let totalWin = 0;
+  slotPaylines.forEach((line, lineIndex) => {
+    const lineSymbols = line.map((row, reelIndex) => grid?.[reelIndex]?.[row] || "SD");
+    const baseSymbol = lineSymbols.find((symbol) => symbol !== "SD") || "SD";
+    let matchCount = 0;
+    for (const symbol of lineSymbols) {
+      if (symbol === baseSymbol || symbol === "SD") {
+        matchCount += 1;
+      } else {
+        break;
+      }
+    }
+    const multiplier = theme.pays?.[baseSymbol]?.[matchCount] || 0;
+    if (matchCount >= 3 && multiplier > 0) {
+      const amount = roundPoints((bet * multiplier) / 3);
+      if (amount > 0) {
+        totalWin = roundPoints(totalWin + amount);
+        wins.push({
+          line: lineIndex + 1,
+          symbol: baseSymbol,
+          count: matchCount,
+          multiplier,
+          amount,
+          positions: line.slice(0, matchCount),
+        });
+      }
+    }
+  });
+  return { wins, totalWin };
+}
+
+function createLosingSlotGrid(theme, bet) {
+  const symbols = (theme.symbols || slotGameThemes.buffalo.symbols).filter((symbol) => symbol !== "SD");
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const grid = Array.from({ length: 5 }, (_, reelIndex) =>
+      Array.from({ length: 3 }, (_, rowIndex) => symbols[(reelIndex * 2 + rowIndex + attempt) % symbols.length] || "A")
+    );
+    if (evaluateSlotGrid(grid, theme, bet).totalWin === 0) return grid;
+  }
+  return Array.from({ length: 5 }, (_, reelIndex) =>
+    Array.from({ length: 3 }, (_, rowIndex) => symbols[(reelIndex + rowIndex * 3) % symbols.length] || "A")
+  );
 }
 
 function createPointTransaction(user, type, points, note, createdAt = new Date().toISOString()) {
@@ -1448,19 +1602,29 @@ async function handleApi(request, response, urlPath, url) {
     }
 
     const createdAt = new Date().toISOString();
-    const symbols = slotGameSymbols[gameKey];
+    const theme = slotGameThemes[gameKey] || slotGameThemes.buffalo;
     const remainingPayout = Math.max(0, roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut));
+    let grid = [];
     let result = [];
+    let wins = [];
+    let bonus = null;
     let win = 0;
     for (let attempt = 0; attempt < 12; attempt += 1) {
-      result = Array.from({ length: 5 }, () => symbols[Math.floor(Math.random() * symbols.length)]);
-      win = roundPoints(calculateSlotWin(result, bet));
+      grid = spinSlotGrid(theme);
+      const evaluation = evaluateSlotGrid(grid, theme, bet);
+      wins = evaluation.wins;
+      const bonusWin = Math.random() < 0.015 ? roundPoints(bet * 5) : 0;
+      bonus = bonusWin > 0 ? { label: "South Diamond bonus", amount: bonusWin } : null;
+      win = roundPoints(evaluation.totalWin + bonusWin);
       if (win <= remainingPayout) break;
     }
     if (win > remainingPayout) {
-      result = createLosingSlotResult(symbols);
+      grid = createLosingSlotGrid(theme, bet);
+      wins = [];
+      bonus = null;
       win = 0;
     }
+    result = grid.map((reel) => reel[1] || reel[0] || "SD");
     const transactions = [];
 
     user.points = roundPoints(user.points - bet);
@@ -1486,6 +1650,9 @@ async function handleApi(request, response, urlPath, url) {
       bet,
       win,
       result,
+      grid,
+      wins,
+      bonus,
       balanceAfter: user.points,
       createdAt,
     });
@@ -1497,6 +1664,9 @@ async function handleApi(request, response, urlPath, url) {
       bet,
       win,
       result,
+      grid,
+      wins,
+      bonus,
       balanceAfter: user.points,
       remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
     });
@@ -1504,6 +1674,9 @@ async function handleApi(request, response, urlPath, url) {
     return sendJson(response, 200, {
       gameKey,
       result,
+      grid,
+      wins,
+      bonus,
       bet,
       win,
       remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
@@ -1546,7 +1719,7 @@ async function handleApi(request, response, urlPath, url) {
       phone,
       email,
       dateOfBirth: parsedDateOfBirth.value,
-      points: 0,
+      points: signupBonusPoints,
       isVip: false,
       passwordHash: hashPassword(password),
       createdAt: new Date().toISOString(),
@@ -1559,6 +1732,13 @@ async function handleApi(request, response, urlPath, url) {
     user.referralCode = createReferralCode(user);
     data.users.unshift(user);
     addActivity(data, "signup", `New player registered: ${user.username}`, { userId: user.id, username: user.username, email: user.email });
+    const signupBonusTransaction = createPointTransaction(user, "add", signupBonusPoints, "Signup bonus - free starter points", user.createdAt);
+    data.pointTransactions.unshift(signupBonusTransaction);
+    addActivity(data, "signup-bonus", `Added ${signupBonusPoints} signup bonus points to ${user.username}`, {
+      userId: user.id,
+      username: user.username,
+      points: signupBonusPoints,
+    });
     if (referrer) {
       referrer.points = (Number(referrer.points) || 0) + referralBonusPoints;
       const referralTransaction = {

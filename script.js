@@ -535,37 +535,37 @@ const slotGames = {
     title: "Buffalo Rush",
     label: "Wild prairie reels",
     className: "buffalo",
-    symbols: ["BUF", "CACT", "A", "K", "Q", "SD", "DIA"],
+    symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
   },
   diamond: {
     title: "Diamond 777",
     label: "Classic jackpot reels",
     className: "diamond",
-    symbols: ["7", "DIA", "BAR", "A", "K", "SD", "STAR"],
+    symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
   },
   dragon: {
-    title: "Dragon Gold",
+    title: "Dragon Conqueror",
     label: "Fire bonus reels",
     className: "dragon",
-    symbols: ["DRG", "FIRE", "CROWN", "A", "K", "SD", "GOLD"],
+    symbols: ["DRG", "FIRE", "SWORD", "GOLD", "PALACE", "A", "K", "SD"],
   },
   ocean: {
-    title: "Ocean Pearls",
+    title: "Ocean Monster",
     label: "Deep sea wins",
     className: "ocean",
-    symbols: ["FISH", "SHARK", "PEARL", "A", "K", "SD", "DIA"],
+    symbols: ["OCEAN", "SHARK", "CRAB", "PEARL", "FISH", "A", "K", "SD"],
   },
   jungle: {
     title: "Jungle Fortune",
     label: "Big wild wins",
     className: "jungle",
-    symbols: ["TIGER", "WILD", "GOLD", "A", "K", "SD", "STAR"],
+    symbols: ["TIGER", "LEOP", "GOLD", "MASK", "LEAF", "A", "K", "SD"],
   },
   neon: {
     title: "Neon Reels",
     label: "Fast city spins",
     className: "neon",
-    symbols: ["7", "BOLT", "DIA", "A", "K", "SD", "DICE"],
+    symbols: ["777", "BOLT", "DICE", "ROUL", "DIA", "A", "K", "SD"],
   },
 };
 
@@ -586,11 +586,23 @@ function updateSlotUi() {
   }
 }
 
-function renderSlotReels(symbols) {
+function renderSlotReels(symbolsOrGrid, wins = []) {
   if (!slotBoard) return;
+  const grid = Array.isArray(symbolsOrGrid?.[0])
+    ? symbolsOrGrid
+    : (symbolsOrGrid || []).map((symbol) => [symbol, symbol, symbol]);
+  const winningCells = new Set();
+  wins.forEach((win) => {
+    (win.positions || []).forEach((row, reelIndex) => {
+      winningCells.add(`${reelIndex}-${row}`);
+    });
+  });
   slotBoard.querySelectorAll(".slot-reel").forEach((reel, index) => {
-    const symbol = symbols[index] || "SD";
-    reel.innerHTML = `<span>${symbol}</span><span>${symbol}</span><span>${symbol}</span>`;
+    const reelSymbols = grid[index] || ["SD", "SD", "SD"];
+    reel.innerHTML = reelSymbols
+      .slice(0, 3)
+      .map((symbol, row) => `<span class="${winningCells.has(`${index}-${row}`) ? "is-winning" : ""}">${symbol || "SD"}</span>`)
+      .join("");
   });
 }
 
@@ -707,10 +719,13 @@ async function spinSlotGame() {
     });
     window.setTimeout(() => {
       updateCurrentPlayer(data.user);
-      renderSlotReels(data.result);
+      renderSlotReels(data.grid || data.result, data.wins || []);
       slotBoard?.querySelectorAll(".slot-reel").forEach((reel) => reel.classList.remove("is-spinning"));
       slotBoard?.classList.toggle("is-winning", data.win > 0);
-      if (slotWinLabel) slotWinLabel.textContent = data.win > 0 ? `You won ${formatPoints(data.win)} points` : "No win. Spin again.";
+      if (slotWinLabel) {
+        const bonusText = data.bonus?.amount ? ` including ${formatPoints(data.bonus.amount)} bonus` : "";
+        slotWinLabel.textContent = data.win > 0 ? `You won ${formatPoints(data.win)} points${bonusText}` : "No win. Spin again.";
+      }
       playSlotSound(data.win > 0 ? "win" : "stop");
       updateSlotUi();
       refreshPlayerPointTransactions();

@@ -1513,17 +1513,21 @@ p {
 .south-slots-card {
   grid-column: span 2;
   background:
-    radial-gradient(circle at 78% 24%, rgba(0, 208, 111, 0.16), transparent 28%),
-    linear-gradient(135deg, rgba(246, 200, 95, 0.18), rgba(166, 31, 54, 0.12)),
+    radial-gradient(circle at 18% 18%, rgba(10, 227, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 78% 24%, rgba(0, 208, 111, 0.18), transparent 28%),
+    linear-gradient(135deg, rgba(246, 200, 95, 0.2), rgba(36, 58, 160, 0.16)),
     var(--panel);
 }
 
 .south-slots-media {
   min-height: 260px;
   background:
-    radial-gradient(circle at 25% 24%, rgba(255, 223, 139, 0.42), transparent 16%),
-    radial-gradient(circle at 70% 42%, rgba(31, 181, 107, 0.22), transparent 24%),
-    linear-gradient(135deg, #40160e, #080808 70%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.82)),
+    radial-gradient(circle at 50% 18%, rgba(10, 227, 255, 0.34), transparent 22%),
+    radial-gradient(circle at 25% 24%, rgba(255, 223, 139, 0.46), transparent 16%),
+    radial-gradient(circle at 70% 42%, rgba(31, 181, 107, 0.24), transparent 24%),
+    linear-gradient(135deg, #081b3c, #080808 70%);
+  box-shadow: inset 0 0 30px rgba(10, 227, 255, 0.16);
 }
 
 .south-slots-media::before {
@@ -1539,10 +1543,50 @@ p {
 }
 
 .south-slots-media b {
-  width: 96px;
-  height: 96px;
-  border-radius: 26px;
-  box-shadow: 0 0 38px rgba(255, 223, 139, 0.46);
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+  width: auto;
+  height: auto;
+  color: #ff39c7;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: clamp(3.8rem, 9vw, 7rem);
+  line-height: 0.8;
+  text-shadow: 0 7px 0 #5f063b, 0 0 26px rgba(255, 57, 199, 0.46);
+  box-shadow: none;
+}
+
+.south-slots-logo {
+  position: absolute;
+  left: 22px;
+  top: 22px;
+  z-index: 1;
+  display: grid;
+  gap: 4px;
+  place-items: center;
+  width: 126px;
+  height: 126px;
+  border: 5px solid rgba(255, 226, 142, 0.9);
+  border-radius: 30px;
+  color: #130d03;
+  background: radial-gradient(circle at 35% 22%, #fff7ce, #f6c85f 52%, #a06d05);
+  box-shadow: 0 0 34px rgba(255, 226, 142, 0.44);
+  transform: rotate(-5deg);
+}
+
+.south-slots-logo i {
+  font-style: normal;
+  font-size: 2.5rem;
+  font-weight: 1000;
+  line-height: 0.84;
+}
+
+.south-slots-logo strong {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .game-visual {
@@ -2519,6 +2563,45 @@ blockquote {
   border-bottom: 1px solid rgba(255, 226, 142, 0.18);
 }
 
+.slots-player-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 190px;
+  padding: 8px 12px;
+  border: 1px solid rgba(36, 220, 255, 0.48);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(7, 38, 67, 0.94), rgba(3, 10, 20, 0.96));
+  box-shadow: inset 0 0 18px rgba(36, 220, 255, 0.18);
+}
+
+.slots-player-chip > span {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 2px solid rgba(36, 220, 255, 0.75);
+  border-radius: 999px;
+  color: #0d1308;
+  background: linear-gradient(180deg, #fff1a8, #d49b10);
+  font-weight: 1000;
+}
+
+.slots-player-chip strong,
+.slots-player-chip small {
+  display: block;
+}
+
+.slots-player-chip strong {
+  color: #fff7df;
+  line-height: 1;
+}
+
+.slots-player-chip small {
+  color: #80eaff;
+  font-weight: 900;
+}
+
 .slots-topbar h2 {
   margin: 0;
   font-size: clamp(2rem, 6vw, 4rem);
@@ -2580,6 +2663,82 @@ blockquote {
   transition: transform 160ms ease, border-color 160ms ease;
 }
 
+.slot-feature-tile {
+  position: relative;
+  display: grid;
+  grid-row: span 2;
+  min-height: 460px;
+  align-content: end;
+  gap: 12px;
+  overflow: hidden;
+  padding: 24px;
+  border: 4px solid rgba(255, 203, 36, 0.86);
+  border-radius: 16px;
+  color: var(--cream);
+  background:
+    linear-gradient(180deg, transparent 20%, rgba(0, 0, 0, 0.92)),
+    radial-gradient(circle at 50% 18%, rgba(255, 32, 199, 0.44), transparent 23%),
+    radial-gradient(circle at 48% 38%, rgba(255, 226, 142, 0.28), transparent 30%),
+    linear-gradient(135deg, #57136d, #120521 65%, #03030d);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: inset 0 0 22px rgba(255, 226, 142, 0.2), 0 0 26px rgba(10, 227, 255, 0.24);
+}
+
+.slot-feature-tile::before {
+  content: "777";
+  position: absolute;
+  inset: 12% 10% auto;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(5rem, 12vw, 10rem);
+  font-weight: 1000;
+  line-height: 0.8;
+  text-align: center;
+  text-shadow: 0 8px 0 #5f063b, 0 0 30px rgba(255, 57, 199, 0.48);
+}
+
+.slot-feature-tile::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 32%;
+  height: 16px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(90deg, #0ae3ff 0 38px, transparent 38px 62px);
+  filter: drop-shadow(0 0 10px rgba(10, 227, 255, 0.78));
+}
+
+.slot-feature-tile span,
+.slot-feature-tile strong,
+.slot-feature-tile small {
+  position: relative;
+  z-index: 1;
+}
+
+.slot-feature-tile span {
+  width: max-content;
+  padding: 7px 10px;
+  border-radius: 4px;
+  color: #fff;
+  background: linear-gradient(135deg, #ff1744, #ff7a00);
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.slot-feature-tile strong {
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 0.82;
+  text-transform: uppercase;
+  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.58), 0 0 20px rgba(255, 226, 142, 0.24);
+}
+
+.slot-feature-tile small {
+  color: var(--muted);
+  font-weight: 900;
+}
+
 .slot-game-tile:hover,
 .slot-game-tile:focus-visible {
   transform: translateY(-4px);
@@ -2593,6 +2752,7 @@ blockquote {
   opacity: 0.92;
   background:
     linear-gradient(180deg, transparent 28%, rgba(0, 0, 0, 0.9)),
+    var(--tile-image, none) center / cover no-repeat,
     radial-gradient(circle at 72% 26%, rgba(255, 223, 139, 0.45), transparent 20%),
     linear-gradient(135deg, #541b14, #100707);
 }
@@ -2614,27 +2774,27 @@ blockquote {
 .slot-game-tile.neon::after { content: "777"; display: grid; place-items: center; color: #00ff9d; font-size: 3.2rem; font-weight: 1000; }
 
 .slot-game-tile.buffalo::before {
-  background: linear-gradient(180deg, transparent 28%, rgba(0, 0, 0, 0.9)), radial-gradient(circle at 78% 24%, rgba(246, 200, 95, 0.34), transparent 16%), linear-gradient(135deg, #572611, #120906);
+  background: linear-gradient(180deg, transparent 22%, rgba(0, 0, 0, 0.86)), var(--tile-image, none) center / cover no-repeat, radial-gradient(circle at 78% 24%, rgba(246, 200, 95, 0.34), transparent 16%), linear-gradient(135deg, #572611, #120906);
 }
 
 .slot-game-tile.diamond::before {
-  background: linear-gradient(180deg, transparent 28%, rgba(0, 0, 0, 0.9)), linear-gradient(135deg, #441567, #1b0636 62%, #070707);
+  background: linear-gradient(180deg, transparent 22%, rgba(0, 0, 0, 0.86)), var(--tile-image, none) center / cover no-repeat, linear-gradient(135deg, #441567, #1b0636 62%, #070707);
 }
 
 .slot-game-tile.dragon::before {
-  background: linear-gradient(180deg, transparent 28%, rgba(0, 0, 0, 0.9)), radial-gradient(circle at 66% 22%, rgba(255, 72, 20, 0.5), transparent 24%), linear-gradient(135deg, #641107, #110504);
+  background: linear-gradient(180deg, transparent 22%, rgba(0, 0, 0, 0.86)), var(--tile-image, none) center / cover no-repeat, radial-gradient(circle at 66% 22%, rgba(255, 72, 20, 0.5), transparent 24%), linear-gradient(135deg, #641107, #110504);
 }
 
 .slot-game-tile.ocean::before {
-  background: linear-gradient(180deg, transparent 28%, rgba(0, 0, 0, 0.9)), radial-gradient(circle at 68% 24%, rgba(37, 214, 255, 0.46), transparent 24%), linear-gradient(135deg, #053350, #02070d);
+  background: linear-gradient(180deg, transparent 22%, rgba(0, 0, 0, 0.86)), var(--tile-image, none) center / cover no-repeat, radial-gradient(circle at 68% 24%, rgba(37, 214, 255, 0.46), transparent 24%), linear-gradient(135deg, #053350, #02070d);
 }
 
 .slot-game-tile.jungle::before {
-  background: linear-gradient(180deg, transparent 28%, rgba(0, 0, 0, 0.9)), radial-gradient(circle at 60% 26%, rgba(31, 181, 107, 0.4), transparent 24%), linear-gradient(135deg, #1d4b1c, #090a04);
+  background: linear-gradient(180deg, transparent 22%, rgba(0, 0, 0, 0.86)), var(--tile-image, none) center / cover no-repeat, radial-gradient(circle at 60% 26%, rgba(31, 181, 107, 0.4), transparent 24%), linear-gradient(135deg, #1d4b1c, #090a04);
 }
 
 .slot-game-tile.neon::before {
-  background: linear-gradient(180deg, transparent 28%, rgba(0, 0, 0, 0.9)), radial-gradient(circle at 62% 24%, rgba(39, 104, 255, 0.48), transparent 24%), linear-gradient(135deg, #141572, #090712);
+  background: linear-gradient(180deg, transparent 22%, rgba(0, 0, 0, 0.86)), var(--tile-image, none) center / cover no-repeat, radial-gradient(circle at 62% 24%, rgba(39, 104, 255, 0.48), transparent 24%), linear-gradient(135deg, #141572, #090712);
 }
 
 .slot-game-tile span,
@@ -2749,6 +2909,13 @@ blockquote {
   font-size: clamp(1.8rem, 5vw, 3.4rem);
   font-weight: 1000;
   text-shadow: 0 4px 0 rgba(0, 0, 0, 0.55), 0 0 16px rgba(255, 223, 139, 0.35);
+}
+
+.slot-reel span.is-winning {
+  color: #5dffac;
+  transform: scale(1.05);
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.55), 0 0 18px rgba(82, 239, 159, 0.88);
+  animation: slot-symbol-win 900ms ease-in-out 2;
 }
 
 .slot-reel.is-spinning span {
@@ -2918,7 +3085,7 @@ blockquote {
 }
 
 .slots-lobby {
-  grid-template-columns: repeat(3, minmax(230px, 1fr));
+  grid-template-columns: minmax(280px, 0.92fr) repeat(3, minmax(210px, 1fr));
   gap: 18px;
 }
 
@@ -3053,6 +3220,7 @@ blockquote {
 
   .slots-topbar {
     align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .slots-lobby-frame {
@@ -3073,6 +3241,11 @@ blockquote {
 
   .slots-lobby {
     grid-template-columns: 1fr;
+  }
+
+  .slot-feature-tile {
+    grid-row: auto;
+    min-height: 270px;
   }
 
   .slot-game-tile {
@@ -3101,6 +3274,15 @@ blockquote {
   50% {
     box-shadow: inset 0 0 42px rgba(82, 239, 159, 0.44), 0 0 46px rgba(82, 239, 159, 0.32);
     border-color: rgba(82, 239, 159, 0.7);
+  }
+}
+
+@keyframes slot-symbol-win {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.45);
   }
 }
 
