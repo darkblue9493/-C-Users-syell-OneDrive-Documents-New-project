@@ -272,11 +272,30 @@ const spinClose = document.querySelector("[data-spin-close]");
 const spinWheel = document.querySelector("[data-spin-wheel]");
 const spinButton = document.querySelector("[data-spin-button]");
 const spinResult = document.querySelector("[data-spin-result]");
+const slotsOpenButtons = document.querySelectorAll("[data-sd-slots-open]");
+const slotsModal = document.querySelector("[data-slots-modal]");
+const slotsClose = document.querySelector("[data-slots-close]");
+const slotsBack = document.querySelector("[data-slots-back]");
+const slotsLobby = document.querySelector("[data-slots-lobby]");
+const slotMachine = document.querySelector("[data-slot-machine]");
+const slotBalanceDisplay = document.querySelector("[data-slots-balance]");
+const slotGameTitle = document.querySelector("[data-slot-game-title]");
+const slotThemeLabel = document.querySelector("[data-slot-theme-label]");
+const slotWinLabel = document.querySelector("[data-slot-win-label]");
+const slotBoard = document.querySelector("[data-slot-board]");
+const slotBetDisplay = document.querySelector("[data-slot-bet]");
+const slotBetDown = document.querySelector("[data-slot-bet-down]");
+const slotBetUp = document.querySelector("[data-slot-bet-up]");
+const slotSpinButton = document.querySelector("[data-slot-spin]");
 
 let currentPlayer = null;
 let hasOpenedPlayerChat = false;
 let hasCheckedDailySpin = false;
 let spinRotation = 0;
+let activeSlotGame = "buffalo";
+let slotBalance = 5000;
+let slotBet = 50;
+let slotIsSpinning = false;
 const referralCodeFromUrl = (() => {
   try {
     return new URLSearchParams(window.location.search).get("ref") || "";
@@ -499,6 +518,166 @@ function showWelcomeModal(user) {
 
 function closeWelcomeModal() {
   welcomeModal?.classList.add("is-hidden");
+}
+
+const slotGames = {
+  buffalo: {
+    title: "Buffalo Rush",
+    label: "Wild prairie reels",
+    className: "buffalo",
+    symbols: ["BUF", "CACT", "A", "K", "Q", "SD", "DIA"],
+  },
+  diamond: {
+    title: "Diamond 777",
+    label: "Classic jackpot reels",
+    className: "diamond",
+    symbols: ["7", "DIA", "BAR", "A", "K", "SD", "STAR"],
+  },
+  dragon: {
+    title: "Dragon Gold",
+    label: "Fire bonus reels",
+    className: "dragon",
+    symbols: ["DRG", "FIRE", "CROWN", "A", "K", "SD", "GOLD"],
+  },
+  ocean: {
+    title: "Ocean Pearls",
+    label: "Deep sea wins",
+    className: "ocean",
+    symbols: ["FISH", "SHARK", "PEARL", "A", "K", "SD", "DIA"],
+  },
+  jungle: {
+    title: "Jungle Fortune",
+    label: "Big wild wins",
+    className: "jungle",
+    symbols: ["TIGER", "WILD", "GOLD", "A", "K", "SD", "STAR"],
+  },
+  neon: {
+    title: "Neon Reels",
+    label: "Fast city spins",
+    className: "neon",
+    symbols: ["7", "BOLT", "DIA", "A", "K", "SD", "DICE"],
+  },
+};
+
+function slotStorageKey() {
+  return `south-diamond-slot-balance-${currentPlayer?.id || "guest"}`;
+}
+
+function loadSlotBalance() {
+  if (!currentPlayer) {
+    slotBalance = 5000;
+    return;
+  }
+  const saved = Number(localStorage.getItem(slotStorageKey()));
+  slotBalance = Number.isFinite(saved) && saved >= 0 ? saved : 5000;
+}
+
+function saveSlotBalance() {
+  if (currentPlayer) localStorage.setItem(slotStorageKey(), String(slotBalance));
+}
+
+function updateSlotUi() {
+  const game = slotGames[activeSlotGame] || slotGames.buffalo;
+  slotBalanceDisplay.textContent = Math.floor(slotBalance).toLocaleString();
+  if (slotBetDisplay) slotBetDisplay.textContent = slotBet;
+  if (slotGameTitle) slotGameTitle.textContent = game.title;
+  if (slotThemeLabel) slotThemeLabel.textContent = game.label;
+  if (slotMachine) {
+    slotMachine.classList.remove(...Object.values(slotGames).map((item) => item.className));
+    slotMachine.classList.add(game.className);
+  }
+}
+
+function renderSlotReels(symbols) {
+  if (!slotBoard) return;
+  slotBoard.querySelectorAll(".slot-reel").forEach((reel, index) => {
+    const symbol = symbols[index] || "SD";
+    reel.innerHTML = `<span>${symbol}</span><span>${symbol}</span><span>${symbol}</span>`;
+  });
+}
+
+function openSlotsLobby() {
+  if (!currentPlayer) {
+    document.querySelector('[data-auth-tab="login"]')?.click();
+    playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  loadSlotBalance();
+  updateSlotUi();
+  slotsModal?.classList.remove("is-hidden");
+  slotsModal?.setAttribute("aria-hidden", "false");
+  slotsLobby?.classList.remove("is-hidden");
+  slotMachine?.classList.add("is-hidden");
+  slotsBack?.classList.add("is-hidden");
+  if (slotWinLabel) slotWinLabel.textContent = "Choose a South Diamond slot game.";
+}
+
+function closeSlotsLobby() {
+  slotsModal?.classList.add("is-hidden");
+  slotsModal?.setAttribute("aria-hidden", "true");
+}
+
+function openSlotGame(gameKey) {
+  activeSlotGame = slotGames[gameKey] ? gameKey : "buffalo";
+  const game = slotGames[activeSlotGame];
+  slotsLobby?.classList.add("is-hidden");
+  slotMachine?.classList.remove("is-hidden");
+  slotsBack?.classList.remove("is-hidden");
+  renderSlotReels(shuffleItems(game.symbols).slice(0, 5));
+  if (slotWinLabel) slotWinLabel.textContent = "Tap Spin to start.";
+  updateSlotUi();
+}
+
+function calculateSlotWin(result) {
+  const counts = result.reduce((map, symbol) => {
+    if (symbol === "SD") return map;
+    map[symbol] = (map[symbol] || 0) + 1;
+    return map;
+  }, {});
+  const wilds = result.filter((symbol) => symbol === "SD").length;
+  const bestCount = Math.max(0, ...Object.values(counts)) + wilds;
+  if (bestCount >= 5) return slotBet * 25;
+  if (bestCount === 4) return slotBet * 8;
+  if (bestCount === 3) return slotBet * 2;
+  if (wilds >= 3) return slotBet * 3;
+  return 0;
+}
+
+function spinSlotGame() {
+  if (slotIsSpinning || !currentPlayer) return;
+  if (slotBalance < slotBet) {
+    if (slotWinLabel) slotWinLabel.textContent = "Not enough SD Coins. Lower your bet.";
+    return;
+  }
+  const game = slotGames[activeSlotGame] || slotGames.buffalo;
+  slotIsSpinning = true;
+  slotBalance -= slotBet;
+  updateSlotUi();
+  if (slotWinLabel) slotWinLabel.textContent = "Spinning...";
+  if (slotSpinButton) {
+    slotSpinButton.disabled = true;
+    slotSpinButton.textContent = "Spinning";
+  }
+  slotBoard?.querySelectorAll(".slot-reel").forEach((reel, index) => {
+    reel.classList.add("is-spinning");
+    reel.style.animationDuration = `${0.68 + index * 0.1}s`;
+  });
+  window.setTimeout(() => {
+    const result = Array.from({ length: 5 }, () => game.symbols[Math.floor(Math.random() * game.symbols.length)]);
+    const win = calculateSlotWin(result);
+    slotBalance += win;
+    saveSlotBalance();
+    renderSlotReels(result);
+    slotBoard?.querySelectorAll(".slot-reel").forEach((reel) => reel.classList.remove("is-spinning"));
+    slotBoard?.classList.toggle("is-winning", win > 0);
+    if (slotWinLabel) slotWinLabel.textContent = win > 0 ? `You won ${win.toLocaleString()} SD Coins` : "No win. Spin again.";
+    updateSlotUi();
+    slotIsSpinning = false;
+    if (slotSpinButton) {
+      slotSpinButton.disabled = false;
+      slotSpinButton.textContent = "Spin";
+    }
+  }, 1500);
 }
 
 function updateCurrentPlayer(user) {
@@ -1049,6 +1228,34 @@ spinButton?.addEventListener("click", runSpinWheel);
 spinModal?.addEventListener("click", (event) => {
   if (event.target === spinModal) closeSpinModal();
 });
+
+slotsOpenButtons.forEach((button) => {
+  button.addEventListener("click", openSlotsLobby);
+});
+
+slotsClose?.addEventListener("click", closeSlotsLobby);
+slotsBack?.addEventListener("click", openSlotsLobby);
+slotsModal?.addEventListener("click", (event) => {
+  if (event.target === slotsModal) closeSlotsLobby();
+});
+
+slotsLobby?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-slot-game]");
+  if (!button) return;
+  openSlotGame(button.dataset.slotGame);
+});
+
+slotBetDown?.addEventListener("click", () => {
+  slotBet = Math.max(10, slotBet - 10);
+  updateSlotUi();
+});
+
+slotBetUp?.addEventListener("click", () => {
+  slotBet = Math.min(500, slotBet + 10);
+  updateSlotUi();
+});
+
+slotSpinButton?.addEventListener("click", spinSlotGame);
 
 const adminInbox = document.querySelector("[data-admin-inbox]");
 const adminMessages = document.querySelector("[data-admin-messages]");
