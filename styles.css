@@ -3653,6 +3653,7 @@ body.is-player-logged-in [data-guest-only] {
   display: grid;
   place-items: center;
   padding: 20px;
+  overflow: auto;
   background:
     radial-gradient(circle at 50% 35%, rgba(246, 200, 95, 0.24), transparent 34%),
     rgba(0, 0, 0, 0.78);
@@ -3661,9 +3662,10 @@ body.is-player-logged-in [data-guest-only] {
 .spin-card {
   position: relative;
   display: grid;
-  gap: 16px;
-  width: min(560px, 100%);
-  padding: clamp(22px, 4vw, 38px);
+  gap: 12px;
+  width: min(520px, 100%);
+  max-height: calc(100vh - 56px);
+  padding: clamp(18px, 3vw, 28px);
   overflow: hidden;
   border: 1px solid rgba(255, 226, 142, 0.38);
   border-radius: 18px;
@@ -3690,7 +3692,7 @@ body.is-player-logged-in [data-guest-only] {
 
 .spin-card h2 {
   margin: 0;
-  font-size: clamp(2.1rem, 8vw, 4rem);
+  font-size: clamp(2rem, 6vw, 3.2rem);
   line-height: 0.9;
   text-transform: uppercase;
 }
@@ -3704,7 +3706,7 @@ body.is-player-logged-in [data-guest-only] {
 
 .spin-stage {
   position: relative;
-  width: min(360px, 82vw);
+  width: min(300px, 76vw);
   aspect-ratio: 1;
   margin: 4px auto;
   filter: drop-shadow(0 20px 34px rgba(0, 0, 0, 0.55));
@@ -3756,15 +3758,15 @@ body.is-player-logged-in [data-guest-only] {
   inset: 50%;
   z-index: 2;
   display: grid;
-  width: 88px;
-  height: 88px;
+  width: 76px;
+  height: 76px;
   place-items: center;
   transform: translate(-50%, -50%);
   border: 6px solid rgba(255, 247, 223, 0.86);
   border-radius: 50%;
   color: #2a1703;
   background: radial-gradient(circle at 35% 28%, #fff5b8, #f6c85f 58%, #a56c10);
-  font-size: 1.45rem;
+  font-size: 1.25rem;
   font-weight: 1000;
   box-shadow: 0 0 24px rgba(255, 223, 139, 0.6);
 }
@@ -3773,22 +3775,22 @@ body.is-player-logged-in [data-guest-only] {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 92px;
-  margin-left: -46px;
+  width: 78px;
+  margin-left: -39px;
   margin-top: -14px;
   color: #fff7df;
-  font-size: 0.82rem;
+  font-size: 0.68rem;
   font-weight: 1000;
   line-height: 1;
   text-shadow: 0 2px 5px rgba(0, 0, 0, 0.85);
   text-transform: uppercase;
 }
 
-.spin-label-better { transform: rotate(36deg) translateY(-118px) rotate(-36deg); }
-.spin-label-one { transform: rotate(108deg) translateY(-118px) rotate(-108deg); }
-.spin-label-three { transform: rotate(180deg) translateY(-118px) rotate(-180deg); }
-.spin-label-five { transform: rotate(252deg) translateY(-118px) rotate(-252deg); }
-.spin-label-ten { transform: rotate(324deg) translateY(-118px) rotate(-324deg); }
+.spin-label-better { transform: rotate(36deg) translateY(-98px) rotate(-36deg); }
+.spin-label-one { transform: rotate(108deg) translateY(-98px) rotate(-108deg); }
+.spin-label-three { transform: rotate(180deg) translateY(-98px) rotate(-180deg); }
+.spin-label-five { transform: rotate(252deg) translateY(-98px) rotate(-252deg); }
+.spin-label-ten { transform: rotate(324deg) translateY(-98px) rotate(-324deg); }
 
 .spin-button {
   min-height: 58px;
@@ -3798,6 +3800,39 @@ body.is-player-logged-in [data-guest-only] {
 .spin-button:disabled {
   cursor: wait;
   opacity: 0.86;
+}
+
+@media (min-width: 980px) and (min-height: 760px) {
+  .spin-card {
+    grid-template-columns: minmax(240px, 1fr) minmax(320px, 360px);
+    width: min(900px, calc(100vw - 64px));
+    align-items: center;
+    text-align: left;
+  }
+
+  .spin-card .section-kicker,
+  .spin-card h2,
+  .spin-copy,
+  .spin-button,
+  .spin-result {
+    grid-column: 1;
+  }
+
+  .spin-stage {
+    grid-column: 2;
+    grid-row: 1 / span 5;
+    width: min(340px, 34vw);
+  }
+
+  .spin-button {
+    width: min(340px, 100%);
+  }
+
+  .spin-label-better { transform: rotate(36deg) translateY(-112px) rotate(-36deg); }
+  .spin-label-one { transform: rotate(108deg) translateY(-112px) rotate(-108deg); }
+  .spin-label-three { transform: rotate(180deg) translateY(-112px) rotate(-180deg); }
+  .spin-label-five { transform: rotate(252deg) translateY(-112px) rotate(-252deg); }
+  .spin-label-ten { transform: rotate(324deg) translateY(-112px) rotate(-324deg); }
 }
 
 @keyframes spin-shine {
@@ -5778,7 +5813,7 @@ body.is-player-logged-in [data-guest-only] {
   }
 
   .spin-stage {
-    width: min(292px, 84vw);
+    width: min(276px, 82vw);
   }
 
   .spin-center {
