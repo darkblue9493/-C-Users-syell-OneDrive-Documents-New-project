@@ -666,46 +666,77 @@
             <h2 id="slots-title">South Diamond Slots</h2>
           </div>
           <div class="slots-topbar-actions">
-            <span class="slots-balance"><b data-slots-balance>5000</b> SD Coins</span>
+            <span class="slots-balance"><b data-slots-balance>0</b> Points</span>
+            <button class="game-link slots-music-button" type="button" data-slots-music>Music Off</button>
             <button class="game-link is-hidden" type="button" data-slots-back>Lobby</button>
             <button class="welcome-close" type="button" data-slots-close aria-label="Close South Diamond slots">x</button>
           </div>
         </div>
 
-        <div class="slots-lobby" data-slots-lobby>
-          <button class="slot-game-tile buffalo" type="button" data-slot-game="buffalo">
-            <span>Hot</span>
-            <strong>Buffalo Rush</strong>
-            <small>Wild reels and prairie jackpots</small>
-          </button>
-          <button class="slot-game-tile diamond" type="button" data-slot-game="diamond">
-            <span>777</span>
-            <strong>Diamond 777</strong>
-            <small>Classic sevens and gem wins</small>
-          </button>
-          <button class="slot-game-tile dragon" type="button" data-slot-game="dragon">
-            <span>Fire</span>
-            <strong>Dragon Gold</strong>
-            <small>Flame reels and bonus crowns</small>
-          </button>
-          <button class="slot-game-tile ocean" type="button" data-slot-game="ocean">
-            <span>Fish</span>
-            <strong>Ocean Pearls</strong>
-            <small>Deep sea bonus spins</small>
-          </button>
-          <button class="slot-game-tile jungle" type="button" data-slot-game="jungle">
-            <span>Wild</span>
-            <strong>Jungle Fortune</strong>
-            <small>Big cats and gold stacks</small>
-          </button>
-          <button class="slot-game-tile neon" type="button" data-slot-game="neon">
-            <span>New</span>
-            <strong>Neon Reels</strong>
-            <small>Fast bright city spins</small>
-          </button>
+        <div class="slots-lobby-frame" data-slots-lobby>
+          <aside class="slots-side-menu" aria-label="Slot categories">
+            <button type="button" class="is-active">All</button>
+            <button type="button">Favorite</button>
+            <button type="button">Fishing</button>
+            <button type="button">Slots</button>
+            <button type="button">Rooms</button>
+            <button type="button">Links</button>
+          </aside>
+          <div class="slots-lobby-main">
+            <div class="slots-marquee">Welcome to South Diamond Slots. Bets start at 0.25 points.</div>
+            <div class="slots-jackpot-strip" aria-label="Jackpot preview">
+              <span>Grand <b>1,519</b></span>
+              <span>Major <b>524</b></span>
+              <span>Minor <b>107</b></span>
+              <span>Mini <b>21</b></span>
+            </div>
+            <div class="slots-lobby">
+              <button class="slot-game-tile buffalo" type="button" data-slot-game="buffalo">
+                <span>Hot</span>
+                <strong>Buffalo Rush</strong>
+                <small>Wild reels and prairie jackpots</small>
+              </button>
+              <button class="slot-game-tile diamond" type="button" data-slot-game="diamond">
+                <span>777</span>
+                <strong>Diamond 777</strong>
+                <small>Classic sevens and gem wins</small>
+              </button>
+              <button class="slot-game-tile dragon" type="button" data-slot-game="dragon">
+                <span>Fire</span>
+                <strong>Dragon Gold</strong>
+                <small>Flame reels and bonus crowns</small>
+              </button>
+              <button class="slot-game-tile ocean" type="button" data-slot-game="ocean">
+                <span>Fish</span>
+                <strong>Ocean Pearls</strong>
+                <small>Deep sea bonus spins</small>
+              </button>
+              <button class="slot-game-tile jungle" type="button" data-slot-game="jungle">
+                <span>Wild</span>
+                <strong>Jungle Fortune</strong>
+                <small>Big cats and gold stacks</small>
+              </button>
+              <button class="slot-game-tile neon" type="button" data-slot-game="neon">
+                <span>New</span>
+                <strong>Neon Reels</strong>
+                <small>Fast bright city spins</small>
+              </button>
+            </div>
+            <div class="slots-prize-dock" aria-label="Slots footer decorations">
+              <span>Daily Wheel</span>
+              <strong>Jackpot</strong>
+              <span>Lucky Bag</span>
+            </div>
+          </div>
         </div>
 
         <div class="slot-machine is-hidden" data-slot-machine>
+          <div class="slots-jackpot-strip slot-machine-jackpots">
+            <span>Grand <b>1,519</b></span>
+            <span>Major <b>524</b></span>
+            <span>Minor <b>107</b></span>
+            <span>Mini <b>21</b></span>
+          </div>
           <div class="slot-machine-header">
             <div>
               <span data-slot-theme-label>Slot Game</span>
@@ -714,15 +745,15 @@
             <b data-slot-win-label>Choose a bet and spin</b>
           </div>
           <div class="slot-reel-board" data-slot-board>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>★</span></div>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>★</span></div>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>★</span></div>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>★</span></div>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>★</span></div>
+            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
           </div>
           <div class="slot-controls">
             <button type="button" data-slot-bet-down>-</button>
-            <span>Bet <b data-slot-bet>50</b></span>
+            <span>Bet <b data-slot-bet>0.25</b></span>
             <button type="button" data-slot-bet-up>+</button>
             <button class="button primary slot-spin-button" type="button" data-slot-spin>Spin</button>
           </div>

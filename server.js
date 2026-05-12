@@ -38,6 +38,25 @@ const defaultSpinLimits = {
   3: 3,
   1: 10,
 };
+const defaultSlotSettings = {
+  dailyPayoutLimit: 25,
+};
+const slotGameSymbols = {
+  buffalo: ["BUF", "CACT", "A", "K", "Q", "SD", "DIA"],
+  diamond: ["7", "DIA", "BAR", "A", "K", "SD", "STAR"],
+  dragon: ["DRG", "FIRE", "CROWN", "A", "K", "SD", "GOLD"],
+  ocean: ["FISH", "SHARK", "PEARL", "A", "K", "SD", "DIA"],
+  jungle: ["TIGER", "WILD", "GOLD", "A", "K", "SD", "STAR"],
+  neon: ["7", "BOLT", "DIA", "A", "K", "SD", "DICE"],
+};
+const slotGameNames = {
+  buffalo: "Buffalo Rush",
+  diamond: "Diamond 777",
+  dragon: "Dragon Gold",
+  ocean: "Ocean Pearls",
+  jungle: "Jungle Fortune",
+  neon: "Neon Reels",
+};
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -65,6 +84,8 @@ function starterDatabase() {
     adminPasswordResetTokens: [],
     spinSettings: { limits: { ...defaultSpinLimits } },
     spinWheel: { date: currentSpinDateKey(), awards: [] },
+    slotSettings: { ...defaultSlotSettings },
+    slotPayout: { date: currentSpinDateKey(), paidOut: 0, spins: [] },
   };
 }
 
@@ -79,6 +100,8 @@ function normalizeDatabase(data) {
   if (typeof normalized.adminPasswordHash !== "string") normalized.adminPasswordHash = "";
   normalized.spinSettings = normalizeSpinSettings(normalized.spinSettings);
   normalized.spinWheel = normalizeSpinWheel(normalized.spinWheel);
+  normalized.slotSettings = normalizeSlotSettings(normalized.slotSettings);
+  normalized.slotPayout = normalizeSlotPayout(normalized.slotPayout);
   const now = Date.now();
   normalized.adminSessions = normalized.adminSessions.filter((session) => {
     const expiresAt = session?.expiresAt ? new Date(session.expiresAt).getTime() : 0;
@@ -90,7 +113,7 @@ function normalizeDatabase(data) {
   });
   normalized.users = normalized.users.map((user) => ({
     ...user,
-    points: Number.isFinite(Number(user.points)) ? Number(user.points) : 0,
+    points: roundPoints(user.points),
     isVip: Boolean(user.isVip),
     adminNote: user.adminNote || "",
     referralCode: normalizeReferralCode(user.referralCode) || createReferralCode(user),
@@ -314,6 +337,11 @@ function currentSpinDateKey(date = new Date()) {
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
+function roundPoints(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.round(number * 100) / 100 : 0;
+}
+
 function normalizeSpinSettings(settings) {
   const source = settings && typeof settings === "object" ? settings : {};
   const sourceLimits = source.limits && typeof source.limits === "object" ? source.limits : source;
@@ -333,6 +361,34 @@ function normalizeSpinWheel(spinWheel) {
     date: typeof wheel.date === "string" && wheel.date ? wheel.date : currentSpinDateKey(),
     awards: Array.isArray(wheel.awards) ? wheel.awards : [],
   };
+}
+
+function normalizeSlotSettings(settings) {
+  const source = settings && typeof settings === "object" ? settings : {};
+  const limit = roundPoints(source.dailyPayoutLimit ?? defaultSlotSettings.dailyPayoutLimit);
+  return {
+    dailyPayoutLimit: Math.max(0, Math.min(limit, 100000)),
+  };
+}
+
+function normalizeSlotPayout(slotPayout) {
+  const payout = slotPayout && typeof slotPayout === "object" ? slotPayout : {};
+  return {
+    date: typeof payout.date === "string" && payout.date ? payout.date : currentSpinDateKey(),
+    paidOut: roundPoints(payout.paidOut),
+    spins: Array.isArray(payout.spins) ? payout.spins : [],
+  };
+}
+
+function ensureSlotPayoutToday(data) {
+  const today = currentSpinDateKey();
+  data.slotSettings = normalizeSlotSettings(data.slotSettings);
+  data.slotPayout = normalizeSlotPayout(data.slotPayout);
+  if (data.slotPayout.date !== today) {
+    data.slotPayout = { date: today, paidOut: 0, spins: [] };
+    return true;
+  }
+  return false;
 }
 
 function ensureSpinWheelToday(data) {
@@ -389,6 +445,38 @@ function pickSpinPrize(data) {
     return counts[String(prize)] < limits[String(prize)];
   });
   return available[Math.floor(Math.random() * available.length)] || 0;
+}
+
+function calculateSlotWin(result, bet) {
+  const counts = result.reduce((map, symbol) => {
+    if (symbol === "SD") return map;
+    map[symbol] = (map[symbol] || 0) + 1;
+    return map;
+  }, {});
+  const wilds = result.filter((symbol) => symbol === "SD").length;
+  const bestCount = Math.max(0, ...Object.values(counts)) + wilds;
+  if (bestCount >= 5) return bet * 25;
+  if (bestCount === 4) return bet * 8;
+  if (bestCount === 3) return bet * 2;
+  if (wilds >= 3) return bet * 3;
+  return 0;
+}
+
+function createLosingSlotResult(symbols) {
+  return symbols.filter((symbol) => symbol !== "SD").slice(0, 5);
+}
+
+function createPointTransaction(user, type, points, note, createdAt = new Date().toISOString()) {
+  return {
+    id: `points-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    userId: user.id,
+    username: user.username,
+    type,
+    points: roundPoints(points),
+    balanceAfter: roundPoints(user.points),
+    note,
+    createdAt,
+  };
 }
 
 function createAdminCode() {
@@ -698,8 +786,8 @@ function sanitizePointTransaction(transaction) {
     userId: transaction.userId,
     username: transaction.username,
     type: transaction.type,
-    points: transaction.points,
-    balanceAfter: transaction.balanceAfter,
+    points: roundPoints(transaction.points),
+    balanceAfter: roundPoints(transaction.balanceAfter),
     note: transaction.note || "",
     createdAt: transaction.createdAt,
   };
@@ -723,7 +811,7 @@ function sanitizeUser(user) {
     phone: user.phone,
     email: user.email,
     dateOfBirth: user.dateOfBirth || null,
-    points: Number.isFinite(Number(user.points)) ? Number(user.points) : 0,
+    points: roundPoints(user.points),
     isVip: Boolean(user.isVip),
     avatarUrl: user.avatarUrl || null,
     createdAt: user.createdAt,
@@ -1081,6 +1169,35 @@ async function handleApi(request, response, urlPath, url) {
     });
   }
 
+  if (request.method === "GET" && urlPath === "/api/admin/slots-settings") {
+    if (!requireAdmin(request, response)) return;
+    const data = await readDatabase();
+    const resetToday = ensureSlotPayoutToday(data);
+    if (resetToday) await writeDatabase(data);
+    return sendJson(response, 200, {
+      settings: data.slotSettings,
+      payout: data.slotPayout,
+      date: data.slotPayout.date,
+      spins: (data.slotPayout.spins || []).slice(0, 120),
+    });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/slots-settings") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const data = await readDatabase();
+    ensureSlotPayoutToday(data);
+    data.slotSettings = normalizeSlotSettings(body);
+    addActivity(data, "slots-settings", "Updated South Diamond Slots daily payout limit", data.slotSettings);
+    await writeDatabase(data);
+    return sendJson(response, 200, {
+      settings: data.slotSettings,
+      payout: data.slotPayout,
+      date: data.slotPayout.date,
+      spins: (data.slotPayout.spins || []).slice(0, 120),
+    });
+  }
+
   if (request.method === "POST" && urlPath === "/api/admin/points") {
     if (!requireAdmin(request, response)) return;
     const body = await readBody(request);
@@ -1307,6 +1424,91 @@ async function handleApi(request, response, urlPath, url) {
       user: sanitizeUser(user),
       transaction: transaction ? sanitizePointTransaction(transaction) : null,
       ...spinStatusForUser(data, user),
+    });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/player/slots/spin") {
+    const sessionUser = await requirePlayer(request, response);
+    if (!sessionUser) return;
+    const body = await readBody(request);
+    const gameKey = Object.prototype.hasOwnProperty.call(slotGameSymbols, body.gameKey) ? String(body.gameKey) : "buffalo";
+    const bet = roundPoints(body.bet);
+    const validQuarterBet = Math.abs(bet * 4 - Math.round(bet * 4)) < 0.0001;
+    if (!Number.isFinite(bet) || bet < 0.25 || bet > 500 || !validQuarterBet) {
+      return sendJson(response, 400, { error: "Choose a valid bet from 0.25 to 500 points." });
+    }
+
+    const data = await readDatabase();
+    ensureSlotPayoutToday(data);
+    const user = data.users.find((item) => item.id === sessionUser.id);
+    if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    user.points = roundPoints(user.points);
+    if (user.points < bet) {
+      return sendJson(response, 400, { error: "Not enough available points for that bet.", user: sanitizeUser(user) });
+    }
+
+    const createdAt = new Date().toISOString();
+    const symbols = slotGameSymbols[gameKey];
+    const remainingPayout = Math.max(0, roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut));
+    let result = [];
+    let win = 0;
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      result = Array.from({ length: 5 }, () => symbols[Math.floor(Math.random() * symbols.length)]);
+      win = roundPoints(calculateSlotWin(result, bet));
+      if (win <= remainingPayout) break;
+    }
+    if (win > remainingPayout) {
+      result = createLosingSlotResult(symbols);
+      win = 0;
+    }
+    const transactions = [];
+
+    user.points = roundPoints(user.points - bet);
+    const betTransaction = createPointTransaction(user, "redeem", bet, `South Diamond Slots bet - ${slotGameNames[gameKey]}`, createdAt);
+    data.pointTransactions.unshift(betTransaction);
+    transactions.push(betTransaction);
+
+    if (win > 0) {
+      user.points = roundPoints(user.points + win);
+      const winTransaction = createPointTransaction(user, "add", win, `South Diamond Slots win - ${slotGameNames[gameKey]}`, createdAt);
+      data.pointTransactions.unshift(winTransaction);
+      transactions.push(winTransaction);
+    }
+
+    user.lastActiveAt = createdAt;
+    data.slotPayout.paidOut = roundPoints(data.slotPayout.paidOut + win);
+    data.slotPayout.spins.unshift({
+      id: `slot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      userId: user.id,
+      username: user.username,
+      gameKey,
+      gameName: slotGameNames[gameKey],
+      bet,
+      win,
+      result,
+      balanceAfter: user.points,
+      createdAt,
+    });
+    data.slotPayout.spins = data.slotPayout.spins.slice(0, 500);
+    addActivity(data, "slots-spin", `${user.username} spun ${slotGameNames[gameKey]} for ${bet} points${win ? ` and won ${win}` : ""}`, {
+      userId: user.id,
+      username: user.username,
+      gameKey,
+      bet,
+      win,
+      result,
+      balanceAfter: user.points,
+      remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
+    });
+    await writeDatabase(data);
+    return sendJson(response, 200, {
+      gameKey,
+      result,
+      bet,
+      win,
+      remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
+      user: sanitizeUser(user),
+      transactions: transactions.map(sanitizePointTransaction),
     });
   }
 

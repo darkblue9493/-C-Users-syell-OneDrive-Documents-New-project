@@ -74,6 +74,11 @@ function shuffleItems(items) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
+function formatPoints(value) {
+  const number = Number(value) || 0;
+  return Number.isInteger(number) ? number.toLocaleString() : number.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 function renderRecentWinners() {
   if (!winnerList) return;
   const names = shuffleItems(winnerNames).slice(0, 4);
@@ -276,6 +281,7 @@ const slotsOpenButtons = document.querySelectorAll("[data-sd-slots-open]");
 const slotsModal = document.querySelector("[data-slots-modal]");
 const slotsClose = document.querySelector("[data-slots-close]");
 const slotsBack = document.querySelector("[data-slots-back]");
+const slotsMusicButton = document.querySelector("[data-slots-music]");
 const slotsLobby = document.querySelector("[data-slots-lobby]");
 const slotMachine = document.querySelector("[data-slot-machine]");
 const slotBalanceDisplay = document.querySelector("[data-slots-balance]");
@@ -293,9 +299,12 @@ let hasOpenedPlayerChat = false;
 let hasCheckedDailySpin = false;
 let spinRotation = 0;
 let activeSlotGame = "buffalo";
-let slotBalance = 5000;
-let slotBet = 50;
+let slotBalance = 0;
+let slotBet = 0.25;
 let slotIsSpinning = false;
+let slotMusicOn = false;
+let slotAudioContext = null;
+let slotMusicTimer = null;
 const referralCodeFromUrl = (() => {
   try {
     return new URLSearchParams(window.location.search).get("ref") || "";
@@ -312,6 +321,7 @@ const adminSearchState = {
   activity: "",
   broadcast: "",
   spin: "",
+  slots: "",
 };
 
 let adminPlayerFilter = "all";
@@ -349,7 +359,7 @@ function showPlayerApp(user) {
   if (playerNameDisplay) playerNameDisplay.textContent = user.username;
   updatePlayerVipBadges(user);
   playerPointsDisplay.forEach((item) => {
-    item.textContent = user.points ?? 0;
+    item.textContent = formatPoints(user.points);
   });
   renderProfile(user);
   if (shouldShowWelcome) showWelcomeModal(user);
@@ -441,8 +451,8 @@ function renderPlayerPointTransactions(transactions = []) {
     `;
     item.querySelector("strong").textContent = transaction.type === "redeem" ? "Points Redeemed" : "Points Added";
     item.querySelector("span").textContent = transaction.note || (transaction.type === "redeem" ? "Redeemed from account" : "Added to account");
-    item.querySelector("small").textContent = `${new Date(transaction.createdAt).toLocaleString()} | Balance ${transaction.balanceAfter}`;
-    item.querySelector("b").textContent = `${transaction.type === "redeem" ? "-" : "+"}${transaction.points}`;
+    item.querySelector("small").textContent = `${new Date(transaction.createdAt).toLocaleString()} | Balance ${formatPoints(transaction.balanceAfter)}`;
+    item.querySelector("b").textContent = `${transaction.type === "redeem" ? "-" : "+"}${formatPoints(transaction.points)}`;
     playerPointTransactions.appendChild(item);
   });
 }
@@ -512,7 +522,7 @@ async function openPlayerReferral() {
 
 function showWelcomeModal(user) {
   if (!welcomeModal) return;
-  if (welcomePoints) welcomePoints.textContent = user.points ?? 0;
+  if (welcomePoints) welcomePoints.textContent = formatPoints(user.points);
   welcomeModal.classList.remove("is-hidden");
 }
 
@@ -559,27 +569,15 @@ const slotGames = {
   },
 };
 
-function slotStorageKey() {
-  return `south-diamond-slot-balance-${currentPlayer?.id || "guest"}`;
-}
-
 function loadSlotBalance() {
-  if (!currentPlayer) {
-    slotBalance = 5000;
-    return;
-  }
-  const saved = Number(localStorage.getItem(slotStorageKey()));
-  slotBalance = Number.isFinite(saved) && saved >= 0 ? saved : 5000;
-}
-
-function saveSlotBalance() {
-  if (currentPlayer) localStorage.setItem(slotStorageKey(), String(slotBalance));
+  slotBalance = Number(currentPlayer?.points) || 0;
 }
 
 function updateSlotUi() {
   const game = slotGames[activeSlotGame] || slotGames.buffalo;
-  slotBalanceDisplay.textContent = Math.floor(slotBalance).toLocaleString();
-  if (slotBetDisplay) slotBetDisplay.textContent = slotBet;
+  slotBalance = Number(currentPlayer?.points) || slotBalance || 0;
+  if (slotBalanceDisplay) slotBalanceDisplay.textContent = formatPoints(slotBalance);
+  if (slotBetDisplay) slotBetDisplay.textContent = formatPoints(slotBet);
   if (slotGameTitle) slotGameTitle.textContent = game.title;
   if (slotThemeLabel) slotThemeLabel.textContent = game.label;
   if (slotMachine) {
@@ -594,6 +592,62 @@ function renderSlotReels(symbols) {
     const symbol = symbols[index] || "SD";
     reel.innerHTML = `<span>${symbol}</span><span>${symbol}</span><span>${symbol}</span>`;
   });
+}
+
+function getSlotAudioContext() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return null;
+  if (!slotAudioContext) slotAudioContext = new AudioContext();
+  return slotAudioContext;
+}
+
+function playSlotTone(frequency = 440, duration = 0.12, volume = 0.05) {
+  try {
+    const context = getSlotAudioContext();
+    if (!context) return;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "triangle";
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(volume, context.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + duration + 0.02);
+  } catch {
+    // Sound can be blocked until the player taps the page.
+  }
+}
+
+function playSlotSound(type = "click") {
+  if (type === "win") {
+    [740, 920, 1160].forEach((frequency, index) => window.setTimeout(() => playSlotTone(frequency, 0.16, 0.08), index * 90));
+    return;
+  }
+  playSlotTone(type === "stop" ? 520 : 360, 0.1, 0.045);
+}
+
+function startSlotMusic() {
+  if (slotMusicTimer) return;
+  slotMusicOn = true;
+  slotsMusicButton?.classList.add("is-active");
+  if (slotsMusicButton) slotsMusicButton.textContent = "Music On";
+  const notes = [196, 247, 294, 247, 330, 294];
+  let index = 0;
+  slotMusicTimer = window.setInterval(() => {
+    playSlotTone(notes[index % notes.length], 0.18, 0.025);
+    index += 1;
+  }, 420);
+}
+
+function stopSlotMusic() {
+  if (slotMusicTimer) window.clearInterval(slotMusicTimer);
+  slotMusicTimer = null;
+  slotMusicOn = false;
+  slotsMusicButton?.classList.remove("is-active");
+  if (slotsMusicButton) slotsMusicButton.textContent = "Music Off";
 }
 
 function openSlotsLobby() {
@@ -615,6 +669,7 @@ function openSlotsLobby() {
 function closeSlotsLobby() {
   slotsModal?.classList.add("is-hidden");
   slotsModal?.setAttribute("aria-hidden", "true");
+  stopSlotMusic();
 }
 
 function openSlotGame(gameKey) {
@@ -628,31 +683,14 @@ function openSlotGame(gameKey) {
   updateSlotUi();
 }
 
-function calculateSlotWin(result) {
-  const counts = result.reduce((map, symbol) => {
-    if (symbol === "SD") return map;
-    map[symbol] = (map[symbol] || 0) + 1;
-    return map;
-  }, {});
-  const wilds = result.filter((symbol) => symbol === "SD").length;
-  const bestCount = Math.max(0, ...Object.values(counts)) + wilds;
-  if (bestCount >= 5) return slotBet * 25;
-  if (bestCount === 4) return slotBet * 8;
-  if (bestCount === 3) return slotBet * 2;
-  if (wilds >= 3) return slotBet * 3;
-  return 0;
-}
-
-function spinSlotGame() {
+async function spinSlotGame() {
   if (slotIsSpinning || !currentPlayer) return;
+  slotBalance = Number(currentPlayer.points) || 0;
   if (slotBalance < slotBet) {
-    if (slotWinLabel) slotWinLabel.textContent = "Not enough SD Coins. Lower your bet.";
+    if (slotWinLabel) slotWinLabel.textContent = "Not enough points. Lower your bet or ask admin to add points.";
     return;
   }
-  const game = slotGames[activeSlotGame] || slotGames.buffalo;
   slotIsSpinning = true;
-  slotBalance -= slotBet;
-  updateSlotUi();
   if (slotWinLabel) slotWinLabel.textContent = "Spinning...";
   if (slotSpinButton) {
     slotSpinButton.disabled = true;
@@ -662,29 +700,44 @@ function spinSlotGame() {
     reel.classList.add("is-spinning");
     reel.style.animationDuration = `${0.68 + index * 0.1}s`;
   });
-  window.setTimeout(() => {
-    const result = Array.from({ length: 5 }, () => game.symbols[Math.floor(Math.random() * game.symbols.length)]);
-    const win = calculateSlotWin(result);
-    slotBalance += win;
-    saveSlotBalance();
-    renderSlotReels(result);
+  try {
+    const data = await api("/api/player/slots/spin", {
+      method: "POST",
+      body: JSON.stringify({ gameKey: activeSlotGame, bet: slotBet }),
+    });
+    window.setTimeout(() => {
+      updateCurrentPlayer(data.user);
+      renderSlotReels(data.result);
+      slotBoard?.querySelectorAll(".slot-reel").forEach((reel) => reel.classList.remove("is-spinning"));
+      slotBoard?.classList.toggle("is-winning", data.win > 0);
+      if (slotWinLabel) slotWinLabel.textContent = data.win > 0 ? `You won ${formatPoints(data.win)} points` : "No win. Spin again.";
+      playSlotSound(data.win > 0 ? "win" : "stop");
+      updateSlotUi();
+      refreshPlayerPointTransactions();
+      slotIsSpinning = false;
+      if (slotSpinButton) {
+        slotSpinButton.disabled = false;
+        slotSpinButton.textContent = "Spin";
+      }
+    }, 1500);
+  } catch (error) {
     slotBoard?.querySelectorAll(".slot-reel").forEach((reel) => reel.classList.remove("is-spinning"));
-    slotBoard?.classList.toggle("is-winning", win > 0);
-    if (slotWinLabel) slotWinLabel.textContent = win > 0 ? `You won ${win.toLocaleString()} SD Coins` : "No win. Spin again.";
-    updateSlotUi();
+    if (slotWinLabel) slotWinLabel.textContent = error.message;
+    if (error.user) updateCurrentPlayer(error.user);
     slotIsSpinning = false;
     if (slotSpinButton) {
       slotSpinButton.disabled = false;
       slotSpinButton.textContent = "Spin";
     }
-  }, 1500);
+    updateSlotUi();
+  }
 }
 
 function updateCurrentPlayer(user) {
   if (!user) return;
   currentPlayer = user;
   playerPointsDisplay.forEach((item) => {
-    item.textContent = user.points ?? 0;
+    item.textContent = formatPoints(user.points);
   });
   renderProfile(user);
 }
@@ -1246,16 +1299,23 @@ slotsLobby?.addEventListener("click", (event) => {
 });
 
 slotBetDown?.addEventListener("click", () => {
-  slotBet = Math.max(10, slotBet - 10);
+  slotBet = Math.max(0.25, Math.round((slotBet - 0.25) * 100) / 100);
+  playSlotSound("click");
   updateSlotUi();
 });
 
 slotBetUp?.addEventListener("click", () => {
-  slotBet = Math.min(500, slotBet + 10);
+  slotBet = Math.min(500, Math.round((slotBet + 0.25) * 100) / 100);
+  playSlotSound("click");
   updateSlotUi();
 });
 
 slotSpinButton?.addEventListener("click", spinSlotGame);
+
+slotsMusicButton?.addEventListener("click", () => {
+  if (slotMusicOn) stopSlotMusic();
+  else startSlotMusic();
+});
 
 const adminInbox = document.querySelector("[data-admin-inbox]");
 const adminMessages = document.querySelector("[data-admin-messages]");
@@ -1285,6 +1345,11 @@ const spinSettingsStatus = document.querySelector("[data-spin-settings-status]")
 const spinAdminStats = document.querySelector("[data-spin-admin-stats]");
 const spinAwardsList = document.querySelector("[data-spin-awards]");
 const spinDate = document.querySelector("[data-spin-date]");
+const slotsSettingsForm = document.querySelector("[data-slots-settings-form]");
+const slotsSettingsStatus = document.querySelector("[data-slots-settings-status]");
+const slotsAdminStats = document.querySelector("[data-slots-admin-stats]");
+const slotsSpinsList = document.querySelector("[data-slots-spins]");
+const slotsAdminDate = document.querySelector("[data-slots-admin-date]");
 const adminPanelButtons = document.querySelectorAll("[data-admin-panel-button]");
 const adminPanels = document.querySelectorAll("[data-admin-panel]");
 const adminChatJumps = document.querySelectorAll("[data-admin-chat-jump]");
@@ -1341,6 +1406,7 @@ const adminPanelTitles = {
   add: "Add Points",
   redeem: "Redeem Points",
   spin: "Spin Wheel",
+  slots: "Slots Control",
   transactions: "Transactions",
   broadcast: "Broadcast",
   agents: "Agent Links",
@@ -1495,7 +1561,7 @@ function createAdminPlayerRow(user) {
   item.querySelector(".registered-player-name").textContent = user.username;
   item.querySelector(".admin-player-email").textContent = user.email;
   item.querySelector(".admin-player-phone").textContent = user.phone || "-";
-  item.querySelector(".admin-player-points").textContent = user.points ?? 0;
+  item.querySelector(".admin-player-points").textContent = formatPoints(user.points);
   item.querySelector(".admin-player-joined").textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-";
   item.querySelector(".admin-player-status").textContent = presence.label;
   item.querySelector(".admin-player-status").classList.add(presence.className);
@@ -1607,7 +1673,7 @@ function openAdminPlayerModal(userId, focusTarget = "") {
   modalJoined.textContent = formatAdminDate(user.createdAt);
   modalStatus.textContent = presence.label;
   modalStatus.className = `status-pill ${presence.className}`;
-  modalPoints.textContent = user.points ?? 0;
+  modalPoints.textContent = formatPoints(user.points);
   modalOpenChat.dataset.userId = user.id;
   modalPointsForm.dataset.userId = user.id;
   modalResetForm.dataset.userId = user.id;
@@ -1643,7 +1709,7 @@ function pointsActionCard(user, action) {
       <div>
         <strong>${user.username}</strong>
         <span>${user.email}</span>
-        <small>${user.points ?? 0} available points</small>
+        <small>${formatPoints(user.points)} available points</small>
       </div>
       <form class="admin-points-form" data-points-user data-points-action="${action}">
         <input name="points" type="number" min="1" step="1" placeholder="Points" required />
@@ -1719,7 +1785,7 @@ function renderBroadcastUsers(users) {
     setPresenceDot(row.querySelector(".player-presence-dot"), presence);
     row.querySelector("strong").textContent = user.username || "Player";
     row.querySelector("small").textContent = user.email || user.phone || "No email";
-    row.querySelector("b").textContent = `${user.points ?? 0} pts`;
+    row.querySelector("b").textContent = `${formatPoints(user.points)} pts`;
     broadcastUsers.appendChild(row);
   });
 }
@@ -1751,8 +1817,8 @@ function renderPointTransactions(transactions = []) {
     `;
     item.querySelector("strong").textContent = transaction.username || "Player";
     item.querySelector("span").textContent = transaction.note || (transaction.type === "add" ? "Points added" : "Points redeemed");
-    item.querySelector("b").textContent = `${transaction.type === "add" ? "+" : "-"}${transaction.points}`;
-    item.querySelector("small").textContent = `${new Date(transaction.createdAt).toLocaleString()} | Balance ${transaction.balanceAfter}`;
+    item.querySelector("b").textContent = `${transaction.type === "add" ? "+" : "-"}${formatPoints(transaction.points)}`;
+    item.querySelector("small").textContent = `${new Date(transaction.createdAt).toLocaleString()} | Balance ${formatPoints(transaction.balanceAfter)}`;
     pointsTransactions.appendChild(item);
   });
 }
@@ -1792,6 +1858,44 @@ function renderSpinAdmin(data = {}) {
       item.querySelector("b").textContent = award.prize > 0 ? `+${award.prize}` : "0";
       item.querySelector("small").textContent = award.createdAt ? new Date(award.createdAt).toLocaleString() : "";
       spinAwardsList.appendChild(item);
+    });
+  }
+}
+
+function renderSlotsAdmin(data = {}) {
+  const settings = data.settings || {};
+  const payout = data.payout || {};
+  const paidOut = formatPoints(payout.paidOut || 0);
+  const limit = formatPoints(settings.dailyPayoutLimit || 0);
+  if (slotsAdminDate) slotsAdminDate.textContent = data.date ? `Today: ${data.date}` : "Daily payout controls";
+  if (slotsSettingsForm) {
+    const input = slotsSettingsForm.elements.dailyPayoutLimit;
+    if (input && document.activeElement !== input) input.value = settings.dailyPayoutLimit ?? "";
+  }
+  if (slotsAdminStats) {
+    const remaining = Math.max(0, Number(settings.dailyPayoutLimit || 0) - Number(payout.paidOut || 0));
+    slotsAdminStats.innerHTML = `
+      <article><span>Paid today</span><strong>${paidOut}</strong></article>
+      <article><span>Daily limit</span><strong>${limit}</strong></article>
+      <article><span>Remaining</span><strong>${formatPoints(remaining)}</strong></article>
+    `;
+  }
+  if (slotsSpinsList) {
+    const spins = data.spins || [];
+    slotsSpinsList.innerHTML = "";
+    if (!spins.length) {
+      slotsSpinsList.innerHTML = `<article class="points-transaction empty">No South Diamond Slots spins yet today.</article>`;
+      return;
+    }
+    spins.slice(0, 80).forEach((spin) => {
+      const item = document.createElement("article");
+      item.className = `points-transaction ${Number(spin.win) > 0 ? "add" : "redeem"}`;
+      item.innerHTML = `<div><strong></strong><span></span></div><b></b><small></small>`;
+      item.querySelector("strong").textContent = spin.username || "Player";
+      item.querySelector("span").textContent = `${spin.gameName || "South Diamond Slots"} | Bet ${formatPoints(spin.bet)}`;
+      item.querySelector("b").textContent = Number(spin.win) > 0 ? `+${formatPoints(spin.win)}` : "0";
+      item.querySelector("small").textContent = spin.createdAt ? new Date(spin.createdAt).toLocaleString() : "";
+      slotsSpinsList.appendChild(item);
     });
   }
 }
@@ -1843,13 +1947,14 @@ async function renderAdmin() {
 
   adminRenderInFlight = true;
   try {
-  const [chatData, userData, dashboardData, pointsData, activityData, spinData] = await Promise.all([
+  const [chatData, userData, dashboardData, pointsData, activityData, spinData, slotsData] = await Promise.all([
     api("/api/chats").catch(() => ({ chats: [] })),
     api("/api/admin/users").catch(() => ({ users: [] })),
     api("/api/admin/dashboard").catch(() => ({ stats: {} })),
     api("/api/admin/points").catch(() => ({ transactions: [] })),
     api("/api/admin/activity").catch(() => ({ activity: [] })),
     api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
+    api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
   ]);
   const chats = (chatData.chats || [])
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
@@ -1862,6 +1967,7 @@ async function renderAdmin() {
       document.activeElement?.closest("[data-note-user]") ||
       document.activeElement?.closest("[data-broadcast-form]") ||
       document.activeElement?.closest("[data-spin-settings-form]") ||
+      document.activeElement?.closest("[data-slots-settings-form]") ||
       document.activeElement?.closest("[data-player-modal]")
   );
   if (!isPlayerFormActive) {
@@ -1875,6 +1981,7 @@ async function renderAdmin() {
   renderActivity(activityData.activity || []);
   renderBroadcastUsers(users);
   renderSpinAdmin(spinData);
+  renderSlotsAdmin(slotsData);
 
   const unreadTotal = chats.reduce((total, chat) => total + (Number(chat.unreadForAdmin) || 0), 0);
   adminUnreadBadges.forEach((badge) => {
@@ -2163,6 +2270,30 @@ if (adminInbox && adminForm) {
       if (spinSettingsStatus) spinSettingsStatus.textContent = "Spin limits saved.";
     } catch (error) {
       if (spinSettingsStatus) spinSettingsStatus.textContent = error.message;
+      else alert(error.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = buttonText;
+    }
+  });
+
+  slotsSettingsForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = slotsSettingsForm.querySelector("button[type='submit']");
+    const buttonText = button.textContent;
+    const dailyPayoutLimit = Number(slotsSettingsForm.elements.dailyPayoutLimit.value);
+    button.disabled = true;
+    button.textContent = "Saving";
+    if (slotsSettingsStatus) slotsSettingsStatus.textContent = "";
+    try {
+      const data = await api("/api/admin/slots-settings", {
+        method: "POST",
+        body: JSON.stringify({ dailyPayoutLimit }),
+      });
+      renderSlotsAdmin(data);
+      if (slotsSettingsStatus) slotsSettingsStatus.textContent = "Slot payout limit saved.";
+    } catch (error) {
+      if (slotsSettingsStatus) slotsSettingsStatus.textContent = error.message;
       else alert(error.message);
     } finally {
       button.disabled = false;
