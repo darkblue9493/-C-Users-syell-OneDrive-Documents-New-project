@@ -1,37 +1,95 @@
 {
-  "chats": [
+  "chats": [],
+  "users": [
     {
-      "id": "demo-maya",
-      "name": "Maya R.",
-      "messages": [
-        {
-          "author": "player",
-          "text": "Hi, can you send me the Juwa link?",
-          "createdAt": "2026-05-06T00:00:00.000Z"
-        },
-        {
-          "author": "operator",
-          "text": "Yes. Tap JW1 or JW2.0 in the Games section.",
-          "createdAt": "2026-05-06T00:00:00.000Z"
-        }
-      ]
+      "id": "user-1778378645233-jmiodm",
+      "username": "srui",
+      "phone": "323232323323",
+      "email": "srrrr@gmail.com",
+      "dateOfBirth": "1998-12-12",
+      "points": 0,
+      "passwordHash": "82367688803d6334661d7eac9c668248:a4b4f44f732a83083a9d3d1e3d687668ecba1c29153d66576ac5c22a27abe606383243f05c98fa8e52a0c85924644511dab1825c6080b951480fcee72240ee4b",
+      "createdAt": "2026-05-10T02:04:05.465Z",
+      "lastLoginAt": "2026-05-10T02:04:05.465Z",
+      "lastActiveAt": "2026-05-10T02:07:27.932Z",
+      "playerSessionTokens": [
+        "1778378645229-96l0w2mejwc-z3wdy5781u"
+      ],
+      "chatId": null,
+      "referredBy": "user-1778378558490-ylq0w6",
+      "referralCode": "SDF4F3EFC2",
+      "adminNote": ""
     },
     {
-      "id": "demo-andre",
-      "name": "Andre T.",
-      "messages": [
-        {
-          "author": "player",
-          "text": "How do I claim the welcome bonus?",
-          "createdAt": "2026-05-06T00:00:00.000Z"
-        },
-        {
-          "author": "operator",
-          "text": "Click Claim Bonus and I can help you from chat.",
-          "createdAt": "2026-05-06T00:00:00.000Z"
-        }
-      ]
+      "id": "user-1778378558490-ylq0w6",
+      "username": "sru",
+      "phone": "341524652617",
+      "email": "sr123@gmail.com",
+      "dateOfBirth": "1998-01-01",
+      "points": 20,
+      "passwordHash": "9b4df6954e8177d718219a2f9c6d4d59:d4297fdfcdbabe1346865d317f221c90bcedb52d3f80b0d9029e08a7dc71ad29687cb54836e31d50dcdc5aa5d7e5a826a531f86d556c7e3a851248b5ca48f315",
+      "createdAt": "2026-05-10T02:02:38.711Z",
+      "lastLoginAt": "2026-05-10T02:02:38.713Z",
+      "lastActiveAt": "2026-05-10T02:18:27.821Z",
+      "playerSessionTokens": [
+        "1778378558486-0gbakbyb2cxo-3etyrjlap7"
+      ],
+      "chatId": null,
+      "referredBy": null,
+      "referralCode": "SDA0FA7465",
+      "adminNote": ""
     }
   ],
-  "users": []
+  "pointTransactions": [
+    {
+      "id": "pt-1778378645478-cb1lfh",
+      "userId": "user-1778378558490-ylq0w6",
+      "username": "sru",
+      "type": "add",
+      "points": 20,
+      "balanceAfter": 20,
+      "note": "Referral bonus for inviting srui",
+      "createdAt": "2026-05-10T02:04:05.478Z"
+    }
+  ],
+  "activityLog": [
+    {
+      "id": "activity-1778378645478-cdj57c",
+      "type": "referral-bonus",
+      "text": "Added 20 referral points to sru",
+      "details": {
+        "userId": "user-1778378558490-ylq0w6",
+        "username": "sru",
+        "referredUserId": "user-1778378645233-jmiodm",
+        "referredUsername": "srui",
+        "points": 20
+      },
+      "createdAt": "2026-05-10T02:04:05.478Z"
+    },
+    {
+      "id": "activity-1778378645478-rsyc9l",
+      "type": "signup",
+      "text": "New player registered: srui",
+      "details": {
+        "userId": "user-1778378645233-jmiodm",
+        "username": "srui",
+        "email": "srrrr@gmail.com"
+      },
+      "createdAt": "2026-05-10T02:04:05.478Z"
+    },
+    {
+      "id": "activity-1778378558725-vw2wsi",
+      "type": "signup",
+      "text": "New player registered: sru",
+      "details": {
+        "userId": "user-1778378558490-ylq0w6",
+        "username": "sru",
+        "email": "sr123@gmail.com"
+      },
+      "createdAt": "2026-05-10T02:02:38.725Z"
+    }
+  ],
+  "adminSessions": [],
+  "adminPasswordResetTokens": [],
+  "adminPasswordHash": ""
 }
