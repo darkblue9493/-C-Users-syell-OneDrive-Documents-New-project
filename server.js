@@ -41,6 +41,7 @@ const defaultSpinLimits = {
 };
 const defaultSlotSettings = {
   dailyPayoutLimit: 25,
+  playerDailyPayoutLimit: 8,
 };
 const slotGameNames = {
   buffalo: "Buffalo Rush",
@@ -458,8 +459,10 @@ function normalizeSpinWheel(spinWheel) {
 function normalizeSlotSettings(settings) {
   const source = settings && typeof settings === "object" ? settings : {};
   const limit = roundPoints(source.dailyPayoutLimit ?? defaultSlotSettings.dailyPayoutLimit);
+  const playerLimit = roundPoints(source.playerDailyPayoutLimit ?? Math.min(defaultSlotSettings.playerDailyPayoutLimit, limit));
   return {
     dailyPayoutLimit: Math.max(0, Math.min(limit, 100000)),
+    playerDailyPayoutLimit: Math.max(0, Math.min(playerLimit, 100000)),
   };
 }
 
@@ -618,6 +621,14 @@ function createLosingSlotGrid(theme, bet) {
   return Array.from({ length: 5 }, (_, reelIndex) =>
     Array.from({ length: 3 }, (_, rowIndex) => symbols[(reelIndex + rowIndex * 3) % symbols.length] || "A")
   );
+}
+
+function slotPayoutForUserToday(data, userId) {
+  ensureSlotPayoutToday(data);
+  return (data.slotPayout.spins || []).reduce((total, spin) => {
+    if (spin.userId !== userId) return total;
+    return roundPoints(total + Math.max(0, Number(spin.win) || 0));
+  }, 0);
 }
 
 function createPointTransaction(user, type, points, note, createdAt = new Date().toISOString()) {
@@ -1604,6 +1615,9 @@ async function handleApi(request, response, urlPath, url) {
     const createdAt = new Date().toISOString();
     const theme = slotGameThemes[gameKey] || slotGameThemes.buffalo;
     const remainingPayout = Math.max(0, roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut));
+    const playerPaidToday = slotPayoutForUserToday(data, user.id);
+    const remainingPlayerPayout = Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - playerPaidToday));
+    const availablePayout = Math.min(remainingPayout, remainingPlayerPayout);
     let grid = [];
     let result = [];
     let wins = [];
@@ -1616,9 +1630,9 @@ async function handleApi(request, response, urlPath, url) {
       const bonusWin = Math.random() < 0.015 ? roundPoints(bet * 5) : 0;
       bonus = bonusWin > 0 ? { label: "South Diamond bonus", amount: bonusWin } : null;
       win = roundPoints(evaluation.totalWin + bonusWin);
-      if (win <= remainingPayout) break;
+      if (win <= availablePayout) break;
     }
-    if (win > remainingPayout) {
+    if (win > availablePayout) {
       grid = createLosingSlotGrid(theme, bet);
       wins = [];
       bonus = null;
@@ -1669,6 +1683,7 @@ async function handleApi(request, response, urlPath, url) {
       bonus,
       balanceAfter: user.points,
       remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
+      remainingPlayerPayout: Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - slotPayoutForUserToday(data, user.id))),
     });
     await writeDatabase(data);
     return sendJson(response, 200, {
@@ -1680,6 +1695,7 @@ async function handleApi(request, response, urlPath, url) {
       bet,
       win,
       remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
+      remainingPlayerPayout: Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - slotPayoutForUserToday(data, user.id))),
       user: sanitizeUser(user),
       transactions: transactions.map(sanitizePointTransaction),
     });

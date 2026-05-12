@@ -1523,6 +1523,7 @@ p {
   min-height: 260px;
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.82)),
+    url("assets/games/Diamond%20777.png") center / cover no-repeat,
     radial-gradient(circle at 50% 18%, rgba(10, 227, 255, 0.34), transparent 22%),
     radial-gradient(circle at 25% 24%, rgba(255, 223, 139, 0.46), transparent 16%),
     radial-gradient(circle at 70% 42%, rgba(31, 181, 107, 0.24), transparent 24%),
@@ -1533,9 +1534,11 @@ p {
 .south-slots-media::before {
   content: "777";
   position: absolute;
-  left: 26px;
-  bottom: 12px;
-  color: rgba(255, 247, 223, 0.11);
+  inset: 0;
+  display: grid;
+  place-items: end start;
+  padding: 22px;
+  color: rgba(255, 247, 223, 0.16);
   font-size: clamp(5rem, 12vw, 10rem);
   font-weight: 1000;
   letter-spacing: -0.1em;
@@ -2074,6 +2077,30 @@ blockquote {
   font-size: 0.82rem;
   font-weight: 900;
   cursor: pointer;
+}
+
+.player-toast {
+  position: fixed;
+  right: 22px;
+  bottom: 102px;
+  z-index: 260;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 226, 142, 0.5);
+  border-radius: 16px;
+  color: #fff7df;
+  background: linear-gradient(135deg, rgba(18, 12, 6, 0.98), rgba(57, 33, 9, 0.96));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42), 0 0 28px rgba(246, 200, 95, 0.18);
+  font-weight: 900;
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.player-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .chat-topbar {
@@ -3284,6 +3311,66 @@ blockquote {
   50% {
     filter: brightness(1.45);
   }
+}
+
+.slot-machine.buffalo {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 170, 51, 0.2), transparent 28%),
+    linear-gradient(135deg, rgba(106, 42, 9, 0.95), rgba(8, 8, 8, 0.96));
+}
+
+.slot-machine.diamond {
+  background:
+    radial-gradient(circle at 78% 18%, rgba(255, 57, 199, 0.24), transparent 30%),
+    linear-gradient(135deg, rgba(35, 11, 84, 0.96), rgba(5, 3, 16, 0.98));
+}
+
+.slot-machine.dragon {
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 63, 23, 0.28), transparent 30%),
+    linear-gradient(135deg, rgba(82, 9, 3, 0.96), rgba(10, 3, 2, 0.98));
+}
+
+.slot-machine.ocean {
+  background:
+    radial-gradient(circle at 70% 20%, rgba(55, 214, 255, 0.22), transparent 30%),
+    linear-gradient(135deg, rgba(3, 43, 75, 0.96), rgba(2, 8, 18, 0.98));
+}
+
+.slot-machine.jungle {
+  background:
+    radial-gradient(circle at 24% 18%, rgba(82, 239, 159, 0.18), transparent 30%),
+    linear-gradient(135deg, rgba(12, 62, 25, 0.96), rgba(4, 10, 4, 0.98));
+}
+
+.slot-machine.neon {
+  background:
+    radial-gradient(circle at 75% 24%, rgba(34, 123, 255, 0.24), transparent 30%),
+    linear-gradient(135deg, rgba(6, 10, 75, 0.96), rgba(2, 5, 18, 0.98));
+}
+
+.slot-machine.buffalo .slot-reel {
+  background: radial-gradient(circle at 50% 20%, rgba(255, 188, 72, 0.28), transparent 32%), linear-gradient(180deg, #3b1a08, #080808);
+}
+
+.slot-machine.diamond .slot-reel {
+  background: radial-gradient(circle at 50% 20%, rgba(255, 57, 199, 0.28), transparent 32%), linear-gradient(180deg, #240a58, #080808);
+}
+
+.slot-machine.dragon .slot-reel {
+  background: radial-gradient(circle at 50% 20%, rgba(255, 82, 32, 0.3), transparent 32%), linear-gradient(180deg, #3a0904, #080808);
+}
+
+.slot-machine.ocean .slot-reel {
+  background: radial-gradient(circle at 50% 20%, rgba(55, 214, 255, 0.28), transparent 32%), linear-gradient(180deg, #062b4c, #05080b);
+}
+
+.slot-machine.jungle .slot-reel {
+  background: radial-gradient(circle at 50% 20%, rgba(82, 239, 159, 0.24), transparent 32%), linear-gradient(180deg, #0f3a15, #050805);
+}
+
+.slot-machine.neon .slot-reel {
+  background: radial-gradient(circle at 50% 20%, rgba(10, 227, 255, 0.25), transparent 32%), linear-gradient(180deg, #10105d, #050508);
 }
 
 .admin-dashboard {
