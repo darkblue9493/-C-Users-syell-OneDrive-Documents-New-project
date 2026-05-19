@@ -348,22 +348,28 @@ const slotGameTitle = document.querySelector("[data-slot-game-title]");
 const slotThemeLabel = document.querySelector("[data-slot-theme-label]");
 const slotWinLabel = document.querySelector("[data-slot-win-label]");
 const slotBoard = document.querySelector("[data-slot-board]");
+const slotMachineArt = document.querySelector("[data-slot-machine-art]");
 const slotBetDisplay = document.querySelector("[data-slot-bet]");
 const slotBetDown = document.querySelector("[data-slot-bet-down]");
 const slotBetUp = document.querySelector("[data-slot-bet-up]");
 const slotSpinButton = document.querySelector("[data-slot-spin]");
+const slotFilterButtons = document.querySelectorAll("[data-slot-filter]");
+const slotGameTiles = document.querySelectorAll("[data-slot-game]");
+const slotEmptyState = document.querySelector("[data-slots-empty]");
 
 let currentPlayer = null;
 let hasOpenedPlayerChat = false;
 let hasCheckedDailySpin = false;
 let spinRotation = 0;
-let activeSlotGame = "buffalo";
+let activeSlotGame = "diamond777";
 let slotBalance = 0;
 let slotBet = 0.25;
 let slotIsSpinning = false;
 let slotMusicOn = false;
 let slotAudioContext = null;
 let slotMusicTimer = null;
+let activeSlotFilter = "all";
+let slotFavorites = new Set();
 let lastPlayerOperatorMessageId = "";
 let playerNotificationsReady = false;
 const referralCodeFromUrl = (() => {
@@ -597,50 +603,143 @@ function closeWelcomeModal() {
 }
 
 const slotGames = {
-  buffalo: {
-    title: "Buffalo Rush",
-    label: "Wild prairie reels",
-    className: "buffalo",
-    symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
-  },
-  diamond: {
+  diamond777: {
     title: "Diamond 777",
     label: "Classic jackpot reels",
     className: "diamond",
+    image: "assets/games/Diamond%20777.png",
     symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
+  },
+  milkyway: {
+    title: "Milky Way 777",
+    label: "Galaxy jackpot reels",
+    className: "milkyway",
+    image: "assets/games/Milkyway.png",
+    symbols: ["GALAXY", "MOON", "STAR", "ROUL", "CHIP", "A", "K", "SD"],
+  },
+  lucky777: {
+    title: "Lucky 777",
+    label: "Lucky gem reels",
+    className: "lucky777",
+    image: "assets/games/lucky%20777.png",
+    symbols: ["777", "LUCK", "DIA", "BELL", "BAR", "A", "K", "SD"],
   },
   dragon: {
     title: "Dragon Conqueror",
     label: "Fire bonus reels",
     className: "dragon",
+    image: "assets/games/Dragon%20Conqueror.png",
     symbols: ["DRG", "FIRE", "SWORD", "GOLD", "PALACE", "A", "K", "SD"],
   },
   ocean: {
     title: "Ocean Monster",
     label: "Deep sea wins",
     className: "ocean",
+    image: "assets/games/ocean%20monster.png",
     symbols: ["OCEAN", "SHARK", "CRAB", "PEARL", "FISH", "A", "K", "SD"],
   },
-  jungle: {
-    title: "Jungle Fortune",
-    label: "Big wild wins",
-    className: "jungle",
-    symbols: ["TIGER", "LEOP", "GOLD", "MASK", "LEAF", "A", "K", "SD"],
+  firekirin: {
+    title: "Fire Kirin",
+    label: "Hot flame reels",
+    className: "firekirin",
+    image: "assets/games/FireKirin.png",
+    symbols: ["KIRIN", "FIRE", "DRG", "GOLD", "COIN", "A", "K", "SD"],
   },
-  neon: {
-    title: "Neon Reels",
-    label: "Fast city spins",
-    className: "neon",
-    symbols: ["777", "BOLT", "DICE", "ROUL", "DIA", "A", "K", "SD"],
+  pandamaster: {
+    title: "Panda Master",
+    label: "Gold panda reels",
+    className: "pandamaster",
+    image: "assets/games/Pandamaster.png",
+    symbols: ["PANDA", "BAMBOO", "COIN", "GOLD", "LUCK", "A", "K", "SD"],
+  },
+  orion: {
+    title: "Orion Stars",
+    label: "Neon roulette reels",
+    className: "orion",
+    image: "assets/games/Orion%20stars.png",
+    symbols: ["ORION", "STAR", "DICE", "ROUL", "BOLT", "A", "K", "SD"],
+  },
+  goldendragon: {
+    title: "Golden Dragon",
+    label: "Premium dragon reels",
+    className: "golden",
+    image: "assets/games/Golden%20Dragon.png",
+    symbols: ["GDRG", "DRG", "GOLD", "FIRE", "COIN", "A", "K", "SD"],
+  },
+  gamevault: {
+    title: "Game Vault",
+    label: "Treasure room reels",
+    className: "vault",
+    image: "assets/games/Game%20Vault.png",
+    symbols: ["VAULT", "SAFE", "KEY", "GEM", "COIN", "A", "K", "SD"],
+  },
+  ultrapanda: {
+    title: "Ultra Panda",
+    label: "Lucky panda reels",
+    className: "ultrapanda",
+    image: "assets/games/Ultrapanda.png",
+    symbols: ["ULTRA", "PANDA", "GOLD", "COIN", "STAR", "A", "K", "SD"],
   },
 };
+
+function loadSlotFavorites() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("southDiamondSlotFavorites") || "[]");
+    slotFavorites = new Set(Array.isArray(saved) ? saved.filter((key) => slotGames[key]) : []);
+  } catch {
+    slotFavorites = new Set();
+  }
+}
+
+function saveSlotFavorites() {
+  try {
+    localStorage.setItem("southDiamondSlotFavorites", JSON.stringify([...slotFavorites]));
+  } catch {
+    // Favorites are a convenience; the games still work if the browser blocks storage.
+  }
+}
+
+function updateSlotFavoriteButtons() {
+  document.querySelectorAll("[data-slot-favorite]").forEach((button) => {
+    const isFavorite = slotFavorites.has(button.dataset.slotFavorite);
+    button.classList.toggle("is-favorite", isFavorite);
+    button.textContent = isFavorite ? "★" : "☆";
+    button.setAttribute("aria-label", `${isFavorite ? "Remove" : "Save"} ${slotGames[button.dataset.slotFavorite]?.title || "game"} favorite`);
+  });
+}
+
+function filterSlotLobby(filter = activeSlotFilter) {
+  activeSlotFilter = filter;
+  let visibleCount = 0;
+  slotFilterButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.slotFilter === activeSlotFilter);
+  });
+  slotGameTiles.forEach((tile) => {
+    const gameKey = tile.dataset.slotGame;
+    const categories = (tile.dataset.slotCategory || "").split(/\s+/);
+    const shouldShow =
+      activeSlotFilter === "all" ||
+      (activeSlotFilter === "favorite" && slotFavorites.has(gameKey)) ||
+      categories.includes(activeSlotFilter);
+    tile.classList.toggle("is-hidden", !shouldShow);
+    if (shouldShow) visibleCount += 1;
+  });
+  if (slotEmptyState) {
+    slotEmptyState.classList.toggle("is-hidden", visibleCount > 0);
+    slotEmptyState.textContent =
+      activeSlotFilter === "favorite"
+        ? "No favorites yet. Tap the star on any game to save it here."
+        : "No games in this section yet.";
+  }
+  updateSlotFavoriteButtons();
+}
 
 function loadSlotBalance() {
   slotBalance = Number(currentPlayer?.points) || 0;
 }
 
 function updateSlotUi() {
-  const game = slotGames[activeSlotGame] || slotGames.buffalo;
+  const game = slotGames[activeSlotGame] || slotGames.diamond777;
   slotBalance = Number(currentPlayer?.points) || slotBalance || 0;
   if (slotBalanceDisplay) slotBalanceDisplay.textContent = formatPoints(slotBalance);
   if (slotBetDisplay) slotBetDisplay.textContent = formatPoints(slotBet);
@@ -649,7 +748,45 @@ function updateSlotUi() {
   if (slotMachine) {
     slotMachine.classList.remove(...Object.values(slotGames).map((item) => item.className));
     slotMachine.classList.add(game.className);
+    slotMachine.style.setProperty("--machine-art", `url("${game.image}")`);
   }
+  if (slotMachineArt) {
+    slotMachineArt.style.backgroundImage = `linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.78)), url("${game.image}")`;
+    slotMachineArt.querySelector("span").textContent = game.label;
+    slotMachineArt.querySelector("strong").textContent = game.title;
+  }
+}
+
+function slotSymbolClass(symbol) {
+  return String(symbol || "SD").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function slotSymbolText(symbol) {
+  const labels = {
+    GALAXY: "Galaxy",
+    GDRG: "Gold Dragon",
+    DRG: "Dragon",
+    DIA: "Diamond",
+    ROUL: "Roulette",
+    KIRIN: "Kirin",
+    LUCK: "Lucky",
+    BELL: "Bell",
+    CHERRY: "Cherry",
+    COIN: "Coin",
+    GOLD: "Gold",
+    STAR: "Star",
+    PANDA: "Panda",
+    BAMBOO: "Bamboo",
+    ORION: "Orion",
+    VAULT: "Vault",
+    SAFE: "Safe",
+    ULTRA: "Ultra",
+    OCEAN: "Ocean",
+    SHARK: "Shark",
+    PEARL: "Pearl",
+    FISH: "Fish",
+  };
+  return labels[symbol] || symbol || "SD";
 }
 
 function renderSlotReels(symbolsOrGrid, wins = []) {
@@ -667,7 +804,10 @@ function renderSlotReels(symbolsOrGrid, wins = []) {
     const reelSymbols = grid[index] || ["SD", "SD", "SD"];
     reel.innerHTML = reelSymbols
       .slice(0, 3)
-      .map((symbol, row) => `<span class="${winningCells.has(`${index}-${row}`) ? "is-winning" : ""}">${symbol || "SD"}</span>`)
+      .map((symbol, row) => {
+        const classes = `slot-symbol symbol-${slotSymbolClass(symbol)}${winningCells.has(`${index}-${row}`) ? " is-winning" : ""}`;
+        return `<span class="${classes}" data-symbol="${symbol || "SD"}"><i>${slotSymbolText(symbol)}</i></span>`;
+      })
       .join("");
   });
 }
@@ -680,7 +820,7 @@ function randomSlotGrid(game) {
 }
 
 function startSlotRollingPreview() {
-  const game = slotGames[activeSlotGame] || slotGames.buffalo;
+  const game = slotGames[activeSlotGame] || slotGames.diamond777;
   return window.setInterval(() => renderSlotReels(randomSlotGrid(game)), 92);
 }
 
@@ -753,6 +893,7 @@ function openSlotsLobby() {
   slotsLobby?.classList.remove("is-hidden");
   slotMachine?.classList.add("is-hidden");
   slotsBack?.classList.add("is-hidden");
+  filterSlotLobby(activeSlotFilter);
   if (slotWinLabel) slotWinLabel.textContent = "Choose a South Diamond slot game.";
 }
 
@@ -763,7 +904,7 @@ function closeSlotsLobby() {
 }
 
 function openSlotGame(gameKey) {
-  activeSlotGame = slotGames[gameKey] ? gameKey : "buffalo";
+  activeSlotGame = slotGames[gameKey] ? gameKey : "diamond777";
   const game = slotGames[activeSlotGame];
   slotsLobby?.classList.add("is-hidden");
   slotMachine?.classList.remove("is-hidden");
@@ -1389,6 +1530,9 @@ spinModal?.addEventListener("click", (event) => {
   if (event.target === spinModal) closeSpinModal();
 });
 
+loadSlotFavorites();
+filterSlotLobby("all");
+
 slotsOpenButtons.forEach((button) => {
   button.addEventListener("click", openSlotsLobby);
 });
@@ -1400,6 +1544,26 @@ slotsModal?.addEventListener("click", (event) => {
 });
 
 slotsLobby?.addEventListener("click", (event) => {
+  const filterButton = event.target.closest("[data-slot-filter]");
+  if (filterButton) {
+    filterSlotLobby(filterButton.dataset.slotFilter || "all");
+    playSlotSound("click");
+    return;
+  }
+
+  const favoriteButton = event.target.closest("[data-slot-favorite]");
+  if (favoriteButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    const gameKey = favoriteButton.dataset.slotFavorite;
+    if (slotFavorites.has(gameKey)) slotFavorites.delete(gameKey);
+    else if (slotGames[gameKey]) slotFavorites.add(gameKey);
+    saveSlotFavorites();
+    filterSlotLobby(activeSlotFilter);
+    playSlotSound("click");
+    return;
+  }
+
   const button = event.target.closest("[data-slot-game]");
   if (!button) return;
   openSlotGame(button.dataset.slotGame);

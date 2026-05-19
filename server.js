@@ -46,8 +46,17 @@ const defaultSlotSettings = {
 const slotGameNames = {
   buffalo: "Buffalo Rush",
   diamond: "Diamond 777",
+  diamond777: "Diamond 777",
+  lucky777: "Lucky 777",
+  milkyway: "Milky Way 777",
   dragon: "Dragon Conqueror",
   ocean: "Ocean Monster",
+  firekirin: "Fire Kirin",
+  pandamaster: "Panda Master",
+  orion: "Orion Stars",
+  goldendragon: "Golden Dragon",
+  gamevault: "Game Vault",
+  ultrapanda: "Ultra Panda",
   jungle: "Jungle Fortune",
   neon: "Neon Reels",
 };
@@ -135,6 +144,119 @@ const slotGameThemes = {
       K: { 3: 2, 4: 5, 5: 14 },
       SD: { 3: 4, 4: 14, 5: 70 },
     },
+  },
+};
+slotGameThemes.diamond777 = slotGameThemes.diamond;
+slotGameThemes.lucky777 = {
+  symbols: ["777", "LUCK", "DIA", "BELL", "BAR", "A", "K", "SD"],
+  weights: [2, 4, 5, 8, 9, 12, 12, 5],
+  pays: {
+    777: { 3: 11, 4: 40, 5: 145 },
+    LUCK: { 3: 8, 4: 28, 5: 100 },
+    DIA: { 3: 6, 4: 18, 5: 60 },
+    BELL: { 3: 4, 4: 12, 5: 36 },
+    BAR: { 3: 3, 4: 8, 5: 24 },
+    A: { 3: 2.5, 4: 6, 5: 18 },
+    K: { 3: 2, 4: 5, 5: 14 },
+    SD: { 3: 4, 4: 14, 5: 70 },
+  },
+};
+slotGameThemes.milkyway = {
+  symbols: ["GALAXY", "MOON", "STAR", "ROUL", "CHIP", "A", "K", "SD"],
+  weights: [2, 4, 6, 8, 9, 12, 12, 5],
+  pays: {
+    GALAXY: { 3: 10, 4: 38, 5: 136 },
+    MOON: { 3: 7, 4: 25, 5: 90 },
+    STAR: { 3: 5, 4: 17, 5: 56 },
+    ROUL: { 3: 4, 4: 12, 5: 36 },
+    CHIP: { 3: 3, 4: 8, 5: 24 },
+    A: { 3: 2.5, 4: 6, 5: 18 },
+    K: { 3: 2, 4: 5, 5: 14 },
+    SD: { 3: 4, 4: 14, 5: 70 },
+  },
+};
+slotGameThemes.firekirin = {
+  symbols: ["KIRIN", "FIRE", "DRG", "GOLD", "COIN", "A", "K", "SD"],
+  weights: [2, 4, 5, 8, 10, 12, 12, 5],
+  pays: {
+    KIRIN: { 3: 11, 4: 42, 5: 150 },
+    FIRE: { 3: 8, 4: 28, 5: 100 },
+    DRG: { 3: 6, 4: 18, 5: 60 },
+    GOLD: { 3: 4, 4: 12, 5: 38 },
+    COIN: { 3: 3, 4: 8, 5: 24 },
+    A: { 3: 2.5, 4: 6, 5: 18 },
+    K: { 3: 2, 4: 5, 5: 14 },
+    SD: { 3: 4, 4: 14, 5: 70 },
+  },
+};
+slotGameThemes.pandamaster = {
+  symbols: ["PANDA", "BAMBOO", "COIN", "GOLD", "LUCK", "A", "K", "SD"],
+  weights: [2, 4, 6, 8, 10, 12, 12, 5],
+  pays: {
+    PANDA: { 3: 10, 4: 36, 5: 132 },
+    BAMBOO: { 3: 7, 4: 25, 5: 90 },
+    COIN: { 3: 5, 4: 16, 5: 54 },
+    GOLD: { 3: 4, 4: 12, 5: 36 },
+    LUCK: { 3: 3, 4: 8, 5: 24 },
+    A: { 3: 2.5, 4: 6, 5: 18 },
+    K: { 3: 2, 4: 5, 5: 14 },
+    SD: { 3: 4, 4: 14, 5: 70 },
+  },
+};
+slotGameThemes.orion = {
+  symbols: ["ORION", "STAR", "DICE", "ROUL", "BOLT", "A", "K", "SD"],
+  weights: [2, 4, 6, 8, 10, 12, 12, 5],
+  pays: {
+    ORION: { 3: 10, 4: 38, 5: 138 },
+    STAR: { 3: 7, 4: 25, 5: 92 },
+    DICE: { 3: 5, 4: 16, 5: 54 },
+    ROUL: { 3: 4, 4: 12, 5: 36 },
+    BOLT: { 3: 3, 4: 8, 5: 24 },
+    A: { 3: 2.5, 4: 6, 5: 18 },
+    K: { 3: 2, 4: 5, 5: 14 },
+    SD: { 3: 4, 4: 14, 5: 70 },
+  },
+};
+slotGameThemes.goldendragon = {
+  symbols: ["GDRG", "DRG", "GOLD", "FIRE", "COIN", "A", "K", "SD"],
+  weights: [2, 4, 5, 8, 10, 12, 12, 5],
+  pays: {
+    GDRG: { 3: 12, 4: 45, 5: 160 },
+    DRG: { 3: 8, 4: 28, 5: 100 },
+    GOLD: { 3: 6, 4: 18, 5: 60 },
+    FIRE: { 3: 4, 4: 12, 5: 38 },
+    COIN: { 3: 3, 4: 8, 5: 24 },
+    A: { 3: 2.5, 4: 6, 5: 18 },
+    K: { 3: 2, 4: 5, 5: 14 },
+    SD: { 3: 4, 4: 14, 5: 70 },
+  },
+};
+slotGameThemes.gamevault = {
+  symbols: ["VAULT", "SAFE", "KEY", "GEM", "COIN", "A", "K", "SD"],
+  weights: [2, 4, 6, 8, 10, 12, 12, 5],
+  pays: {
+    VAULT: { 3: 10, 4: 36, 5: 132 },
+    SAFE: { 3: 7, 4: 25, 5: 90 },
+    KEY: { 3: 5, 4: 16, 5: 54 },
+    GEM: { 3: 4, 4: 12, 5: 36 },
+    COIN: { 3: 3, 4: 8, 5: 24 },
+    A: { 3: 2.5, 4: 6, 5: 18 },
+    K: { 3: 2, 4: 5, 5: 14 },
+    SD: { 3: 4, 4: 14, 5: 70 },
+  },
+};
+slotGameThemes.ultrapanda = {
+  symbols: ["ULTRA", "PANDA", "GOLD", "COIN", "STAR", "A", "K", "SD"],
+  weights: [2, 4, 6, 8, 10, 12, 12, 5],
+  pays: {
+    ULTRA: { 3: 11, 4: 40, 5: 145 },
+    PANDA: { 3: 8, 4: 28, 5: 100 },
+    GOLD: { 3: 5, 4: 16, 5: 56 },
+    COIN: { 3: 4, 4: 12, 5: 36 },
+    STAR: { 3: 3, 4: 8, 5: 24 },
+    A: { 3: 2.5, 4: 6, 5: 18 },
+    K: { 3: 2, 4: 5, 5: 14 },
+    SD: { 3: 4, 4: 14, 5: 70 },
   },
 };
 const slotGameSymbols = Object.fromEntries(Object.entries(slotGameThemes).map(([key, theme]) => [key, theme.symbols]));
@@ -1596,7 +1718,7 @@ async function handleApi(request, response, urlPath, url) {
     const sessionUser = await requirePlayer(request, response);
     if (!sessionUser) return;
     const body = await readBody(request);
-    const gameKey = Object.prototype.hasOwnProperty.call(slotGameSymbols, body.gameKey) ? String(body.gameKey) : "buffalo";
+    const gameKey = Object.prototype.hasOwnProperty.call(slotGameSymbols, body.gameKey) ? String(body.gameKey) : "diamond777";
     const bet = roundPoints(body.bet);
     const validQuarterBet = Math.abs(bet * 4 - Math.round(bet * 4)) < 0.0001;
     if (!Number.isFinite(bet) || bet < 0.25 || bet > 500 || !validQuarterBet) {
@@ -1613,7 +1735,7 @@ async function handleApi(request, response, urlPath, url) {
     }
 
     const createdAt = new Date().toISOString();
-    const theme = slotGameThemes[gameKey] || slotGameThemes.buffalo;
+    const theme = slotGameThemes[gameKey] || slotGameThemes.diamond777;
     const remainingPayout = Math.max(0, roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut));
     const playerPaidToday = slotPayoutForUserToday(data, user.id);
     const remainingPlayerPayout = Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - playerPaidToday));

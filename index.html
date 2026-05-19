@@ -686,12 +686,12 @@
 
         <div class="slots-lobby-frame" data-slots-lobby>
           <aside class="slots-side-menu" aria-label="Slot categories">
-            <button type="button" class="is-active">All</button>
-            <button type="button">Favorite</button>
-            <button type="button">Fishing</button>
-            <button type="button">Slots</button>
-            <button type="button">Rooms</button>
-            <button type="button">Links</button>
+            <button type="button" class="is-active" data-slot-filter="all">All</button>
+            <button type="button" data-slot-filter="favorite">Favorite</button>
+            <button type="button" data-slot-filter="fishing">Fishing</button>
+            <button type="button" data-slot-filter="slots">Slots</button>
+            <button type="button" data-slot-filter="rooms">Rooms</button>
+            <button type="button" data-slot-filter="links">Links</button>
           </aside>
           <div class="slots-lobby-main">
             <div class="slots-marquee">Welcome to South Diamond Slots. Bets start at 0.25 points.</div>
@@ -702,42 +702,74 @@
               <span>Mini <b>21</b></span>
             </div>
             <div class="slots-lobby">
-              <button class="slot-feature-tile diamond" type="button" data-slot-game="diamond" style="--tile-image: url('assets/games/Diamond%20777.png')">
+              <button class="slot-feature-tile diamond" type="button" data-slot-game="diamond777" data-slot-category="slots links" style="--tile-image: url('assets/games/Diamond%20777.png')">
+                <span class="slot-favorite-button" data-slot-favorite="diamond777" aria-label="Save Diamond 777 as favorite">☆</span>
                 <span>Featured</span>
                 <strong>Diamond 777</strong>
                 <small>Classic reels with South Diamond wilds</small>
               </button>
-              <button class="slot-game-tile buffalo" type="button" data-slot-game="buffalo" style="--tile-image: url('assets/games/Milkyway.png')">
+              <button class="slot-game-tile milkyway" type="button" data-slot-game="milkyway" data-slot-category="slots rooms links" style="--tile-image: url('assets/games/Milkyway.png')">
+                <span class="slot-favorite-button" data-slot-favorite="milkyway" aria-label="Save Milky Way 777 as favorite">☆</span>
                 <span>Hot</span>
-                <strong>Buffalo Rush</strong>
-                <small>Wild reels and prairie jackpots</small>
+                <strong>Milky Way 777</strong>
+                <small>Galaxy reels and bright jackpot sparks</small>
               </button>
-              <button class="slot-game-tile diamond" type="button" data-slot-game="diamond" style="--tile-image: url('assets/games/lucky%20777.png')">
+              <button class="slot-game-tile lucky777" type="button" data-slot-game="lucky777" data-slot-category="slots links" style="--tile-image: url('assets/games/lucky%20777.png')">
+                <span class="slot-favorite-button" data-slot-favorite="lucky777" aria-label="Save Lucky 777 as favorite">☆</span>
                 <span>777</span>
                 <strong>Lucky 777</strong>
                 <small>Classic sevens and gem wins</small>
               </button>
-              <button class="slot-game-tile dragon" type="button" data-slot-game="dragon" style="--tile-image: url('assets/games/Dragon%20Conqueror.png')">
+              <button class="slot-game-tile dragon" type="button" data-slot-game="dragon" data-slot-category="slots links" style="--tile-image: url('assets/games/Dragon%20Conqueror.png')">
+                <span class="slot-favorite-button" data-slot-favorite="dragon" aria-label="Save Dragon Conqueror as favorite">☆</span>
                 <span>Fire</span>
                 <strong>Dragon Conqueror</strong>
                 <small>Flame reels and bonus crowns</small>
               </button>
-              <button class="slot-game-tile ocean" type="button" data-slot-game="ocean" style="--tile-image: url('assets/games/ocean%20monster.png')">
+              <button class="slot-game-tile ocean" type="button" data-slot-game="ocean" data-slot-category="fishing links" style="--tile-image: url('assets/games/ocean%20monster.png')">
+                <span class="slot-favorite-button" data-slot-favorite="ocean" aria-label="Save Ocean Monster as favorite">☆</span>
                 <span>Fish</span>
                 <strong>Ocean Monster</strong>
                 <small>Deep sea bonus spins</small>
               </button>
-              <button class="slot-game-tile jungle" type="button" data-slot-game="jungle" style="--tile-image: url('assets/games/Game%20Vault.png')">
-                <span>Wild</span>
-                <strong>Jungle Fortune</strong>
-                <small>Big cats and gold stacks</small>
+              <button class="slot-game-tile firekirin" type="button" data-slot-game="firekirin" data-slot-category="fishing slots links" style="--tile-image: url('assets/games/FireKirin.png')">
+                <span class="slot-favorite-button" data-slot-favorite="firekirin" aria-label="Save Fire Kirin as favorite">☆</span>
+                <span>Fire</span>
+                <strong>Fire Kirin</strong>
+                <small>Hot reels with flame wilds</small>
               </button>
-              <button class="slot-game-tile neon" type="button" data-slot-game="neon" style="--tile-image: url('assets/games/Orion%20stars.png')">
+              <button class="slot-game-tile pandamaster" type="button" data-slot-game="pandamaster" data-slot-category="slots rooms links" style="--tile-image: url('assets/games/Pandamaster.png')">
+                <span class="slot-favorite-button" data-slot-favorite="pandamaster" aria-label="Save Panda Master as favorite">☆</span>
                 <span>New</span>
-                <strong>Neon Reels</strong>
-                <small>Fast bright city spins</small>
+                <strong>Panda Master</strong>
+                <small>Gold coins and panda bonus reels</small>
+              </button>
+              <button class="slot-game-tile orion" type="button" data-slot-game="orion" data-slot-category="slots rooms links" style="--tile-image: url('assets/games/Orion%20stars.png')">
+                <span class="slot-favorite-button" data-slot-favorite="orion" aria-label="Save Orion Stars as favorite">☆</span>
+                <span>Stars</span>
+                <strong>Orion Stars</strong>
+                <small>Neon roulette and star wins</small>
+              </button>
+              <button class="slot-game-tile golden" type="button" data-slot-game="goldendragon" data-slot-category="slots links" style="--tile-image: url('assets/games/Golden%20Dragon.png')">
+                <span class="slot-favorite-button" data-slot-favorite="goldendragon" aria-label="Save Golden Dragon as favorite">☆</span>
+                <span>VIP</span>
+                <strong>Golden Dragon</strong>
+                <small>Dragon reels with premium jackpots</small>
+              </button>
+              <button class="slot-game-tile vault" type="button" data-slot-game="gamevault" data-slot-category="slots rooms links" style="--tile-image: url('assets/games/Game%20Vault.png')">
+                <span class="slot-favorite-button" data-slot-favorite="gamevault" aria-label="Save Game Vault as favorite">☆</span>
+                <span>Vault</span>
+                <strong>Game Vault</strong>
+                <small>Bonus rooms and treasure symbols</small>
+              </button>
+              <button class="slot-game-tile ultrapanda" type="button" data-slot-game="ultrapanda" data-slot-category="slots rooms links" style="--tile-image: url('assets/games/Ultrapanda.png')">
+                <span class="slot-favorite-button" data-slot-favorite="ultrapanda" aria-label="Save Ultra Panda as favorite">☆</span>
+                <span>Panda</span>
+                <strong>Ultra Panda</strong>
+                <small>Coin showers and lucky panda reels</small>
               </button>
             </div>
+            <p class="slots-empty-state is-hidden" data-slots-empty>No games in this section yet. Tap the star on a game to add favorites.</p>
             <div class="slots-prize-dock" aria-label="Slots footer decorations">
               <span>Daily Wheel</span>
               <strong>Jackpot</strong>
@@ -760,12 +792,18 @@
             </div>
             <b data-slot-win-label>Choose a bet and spin</b>
           </div>
-          <div class="slot-reel-board" data-slot-board>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
-            <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+          <div class="slot-machine-stage">
+            <div class="slot-machine-art" data-slot-machine-art>
+              <span>South Diamond</span>
+              <strong>Original Slots</strong>
+            </div>
+            <div class="slot-reel-board" data-slot-board>
+              <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+              <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+              <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+              <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+              <div class="slot-reel"><span>7</span><span>SD</span><span>BAR</span></div>
+            </div>
           </div>
           <div class="slot-controls">
             <button type="button" data-slot-bet-down>-</button>
@@ -778,6 +816,7 @@
             <span>4 matching: 8x</span>
             <span>5 matching: 25x</span>
             <span>Wild SD boosts wins</span>
+            <span>Higher bets unlock higher point wins</span>
           </div>
         </div>
       </div>
