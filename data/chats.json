@@ -18,7 +18,9 @@
       "chatId": null,
       "referredBy": "user-1778378558490-ylq0w6",
       "referralCode": "SDF4F3EFC2",
-      "adminNote": ""
+      "adminNote": "",
+      "isVip": false,
+      "spinLastAt": null
     },
     {
       "id": "user-1778378558490-ylq0w6",
@@ -37,7 +39,9 @@
       "chatId": null,
       "referredBy": null,
       "referralCode": "SDA0FA7465",
-      "adminNote": ""
+      "adminNote": "",
+      "isVip": false,
+      "spinLastAt": null
     }
   ],
   "pointTransactions": [
@@ -91,5 +95,28 @@
   ],
   "adminSessions": [],
   "adminPasswordResetTokens": [],
-  "adminPasswordHash": ""
+  "adminPasswordHash": "",
+  "spinSettings": {
+    "limits": {
+      "1": 10,
+      "3": 3,
+      "5": 2,
+      "10": 1
+    }
+  },
+  "spinWheel": {
+    "date": "2026-05-18",
+    "awards": []
+  },
+  "slotSettings": {
+    "dailyPayoutLimit": 25,
+    "playerDailyPayoutLimit": 8
+  },
+  "slotPayout": {
+    "date": "2026-05-18",
+    "paidOut": 0,
+    "spins": []
+  },
+  "uploads": [],
+  "activities": []
 }

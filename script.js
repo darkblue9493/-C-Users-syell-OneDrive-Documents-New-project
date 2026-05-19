@@ -348,28 +348,35 @@ const slotGameTitle = document.querySelector("[data-slot-game-title]");
 const slotThemeLabel = document.querySelector("[data-slot-theme-label]");
 const slotWinLabel = document.querySelector("[data-slot-win-label]");
 const slotBoard = document.querySelector("[data-slot-board]");
-const slotMachineArt = document.querySelector("[data-slot-machine-art]");
 const slotBetDisplay = document.querySelector("[data-slot-bet]");
 const slotBetDown = document.querySelector("[data-slot-bet-down]");
 const slotBetUp = document.querySelector("[data-slot-bet-up]");
 const slotSpinButton = document.querySelector("[data-slot-spin]");
-const slotFilterButtons = document.querySelectorAll("[data-slot-filter]");
-const slotGameTiles = document.querySelectorAll("[data-slot-game]");
-const slotEmptyState = document.querySelector("[data-slots-empty]");
+const slotCreditsDisplay = document.querySelector("[data-slot-credits]");
+const slotWinAmount = document.querySelector("[data-slot-win-amount]");
+const winBurst = document.querySelector("[data-win-burst]");
+const winBurstAmount = document.querySelector("[data-win-burst-amount]");
+const winCoins = document.querySelector("[data-win-coins]");
+const bigWinBanner = document.querySelector("[data-big-win-banner]");
+const slotMaxBetBtn = document.querySelector("[data-slot-max-bet]");
+const slotAutoBtn = document.querySelector("[data-slot-auto]");
+const slotStage = document.querySelector("[data-slot-stage]");
+const paylineOverlay = document.querySelector("[data-payline-overlay]");
 
 let currentPlayer = null;
 let hasOpenedPlayerChat = false;
 let hasCheckedDailySpin = false;
 let spinRotation = 0;
-let activeSlotGame = "diamond777";
+let activeSlotGame = "buffalo";
 let slotBalance = 0;
 let slotBet = 0.25;
 let slotIsSpinning = false;
 let slotMusicOn = false;
 let slotAudioContext = null;
 let slotMusicTimer = null;
-let activeSlotFilter = "all";
-let slotFavorites = new Set();
+let slotAutoSpinning = false;
+let slotAutoSpinTimer = null;
+let slotCurrentWin = 0;
 let lastPlayerOperatorMessageId = "";
 let playerNotificationsReady = false;
 const referralCodeFromUrl = (() => {
@@ -602,191 +609,195 @@ function closeWelcomeModal() {
   welcomeModal?.classList.add("is-hidden");
 }
 
+// Rich symbol library: each symbol maps to display data (icon, color, tier)
+const SLOT_SYMBOL_LIBRARY = {
+  // High value
+  "SD":     { icon: '<svg viewBox="0 0 40 40"><defs><linearGradient id="sdg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff8dc"/><stop offset=".5" stop-color="#f6c85f"/><stop offset="1" stop-color="#a06b1f"/></linearGradient></defs><polygon points="20,3 36,20 20,37 4,20" fill="url(#sdg)" stroke="#fff" stroke-width="1.5"/><text x="20" y="25" text-anchor="middle" font-family="Georgia" font-weight="900" font-size="14" fill="#1a0d06">SD</text></svg>', color:"#ffd76b", tier:"wild", label:"WILD" },
+  "777":    { icon: '<svg viewBox="0 0 40 40"><defs><linearGradient id="sevg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff4d6d"/><stop offset="1" stop-color="#8b0023"/></linearGradient></defs><rect x="3" y="3" width="34" height="34" rx="6" fill="url(#sevg)" stroke="#ffd76b" stroke-width="2"/><text x="20" y="27" text-anchor="middle" font-family="Impact" font-weight="900" font-size="18" fill="#ffd76b">777</text></svg>', color:"#ff4d6d", tier:"premium", label:"777" },
+  "DIA":    { icon:"\uD83D\uDC8E", color:"#7be8ff", tier:"premium", label:"DIAMOND" },
+  "BAR":    { icon: '<svg viewBox="0 0 40 40"><rect x="4" y="10" width="32" height="20" rx="3" fill="#1a0d06" stroke="#f6c85f" stroke-width="2"/><text x="20" y="25" text-anchor="middle" font-family="Arial Black" font-weight="900" font-size="11" fill="#f6c85f">BAR</text></svg>', color:"#f6c85f", tier:"premium", label:"BAR" },
+  "BELL":   { icon:"\uD83D\uDD14", color:"#ffc845", tier:"high", label:"BELL" },
+  "CHERRY": { icon:"\uD83C\uDF52", color:"#ff5675", tier:"high", label:"CHERRY" },
+  // Theme: Buffalo
+  "BUF":    { icon:"\uD83E\uDD8C", color:"#ffb162", tier:"premium", label:"BUFFALO" },
+  "BISON":  { icon:"\uD83D\uDC03", color:"#cf8a4a", tier:"high", label:"BISON" },
+  "EAGLE":  { icon:"\uD83E\uDD85", color:"#e8c489", tier:"high", label:"EAGLE" },
+  "CACT":   { icon:"\uD83C\uDF35", color:"#69d27a", tier:"mid", label:"CACTUS" },
+  // Theme: Dragon
+  "DRG":    { icon:"\uD83D\uDC09", color:"#ff5630", tier:"premium", label:"DRAGON" },
+  "FIRE":   { icon:"\uD83D\uDD25", color:"#ff7a30", tier:"high", label:"FIRE" },
+  "SWORD":  { icon:"\u2694\uFE0F", color:"#c0c8d2", tier:"high", label:"SWORD" },
+  "GOLD":   { icon: '<svg viewBox="0 0 40 40"><defs><radialGradient id="gold" cx=".4" cy=".3"><stop offset="0" stop-color="#fff8cd"/><stop offset="1" stop-color="#b8830a"/></radialGradient></defs><circle cx="20" cy="20" r="15" fill="url(#gold)" stroke="#8b5d00" stroke-width="2"/><text x="20" y="25" text-anchor="middle" font-family="Georgia" font-weight="900" font-size="14" fill="#5a3a00">$</text></svg>', color:"#ffd76b", tier:"high", label:"GOLD" },
+  "PALACE": { icon:"\uD83C\uDFEF", color:"#ff9a4a", tier:"mid", label:"PALACE" },
+  // Theme: Ocean
+  "OCEAN":  { icon:"\uD83C\uDF0A", color:"#3bb8ff", tier:"premium", label:"WAVE" },
+  "SHARK":  { icon:"\uD83E\uDD88", color:"#5fc1f5", tier:"high", label:"SHARK" },
+  "CRAB":   { icon:"\uD83E\uDD80", color:"#ff7e5a", tier:"high", label:"CRAB" },
+  "PEARL":  { icon: '<svg viewBox="0 0 40 40"><defs><radialGradient id="pearl" cx=".4" cy=".35"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#dde9ff"/><stop offset="1" stop-color="#7fa5cc"/></radialGradient></defs><circle cx="20" cy="20" r="14" fill="url(#pearl)" stroke="#aac4e0" stroke-width="1.5"/></svg>', color:"#dde9ff", tier:"high", label:"PEARL" },
+  "FISH":   { icon:"\uD83D\uDC1F", color:"#ffb854", tier:"mid", label:"FISH" },
+  // Theme: Jungle
+  "TIGER":  { icon:"\uD83D\uDC2F", color:"#ffa64d", tier:"premium", label:"TIGER" },
+  "LEOP":   { icon:"\uD83D\uDC06", color:"#ffd966", tier:"high", label:"LEOPARD" },
+  "MASK":   { icon:"\uD83D\uDC79", color:"#7ad186", tier:"high", label:"TOTEM" },
+  "LEAF":   { icon:"\uD83C\uDF43", color:"#52ef9f", tier:"mid", label:"LEAF" },
+  // Theme: Neon
+  "BOLT":   { icon:"\u26A1", color:"#fff05a", tier:"premium", label:"BOLT" },
+  "DICE":   { icon:"\uD83C\uDFB2", color:"#ff5fe5", tier:"high", label:"DICE" },
+  "ROUL":   { icon: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="14" fill="#5e0024" stroke="#f6c85f" stroke-width="2"/><circle cx="20" cy="20" r="6" fill="#1a0d06"/><line x1="20" y1="6" x2="20" y2="14" stroke="#fff" stroke-width="2"/><line x1="20" y1="34" x2="20" y2="26" stroke="#fff" stroke-width="2"/><line x1="6" y1="20" x2="14" y2="20" stroke="#fff" stroke-width="2"/><line x1="34" y1="20" x2="26" y2="20" stroke="#fff" stroke-width="2"/></svg>', color:"#ff3b7a", tier:"high", label:"ROULETTE" },
+  // Card faces
+  "A":      { icon:"A", color:"#ff5675", tier:"low", label:"A" },
+  "K":      { icon:"K", color:"#ffc845", tier:"low", label:"K" },
+  "Q":      { icon:"Q", color:"#a78bff", tier:"low", label:"Q" },
+  "J":      { icon:"J", color:"#52ef9f", tier:"low", label:"J" },
+  "10":     { icon:"10", color:"#7be8ff", tier:"low", label:"10" },
+};
+
+function getSymbolMeta(symbol) {
+  return SLOT_SYMBOL_LIBRARY[symbol] || { icon: symbol || "?", color: "#fff", tier: "low", label: symbol || "?" };
+}
+
 const slotGames = {
-  diamond777: {
+  buffalo: {
+    title: "Buffalo Rush",
+    label: "Wild prairie reels",
+    className: "buffalo",
+    accent: "#ffb162",
+    symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
+  },
+  diamond: {
     title: "Diamond 777",
     label: "Classic jackpot reels",
     className: "diamond",
-    image: "assets/games/Diamond%20777.png",
+    accent: "#7be8ff",
     symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
-  },
-  milkyway: {
-    title: "Milky Way 777",
-    label: "Galaxy jackpot reels",
-    className: "milkyway",
-    image: "assets/games/Milkyway.png",
-    symbols: ["GALAXY", "MOON", "STAR", "ROUL", "CHIP", "A", "K", "SD"],
-  },
-  lucky777: {
-    title: "Lucky 777",
-    label: "Lucky gem reels",
-    className: "lucky777",
-    image: "assets/games/lucky%20777.png",
-    symbols: ["777", "LUCK", "DIA", "BELL", "BAR", "A", "K", "SD"],
   },
   dragon: {
     title: "Dragon Conqueror",
     label: "Fire bonus reels",
     className: "dragon",
-    image: "assets/games/Dragon%20Conqueror.png",
+    accent: "#ff5630",
     symbols: ["DRG", "FIRE", "SWORD", "GOLD", "PALACE", "A", "K", "SD"],
   },
   ocean: {
     title: "Ocean Monster",
     label: "Deep sea wins",
     className: "ocean",
-    image: "assets/games/ocean%20monster.png",
+    accent: "#3bb8ff",
     symbols: ["OCEAN", "SHARK", "CRAB", "PEARL", "FISH", "A", "K", "SD"],
+  },
+  jungle: {
+    title: "Jungle Fortune",
+    label: "Big wild wins",
+    className: "jungle",
+    accent: "#52ef9f",
+    symbols: ["TIGER", "LEOP", "GOLD", "MASK", "LEAF", "A", "K", "SD"],
+  },
+  neon: {
+    title: "Neon Reels",
+    label: "Fast city spins",
+    className: "neon",
+    accent: "#ff5fe5",
+    symbols: ["777", "BOLT", "DICE", "ROUL", "DIA", "A", "K", "SD"],
+  },
+  // Bonus mapped games (use generic mappings)
+  milkyway: {
+    title: "Milky Way 777",
+    label: "Galaxy reels",
+    className: "neon",
+    accent: "#a78bff",
+    symbols: ["777", "DIA", "BOLT", "BELL", "A", "K", "SD"],
+  },
+  lucky777: {
+    title: "Lucky 777",
+    label: "Classic sevens",
+    className: "diamond",
+    accent: "#ff4d6d",
+    symbols: ["777", "BAR", "CHERRY", "BELL", "DIA", "A", "K", "SD"],
+  },
+  diamond777: {
+    title: "Diamond 777",
+    label: "Premium gem reels",
+    className: "diamond",
+    accent: "#7be8ff",
+    symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
   },
   firekirin: {
     title: "Fire Kirin",
-    label: "Hot flame reels",
-    className: "firekirin",
-    image: "assets/games/FireKirin.png",
-    symbols: ["KIRIN", "FIRE", "DRG", "GOLD", "COIN", "A", "K", "SD"],
+    label: "Flame wild reels",
+    className: "dragon",
+    accent: "#ff7a30",
+    symbols: ["DRG", "FIRE", "GOLD", "PALACE", "A", "K", "Q", "SD"],
   },
   pandamaster: {
     title: "Panda Master",
-    label: "Gold panda reels",
-    className: "pandamaster",
-    image: "assets/games/Pandamaster.png",
-    symbols: ["PANDA", "BAMBOO", "COIN", "GOLD", "LUCK", "A", "K", "SD"],
+    label: "Panda bonus reels",
+    className: "jungle",
+    accent: "#7ad186",
+    symbols: ["TIGER", "LEAF", "BELL", "GOLD", "A", "K", "Q", "SD"],
   },
   orion: {
     title: "Orion Stars",
-    label: "Neon roulette reels",
-    className: "orion",
-    image: "assets/games/Orion%20stars.png",
-    symbols: ["ORION", "STAR", "DICE", "ROUL", "BOLT", "A", "K", "SD"],
+    label: "Neon star wins",
+    className: "neon",
+    accent: "#a78bff",
+    symbols: ["BOLT", "DICE", "ROUL", "DIA", "777", "A", "K", "SD"],
   },
   goldendragon: {
     title: "Golden Dragon",
-    label: "Premium dragon reels",
-    className: "golden",
-    image: "assets/games/Golden%20Dragon.png",
-    symbols: ["GDRG", "DRG", "GOLD", "FIRE", "COIN", "A", "K", "SD"],
+    label: "VIP dragon reels",
+    className: "dragon",
+    accent: "#ffd76b",
+    symbols: ["DRG", "GOLD", "FIRE", "PALACE", "SWORD", "A", "K", "SD"],
   },
   gamevault: {
     title: "Game Vault",
-    label: "Treasure room reels",
-    className: "vault",
-    image: "assets/games/Game%20Vault.png",
-    symbols: ["VAULT", "SAFE", "KEY", "GEM", "COIN", "A", "K", "SD"],
+    label: "Treasure reels",
+    className: "buffalo",
+    accent: "#f6c85f",
+    symbols: ["GOLD", "BAR", "DIA", "BELL", "CHERRY", "A", "K", "SD"],
   },
   ultrapanda: {
     title: "Ultra Panda",
     label: "Lucky panda reels",
-    className: "ultrapanda",
-    image: "assets/games/Ultrapanda.png",
-    symbols: ["ULTRA", "PANDA", "GOLD", "COIN", "STAR", "A", "K", "SD"],
+    className: "jungle",
+    accent: "#69d27a",
+    symbols: ["LEAF", "GOLD", "BELL", "TIGER", "A", "K", "Q", "SD"],
   },
 };
-
-function loadSlotFavorites() {
-  try {
-    const saved = JSON.parse(localStorage.getItem("southDiamondSlotFavorites") || "[]");
-    slotFavorites = new Set(Array.isArray(saved) ? saved.filter((key) => slotGames[key]) : []);
-  } catch {
-    slotFavorites = new Set();
-  }
-}
-
-function saveSlotFavorites() {
-  try {
-    localStorage.setItem("southDiamondSlotFavorites", JSON.stringify([...slotFavorites]));
-  } catch {
-    // Favorites are a convenience; the games still work if the browser blocks storage.
-  }
-}
-
-function updateSlotFavoriteButtons() {
-  document.querySelectorAll("[data-slot-favorite]").forEach((button) => {
-    const isFavorite = slotFavorites.has(button.dataset.slotFavorite);
-    button.classList.toggle("is-favorite", isFavorite);
-    button.textContent = isFavorite ? "★" : "☆";
-    button.setAttribute("aria-label", `${isFavorite ? "Remove" : "Save"} ${slotGames[button.dataset.slotFavorite]?.title || "game"} favorite`);
-  });
-}
-
-function filterSlotLobby(filter = activeSlotFilter) {
-  activeSlotFilter = filter;
-  let visibleCount = 0;
-  slotFilterButtons.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.slotFilter === activeSlotFilter);
-  });
-  slotGameTiles.forEach((tile) => {
-    const gameKey = tile.dataset.slotGame;
-    const categories = (tile.dataset.slotCategory || "").split(/\s+/);
-    const shouldShow =
-      activeSlotFilter === "all" ||
-      (activeSlotFilter === "favorite" && slotFavorites.has(gameKey)) ||
-      categories.includes(activeSlotFilter);
-    tile.classList.toggle("is-hidden", !shouldShow);
-    if (shouldShow) visibleCount += 1;
-  });
-  if (slotEmptyState) {
-    slotEmptyState.classList.toggle("is-hidden", visibleCount > 0);
-    slotEmptyState.textContent =
-      activeSlotFilter === "favorite"
-        ? "No favorites yet. Tap the star on any game to save it here."
-        : "No games in this section yet.";
-  }
-  updateSlotFavoriteButtons();
-}
 
 function loadSlotBalance() {
   slotBalance = Number(currentPlayer?.points) || 0;
 }
 
 function updateSlotUi() {
-  const game = slotGames[activeSlotGame] || slotGames.diamond777;
+  const game = slotGames[activeSlotGame] || slotGames.buffalo;
   slotBalance = Number(currentPlayer?.points) || slotBalance || 0;
   if (slotBalanceDisplay) slotBalanceDisplay.textContent = formatPoints(slotBalance);
+  if (slotCreditsDisplay) slotCreditsDisplay.textContent = formatPoints(slotBalance);
   if (slotBetDisplay) slotBetDisplay.textContent = formatPoints(slotBet);
   if (slotGameTitle) slotGameTitle.textContent = game.title;
   if (slotThemeLabel) slotThemeLabel.textContent = game.label;
   if (slotMachine) {
-    slotMachine.classList.remove(...Object.values(slotGames).map((item) => item.className));
+    const allClasses = [...new Set(Object.values(slotGames).map((item) => item.className))];
+    slotMachine.classList.remove(...allClasses);
     slotMachine.classList.add(game.className);
-    slotMachine.style.setProperty("--machine-art", `url("${game.image}")`);
+    if (game.accent) slotMachine.style.setProperty("--slot-accent", game.accent);
   }
-  if (slotMachineArt) {
-    slotMachineArt.style.backgroundImage = `linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.78)), url("${game.image}")`;
-    slotMachineArt.querySelector("span").textContent = game.label;
-    slotMachineArt.querySelector("strong").textContent = game.title;
-  }
+  if (slotWinAmount && !slotIsSpinning) slotWinAmount.textContent = formatPoints(slotCurrentWin);
 }
 
-function slotSymbolClass(symbol) {
-  return String(symbol || "SD").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-}
-
-function slotSymbolText(symbol) {
-  const labels = {
-    GALAXY: "Galaxy",
-    GDRG: "Gold Dragon",
-    DRG: "Dragon",
-    DIA: "Diamond",
-    ROUL: "Roulette",
-    KIRIN: "Kirin",
-    LUCK: "Lucky",
-    BELL: "Bell",
-    CHERRY: "Cherry",
-    COIN: "Coin",
-    GOLD: "Gold",
-    STAR: "Star",
-    PANDA: "Panda",
-    BAMBOO: "Bamboo",
-    ORION: "Orion",
-    VAULT: "Vault",
-    SAFE: "Safe",
-    ULTRA: "Ultra",
-    OCEAN: "Ocean",
-    SHARK: "Shark",
-    PEARL: "Pearl",
-    FISH: "Fish",
-  };
-  return labels[symbol] || symbol || "SD";
+function renderSymbolCell(symbol, isWinning) {
+  const meta = getSymbolMeta(symbol);
+  const isSvg = typeof meta.icon === "string" && meta.icon.startsWith("<svg");
+  const tierClass = `tier-${meta.tier || "low"}`;
+  const winClass = isWinning ? " is-winning" : "";
+  if (isSvg) {
+    return `<span class="symbol-cell ${tierClass}${winClass}" data-symbol="${symbol}" style="--sym-color:${meta.color}"><span class="sym-svg">${meta.icon}</span></span>`;
+  }
+  // Emoji or text
+  const isText = /^[A-Z0-9]+$/.test(meta.icon) && meta.icon.length <= 3;
+  const cls = isText ? "sym-text" : "sym-emoji";
+  return `<span class="symbol-cell ${tierClass}${winClass}" data-symbol="${symbol}" style="--sym-color:${meta.color}"><span class="${cls}">${meta.icon}</span></span>`;
 }
 
 function renderSlotReels(symbolsOrGrid, wins = []) {
@@ -804,10 +815,7 @@ function renderSlotReels(symbolsOrGrid, wins = []) {
     const reelSymbols = grid[index] || ["SD", "SD", "SD"];
     reel.innerHTML = reelSymbols
       .slice(0, 3)
-      .map((symbol, row) => {
-        const classes = `slot-symbol symbol-${slotSymbolClass(symbol)}${winningCells.has(`${index}-${row}`) ? " is-winning" : ""}`;
-        return `<span class="${classes}" data-symbol="${symbol || "SD"}"><i>${slotSymbolText(symbol)}</i></span>`;
-      })
+      .map((symbol, row) => renderSymbolCell(symbol || "SD", winningCells.has(`${index}-${row}`)))
       .join("");
   });
 }
@@ -820,7 +828,7 @@ function randomSlotGrid(game) {
 }
 
 function startSlotRollingPreview() {
-  const game = slotGames[activeSlotGame] || slotGames.diamond777;
+  const game = slotGames[activeSlotGame] || slotGames.buffalo;
   return window.setInterval(() => renderSlotReels(randomSlotGrid(game)), 92);
 }
 
@@ -893,7 +901,6 @@ function openSlotsLobby() {
   slotsLobby?.classList.remove("is-hidden");
   slotMachine?.classList.add("is-hidden");
   slotsBack?.classList.add("is-hidden");
-  filterSlotLobby(activeSlotFilter);
   if (slotWinLabel) slotWinLabel.textContent = "Choose a South Diamond slot game.";
 }
 
@@ -904,7 +911,7 @@ function closeSlotsLobby() {
 }
 
 function openSlotGame(gameKey) {
-  activeSlotGame = slotGames[gameKey] ? gameKey : "diamond777";
+  activeSlotGame = slotGames[gameKey] ? gameKey : "buffalo";
   const game = slotGames[activeSlotGame];
   slotsLobby?.classList.add("is-hidden");
   slotMachine?.classList.remove("is-hidden");
@@ -914,60 +921,174 @@ function openSlotGame(gameKey) {
   updateSlotUi();
 }
 
+function animateCount(el, fromVal, toVal, duration = 1200) {
+  if (!el) return;
+  const start = performance.now();
+  const diff = toVal - fromVal;
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const cur = fromVal + diff * eased;
+    el.textContent = formatPoints(Math.round(cur * 100) / 100);
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function showWinBurst(amount, isBig) {
+  if (!winBurst) return;
+  winBurst.classList.remove("is-hidden");
+  if (winBurstAmount) winBurstAmount.textContent = `+${formatPoints(amount)}`;
+  winBurst.classList.add("is-active");
+  // Coin shower
+  if (winCoins) {
+    winCoins.innerHTML = "";
+    const coinCount = isBig ? 24 : 12;
+    for (let i = 0; i < coinCount; i++) {
+      const coin = document.createElement("span");
+      coin.className = "coin-particle";
+      coin.style.left = `${10 + Math.random() * 80}%`;
+      coin.style.animationDelay = `${Math.random() * 0.6}s`;
+      coin.style.animationDuration = `${1.4 + Math.random() * 1.0}s`;
+      coin.textContent = ["\uD83D\uDCB0","\uD83D\uDC8E","\u2B50","\uD83C\uDF1F"][i % 4];
+      winCoins.appendChild(coin);
+    }
+  }
+  if (isBig && bigWinBanner) {
+    bigWinBanner.classList.remove("is-hidden");
+    bigWinBanner.classList.add("is-active");
+    window.setTimeout(() => {
+      bigWinBanner.classList.remove("is-active");
+      bigWinBanner.classList.add("is-hidden");
+    }, 2800);
+  }
+  window.setTimeout(() => {
+    winBurst.classList.remove("is-active");
+    winBurst.classList.add("is-hidden");
+  }, 2400);
+}
+
 async function spinSlotGame() {
   if (slotIsSpinning || !currentPlayer) return;
   slotBalance = Number(currentPlayer.points) || 0;
   if (slotBalance < slotBet) {
     if (slotWinLabel) slotWinLabel.textContent = "Not enough points. Lower your bet or ask admin to add points.";
+    stopSlotAutoSpin();
     return;
   }
   slotIsSpinning = true;
-  if (slotWinLabel) slotWinLabel.textContent = "Spinning...";
+  slotCurrentWin = 0;
+  if (slotWinLabel) slotWinLabel.textContent = "Reels rolling...";
+  if (slotWinAmount) slotWinAmount.textContent = "0";
+  slotBoard?.classList.remove("is-winning");
   if (slotSpinButton) {
     slotSpinButton.disabled = true;
-    slotSpinButton.textContent = "Spinning";
+    slotSpinButton.classList.add("is-spinning");
+    const txt = slotSpinButton.querySelector(".spin-button-text");
+    if (txt) txt.textContent = "STOP";
   }
   const rollingTimer = startSlotRollingPreview();
   slotBoard?.querySelectorAll(".slot-reel").forEach((reel, index) => {
     reel.classList.add("is-spinning");
-    reel.style.animationDuration = `${0.68 + index * 0.1}s`;
+    reel.style.animationDuration = `${0.18 + index * 0.04}s`;
   });
   try {
     const data = await api("/api/player/slots/spin", {
       method: "POST",
       body: JSON.stringify({ gameKey: activeSlotGame, bet: slotBet }),
     });
+    // Stop reels in sequence for realism
+    const totalSpinTime = 2400;
+    const stopStagger = 280;
     window.setTimeout(() => {
       window.clearInterval(rollingTimer);
-      updateCurrentPlayer(data.user);
-      renderSlotReels(data.grid || data.result, data.wins || []);
-      slotBoard?.querySelectorAll(".slot-reel").forEach((reel) => reel.classList.remove("is-spinning"));
-      slotBoard?.classList.toggle("is-winning", data.win > 0);
-      if (slotWinLabel) {
-        const bonusText = data.bonus?.amount ? ` including ${formatPoints(data.bonus.amount)} bonus` : "";
-        slotWinLabel.textContent = data.win > 0 ? `You won ${formatPoints(data.win)} points${bonusText}` : "No win. Spin again.";
-      }
-      playSlotSound(data.win > 0 ? "win" : "stop");
-      updateSlotUi();
-      refreshPlayerPointTransactions();
-      slotIsSpinning = false;
-      if (slotSpinButton) {
-        slotSpinButton.disabled = false;
-        slotSpinButton.textContent = "Spin";
-      }
-    }, 2400);
+      const reels = slotBoard?.querySelectorAll(".slot-reel") || [];
+      const grid = data.grid || data.result || [];
+      reels.forEach((reel, index) => {
+        window.setTimeout(() => {
+          reel.classList.remove("is-spinning");
+          reel.classList.add("just-stopped");
+          // Render only this reel with final symbols
+          const reelSymbols = (grid[index] || ["SD","SD","SD"]).slice(0, 3);
+          reel.innerHTML = reelSymbols
+            .map((symbol) => renderSymbolCell(symbol || "SD", false))
+            .join("");
+          playSlotSound("stop");
+          window.setTimeout(() => reel.classList.remove("just-stopped"), 360);
+        }, index * stopStagger);
+      });
+      // After all reels stop, apply wins and update UI
+      window.setTimeout(() => {
+        renderSlotReels(data.grid || data.result, data.wins || []);
+        slotBoard?.classList.toggle("is-winning", data.win > 0);
+        updateCurrentPlayer(data.user);
+        const winAmt = Number(data.win) || 0;
+        slotCurrentWin = winAmt;
+        if (slotWinLabel) {
+          const bonusText = data.bonus?.amount ? ` (incl. ${formatPoints(data.bonus.amount)} bonus)` : "";
+          slotWinLabel.textContent = winAmt > 0 ? `WIN! ${formatPoints(winAmt)} points${bonusText}` : "No win. Spin again.";
+        }
+        if (winAmt > 0) {
+          animateCount(slotWinAmount, 0, winAmt, 1200);
+          const isBig = winAmt >= slotBet * 10;
+          showWinBurst(winAmt, isBig);
+          playSlotSound("win");
+        } else {
+          if (slotWinAmount) slotWinAmount.textContent = "0";
+        }
+        updateSlotUi();
+        refreshPlayerPointTransactions();
+        slotIsSpinning = false;
+        if (slotSpinButton) {
+          slotSpinButton.disabled = false;
+          slotSpinButton.classList.remove("is-spinning");
+          const txt = slotSpinButton.querySelector(".spin-button-text");
+          if (txt) txt.textContent = "SPIN";
+        }
+        // Auto-spin continues
+        if (slotAutoSpinning) {
+          slotAutoSpinTimer = window.setTimeout(() => spinSlotGame(), 1200);
+        }
+      }, reels.length * stopStagger + 200);
+    }, totalSpinTime);
   } catch (error) {
     window.clearInterval(rollingTimer);
     slotBoard?.querySelectorAll(".slot-reel").forEach((reel) => reel.classList.remove("is-spinning"));
     if (slotWinLabel) slotWinLabel.textContent = error.message;
     if (error.user) updateCurrentPlayer(error.user);
     slotIsSpinning = false;
+    stopSlotAutoSpin();
     if (slotSpinButton) {
       slotSpinButton.disabled = false;
-      slotSpinButton.textContent = "Spin";
+      slotSpinButton.classList.remove("is-spinning");
+      const txt = slotSpinButton.querySelector(".spin-button-text");
+      if (txt) txt.textContent = "SPIN";
     }
     updateSlotUi();
   }
+}
+
+function startSlotAutoSpin() {
+  if (slotAutoSpinning) return;
+  slotAutoSpinning = true;
+  slotAutoBtn?.classList.add("is-active");
+  if (slotAutoBtn) slotAutoBtn.textContent = "STOP AUTO";
+  if (!slotIsSpinning) spinSlotGame();
+}
+
+function stopSlotAutoSpin() {
+  slotAutoSpinning = false;
+  if (slotAutoSpinTimer) window.clearTimeout(slotAutoSpinTimer);
+  slotAutoSpinTimer = null;
+  slotAutoBtn?.classList.remove("is-active");
+  if (slotAutoBtn) slotAutoBtn.textContent = "AUTO";
+}
+
+function setMaxBet() {
+  const maxBets = [0.25, 0.5, 1, 2, 5, 10];
+  const affordable = maxBets.filter((b) => b <= slotBalance);
+  slotBet = affordable.length ? affordable[affordable.length - 1] : 0.25;
+  updateSlotUi();
 }
 
 function updateCurrentPlayer(user) {
@@ -1530,9 +1651,6 @@ spinModal?.addEventListener("click", (event) => {
   if (event.target === spinModal) closeSpinModal();
 });
 
-loadSlotFavorites();
-filterSlotLobby("all");
-
 slotsOpenButtons.forEach((button) => {
   button.addEventListener("click", openSlotsLobby);
 });
@@ -1544,26 +1662,6 @@ slotsModal?.addEventListener("click", (event) => {
 });
 
 slotsLobby?.addEventListener("click", (event) => {
-  const filterButton = event.target.closest("[data-slot-filter]");
-  if (filterButton) {
-    filterSlotLobby(filterButton.dataset.slotFilter || "all");
-    playSlotSound("click");
-    return;
-  }
-
-  const favoriteButton = event.target.closest("[data-slot-favorite]");
-  if (favoriteButton) {
-    event.preventDefault();
-    event.stopPropagation();
-    const gameKey = favoriteButton.dataset.slotFavorite;
-    if (slotFavorites.has(gameKey)) slotFavorites.delete(gameKey);
-    else if (slotGames[gameKey]) slotFavorites.add(gameKey);
-    saveSlotFavorites();
-    filterSlotLobby(activeSlotFilter);
-    playSlotSound("click");
-    return;
-  }
-
   const button = event.target.closest("[data-slot-game]");
   if (!button) return;
   openSlotGame(button.dataset.slotGame);
@@ -2857,3 +2955,10 @@ if (logoutButton) {
     await logoutAdmin();
   });
 }
+
+// === Slot game enhancements: wire up new controls ===
+if (slotMaxBetBtn) slotMaxBetBtn.addEventListener("click", () => { if (!slotIsSpinning) setMaxBet(); });
+if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
+  if (slotAutoSpinning) stopSlotAutoSpin();
+  else startSlotAutoSpin();
+});
