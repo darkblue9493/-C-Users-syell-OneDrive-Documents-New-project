@@ -27,7 +27,7 @@ button { font-family: inherit; cursor: pointer; }
   top: 0;
   z-index: 100;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -68,6 +68,26 @@ button { font-family: inherit; cursor: pointer; }
   font-size: .65rem; color: #fff;
 }
 .brand-text { font-size: 1.1rem; letter-spacing: .05em; text-shadow: 0 0 8px rgba(255, 215, 107, .6); }
+.arcade-home {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 215, 107, 0.45);
+  border-radius: 999px;
+  color: #fff7df;
+  background: rgba(255, 215, 107, 0.12);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.arcade-home:hover,
+.arcade-brand:hover {
+  color: #ffffff;
+}
 .arcade-balance {
   display: grid;
   grid-template-rows: auto auto;
@@ -1059,6 +1079,7 @@ button { font-family: inherit; cursor: pointer; }
 @media (max-width: 768px) {
   .arcade-header { grid-template-columns: auto 1fr auto; padding: 8px; gap: 8px; }
   .brand-text { font-size: .9rem; }
+  .arcade-home { padding: 6px 10px; font-size: .68rem; }
   .arcade-toggles { grid-column: 1 / -1; justify-content: center; }
   .arcade-balance { gap: 1px 6px; padding: 4px 8px; }
   .balance-label { font-size: .5rem; }
@@ -1479,6 +1500,23 @@ button { font-family: inherit; cursor: pointer; }
   background: linear-gradient(135deg, #ffd76b, #b8830a);
   color: #1a0d06;
   box-shadow: 0 0 14px rgba(255, 215, 107, .9);
+}
+.badge-maintenance {
+  background: linear-gradient(135deg, #d9dee7, #687386);
+  color: #111827;
+  box-shadow: 0 0 14px rgba(217, 222, 231, .5);
+}
+.lobby-tile.is-maintenance {
+  filter: grayscale(.55);
+  opacity: .72;
+}
+.lobby-tile.is-maintenance .tile-play {
+  background: linear-gradient(135deg, #d9dee7, #687386);
+  color: #111827 !important;
+  box-shadow: 0 2px 0 rgba(0,0,0,.5);
+}
+.lobby-tile.is-maintenance .tile-mascot-art {
+  opacity: .58;
 }
 @keyframes badge-shine {
   0%, 100% { transform: scale(1); }
@@ -2553,10 +2591,10 @@ body.is-pseudo-fullscreen .game-view {
   }
 
   .arcade-header {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "brand balance"
-      "toggles toggles";
+      "brand home balance"
+      "toggles toggles toggles";
     align-items: center;
     padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px;
     gap: 8px;
@@ -2565,6 +2603,10 @@ body.is-pseudo-fullscreen .game-view {
   .arcade-brand {
     grid-area: brand;
     min-width: 0;
+  }
+
+  .arcade-home {
+    grid-area: home;
   }
 
   .brand-mark {

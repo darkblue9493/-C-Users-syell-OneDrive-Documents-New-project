@@ -1092,6 +1092,7 @@ function isAdminGameEnabled(gameKey) {
 
 async function applyLiveArcadeControls() {
   await refreshArcadeControls();
+  if ($("[data-lobby-grid]")) renderLobby();
   if (!State.activeGame) return;
   clampBetToAdmin(State.activeGame);
   if (!isAdminGameEnabled(State.activeGame)) {
@@ -1105,9 +1106,9 @@ async function applyLiveArcadeControls() {
 
 function startArcadeControlsWatcher() {
   setInterval(() => {
-    if (!State.activeGame || State.isSpinning) return;
+    if (State.isSpinning) return;
     applyLiveArcadeControls();
-  }, 2000);
+  }, 750);
 }
 
 function loadState() {
@@ -1345,17 +1346,18 @@ function renderLobby() {
   if (!lobby) return;
   lobby.innerHTML = GAME_ORDER.map(key => {
     const game = GAMES[key];
+    const enabled = isAdminGameEnabled(key);
     const mascotSvg = MASCOT_ART[key] || "";
     const badge = FEATURED_GAMES.has(key) ? '<span class="tile-badge badge-featured">FEATURED</span>' :
                   NEW_GAMES.has(key) ? '<span class="tile-badge badge-new">NEW</span>' :
                   HOT_GAMES.has(key) ? '<span class="tile-badge badge-hot">HOT</span>' : '';
     return `
-      <button class="lobby-tile theme-${game.theme}" data-game="${key}">
+      <button class="lobby-tile theme-${game.theme}${enabled ? "" : " is-maintenance"}" data-game="${key}" aria-disabled="${enabled ? "false" : "true"}">
         <div class="tile-bg ${game.sceneClass}"></div>
         <div class="tile-shine" aria-hidden="true"></div>
         <div class="tile-decor" aria-hidden="true">${(game.bgEmoji || []).map(e => `<span>${e}</span>`).join("")}</div>
         <div class="tile-mascot-art" aria-hidden="true">${mascotSvg}</div>
-        ${badge}
+        ${enabled ? badge : '<span class="tile-badge badge-maintenance">MAINTENANCE</span>'}
         <div class="tile-info">
           <strong>${game.title}</strong>
           <span>${game.tagline}</span>
@@ -1363,7 +1365,7 @@ function renderLobby() {
         </div>
         <div class="tile-play">
           <span class="play-icon">▶</span>
-          <span class="play-text">PLAY NOW</span>
+          <span class="play-text">${enabled ? "PLAY NOW" : "OFFLINE"}</span>
         </div>
       </button>
     `;
@@ -2077,6 +2079,9 @@ function bindEvents() {
 // ============================================================
 async function bootstrap() {
   loadState();
+  if (!(await refreshPlayerPoints({ redirectOnFail: true }))) {
+    return;
+  }
   await refreshArcadeControls();
   renderLobby();
   updateDisplays();
@@ -2086,7 +2091,6 @@ async function bootstrap() {
   // Music/sound button initial state
   const mb = $("[data-music-btn]"); if (mb) { mb.textContent = State.musicOn ? "\u{1F3B5} ON" : "\u{1F3B5} OFF"; mb.classList.toggle("is-active", State.musicOn); }
   const sb = $("[data-sound-btn]"); if (sb) { sb.textContent = State.soundOn ? "\u{1F50A}" : "\u{1F507}"; sb.classList.toggle("is-active", State.soundOn); }
-  await refreshPlayerPoints();
   // If URL has ?game=xxx, open it
   try {
     const u = new URLSearchParams(window.location.search);

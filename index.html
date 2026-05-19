@@ -239,7 +239,7 @@
             <h2>Choose your game room.</h2>
           </div>
           <div class="game-link-grid">
-            <article class="game-card south-slots-card">
+            <article class="game-card south-slots-card is-hidden" data-player-only>
               <div class="game-brand-media south-slots-media">
                 <span class="south-slots-logo">
                   <i>SD</i>
@@ -910,6 +910,11 @@
           if (btn) {
             e.preventDefault();
             e.stopPropagation();
+            if (!document.body.classList.contains("is-player-logged-in")) {
+              document.querySelector('[data-auth-tab="login"]')?.click();
+              document.querySelector("[data-player-auth]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+              return;
+            }
             var key = btn.dataset.slotGame;
             var mapped = gameMap[key] || "wildBuffalo";
             syncPlayer();
@@ -918,6 +923,12 @@
           }
           var arcade = e.target.closest("[data-sd-slots-arcade]");
           if (arcade) {
+            if (!document.body.classList.contains("is-player-logged-in")) {
+              e.preventDefault();
+              document.querySelector('[data-auth-tab="login"]')?.click();
+              document.querySelector("[data-player-auth]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+              return;
+            }
             syncPlayer();
             // Let default link navigation happen
           }

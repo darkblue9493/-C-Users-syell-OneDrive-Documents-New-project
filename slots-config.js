@@ -10,6 +10,7 @@
   const STORAGE_KEY = "sd_slots_admin_v1";
   const STATS_KEY = "sd_slots_stats_v1";
   let serverConfig = null;
+  let serverStats = null;
 
   // List of game keys + display titles (kept in sync with slots-arcade.js GAMES)
   const GAME_LIST = [
@@ -131,6 +132,7 @@
     const data = await response.json();
     if (!data.config) throw new Error("Admin login is required to load live slots arcade controls.");
     serverConfig = mergeConfig(data.config || data);
+    if (data.stats) serverStats = mergeStats(data.stats);
     save(serverConfig);
     return serverConfig;
   }
@@ -148,11 +150,55 @@
     if (!response.ok) throw new Error(data.error || "Could not save slots arcade controls.");
     if (!data.config) throw new Error("Admin login is required to save live slots arcade controls.");
     serverConfig = mergeConfig(data.config || merged);
+    if (data.stats) serverStats = mergeStats(data.stats);
     save(serverConfig);
     return serverConfig;
   }
 
+  function mergeStats(stats) {
+    const parsed = stats && typeof stats === "object" ? stats : {};
+    const def = defaultStats();
+    parsed.games = parsed.games || {};
+    for (const g of GAME_LIST) {
+      parsed.games[g.key] = { ...def.games[g.key], ...(parsed.games[g.key] || {}) };
+    }
+    return {
+      ...def,
+      ...parsed,
+      games: parsed.games,
+      recentWins: Array.isArray(parsed.recentWins) ? parsed.recentWins : [],
+    };
+  }
+
+  async function refreshStatsFromServer() {
+    const response = await fetch("/api/admin/slots-arcade-stats", {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not load slots arcade stats.");
+    serverStats = mergeStats(data.stats || data);
+    saveStats(serverStats);
+    return serverStats;
+  }
+
+  async function resetStatsOnServer(gameKey = null) {
+    const response = await fetch("/api/admin/slots-arcade-stats/reset", {
+      method: "POST",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gameKey }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not reset slots arcade stats.");
+    serverStats = mergeStats(data.stats || data);
+    saveStats(serverStats);
+    return serverStats;
+  }
+
   function loadStats() {
+    if (serverStats && serverStats.date === todayKey()) return mergeStats(serverStats);
     try {
       const raw = localStorage.getItem(STATS_KEY);
       if (!raw) return defaultStats();
@@ -195,6 +241,7 @@
       stats.recentWins.unshift({ gameKey, amount: won, wagered, at: Date.now() });
       stats.recentWins = stats.recentWins.slice(0, 50);
     }
+    serverStats = mergeStats(stats);
     saveStats(stats);
     return stats;
   }
@@ -254,6 +301,7 @@
     GAME_LIST,
     load, save,
     refreshFromServer, saveToServer,
+    refreshStatsFromServer, resetStatsOnServer,
     loadStats, saveStats,
     recordSpin,
     computeRtpMultiplier,

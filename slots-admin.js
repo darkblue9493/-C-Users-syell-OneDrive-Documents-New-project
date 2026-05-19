@@ -41,6 +41,7 @@
   function pct(n) { return (Math.round(n * 1000) / 10).toFixed(1) + "%"; }
 
   let pendingConfig = null;
+  let pendingSlotSettings = null;
   let saveTimer = null;
   let saveInFlight = false;
   let saveAgain = false;
@@ -52,19 +53,60 @@
       pendingConfig = SC.load();
       showSaveStatus("Using local arcade settings. Log in as admin to sync live controls.", false);
     }
+    await loadSlotSettings();
     bindMasterControls();
     renderGameCards();
+    await refreshStatsFromServer();
     refreshSummary();
     renderRecentWins();
     // Auto-refresh stats every 5s while panel is visible
     setInterval(() => {
       const panel = $('[data-admin-panel="slots"]');
       if (panel && panel.classList.contains("is-active")) {
-        refreshSummary();
-        refreshGameStats();
-        renderRecentWins();
+        refreshStatsFromServer().finally(() => {
+          refreshSummary();
+          refreshGameStats();
+          renderRecentWins();
+        });
       }
     }, 5000);
+  }
+
+  async function refreshStatsFromServer() {
+    if (typeof SC.refreshStatsFromServer !== "function") return SC.loadStats();
+    try {
+      return await SC.refreshStatsFromServer();
+    } catch (error) {
+      return SC.loadStats();
+    }
+  }
+
+  async function loadSlotSettings() {
+    try {
+      const response = await fetch("/api/admin/slots-settings", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not load payout limits.");
+      pendingSlotSettings = data.settings || { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8 };
+    } catch (error) {
+      pendingSlotSettings = { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8 };
+    }
+  }
+
+  async function saveSlotSettings() {
+    const response = await fetch("/api/admin/slots-settings", {
+      method: "POST",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(pendingSlotSettings),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not save payout limits.");
+    pendingSlotSettings = data.settings || pendingSlotSettings;
+    return pendingSlotSettings;
   }
 
   function bindMasterControls() {
@@ -78,14 +120,30 @@
         queueLiveSave("Slots arcade status updated live.");
       });
     }
+    const dailyPayout = $("[data-slots-daily-payout-limit]");
+    const playerPayout = $("[data-slots-player-payout-limit]");
+    if (dailyPayout) {
+      dailyPayout.value = pendingSlotSettings?.dailyPayoutLimit ?? 25;
+      dailyPayout.addEventListener("change", () => {
+        pendingSlotSettings.dailyPayoutLimit = Math.max(0, Number(dailyPayout.value) || 0);
+        if (playerPayout && Number(playerPayout.value) > pendingSlotSettings.dailyPayoutLimit) {
+          playerPayout.value = pendingSlotSettings.dailyPayoutLimit;
+          pendingSlotSettings.playerDailyPayoutLimit = pendingSlotSettings.dailyPayoutLimit;
+        }
+        queueLiveSave("Total daily payout limit saved live.");
+      });
+    }
+    if (playerPayout) {
+      playerPayout.value = pendingSlotSettings?.playerDailyPayoutLimit ?? 8;
+      playerPayout.addEventListener("change", () => {
+        pendingSlotSettings.playerDailyPayoutLimit = Math.max(0, Number(playerPayout.value) || 0);
+        queueLiveSave("Per-player payout limit saved live.");
+      });
+    }
     $("[data-slots-save-all]")?.addEventListener("click", saveAll);
     $("[data-slots-reset-stats]")?.addEventListener("click", () => {
       if (confirm("Reset today's slot statistics for ALL games? Player credits are not affected.")) {
-        SC.resetGameStats(null);
-        refreshSummary();
-        refreshGameStats();
-        renderRecentWins();
-        showSaveStatus("Daily stats reset.", true);
+        resetStats(null);
       }
     });
     $("[data-slots-export-config]")?.addEventListener("click", () => {
@@ -180,6 +238,7 @@
             </fieldset>
 
             <div class="sga-actions">
+              <button type="button" class="button primary" data-save-game="${g.key}">Save This Game</button>
               <button type="button" class="game-link" data-reset-game="${g.key}">Reset This Game's Stats</button>
             </div>
           </details>
@@ -244,15 +303,27 @@
       const resetBtn = $("[data-reset-game]", card);
       if (resetBtn) resetBtn.addEventListener("click", () => {
         if (confirm(`Reset today's stats for ${SC.GAME_LIST.find(g => g.key === key).title}?`)) {
-          SC.resetGameStats(key);
-          refreshGameStats();
-          refreshSummary();
-          showSaveStatus("Game stats reset.", true);
+          resetStats(key);
         }
       });
+      const saveBtn = $("[data-save-game]", card);
+      if (saveBtn) saveBtn.addEventListener("click", () => saveLive(`${SC.GAME_LIST.find(g => g.key === key)?.title || "Game"} saved live.`));
       if (!enabled.checked) card.classList.add("is-disabled");
     });
     refreshGameStats();
+  }
+
+  async function resetStats(gameKey) {
+    try {
+      if (typeof SC.resetStatsOnServer === "function") await SC.resetStatsOnServer(gameKey);
+      else SC.resetGameStats(gameKey);
+      refreshGameStats();
+      refreshSummary();
+      renderRecentWins();
+      showSaveStatus(gameKey ? "Game stats reset." : "Daily stats reset.", true);
+    } catch (error) {
+      showSaveStatus("Stats reset failed. Please retry.", false, 6000);
+    }
   }
 
   function refreshGameStats() {
@@ -327,7 +398,11 @@
     }
     saveInFlight = true;
     try {
-      pendingConfig = await SC.saveToServer(pendingConfig);
+      const saved = await Promise.all([
+        SC.saveToServer(pendingConfig),
+        saveSlotSettings(),
+      ]);
+      pendingConfig = saved[0];
       showSaveStatus(successMessage, true);
     } catch (error) {
       const ok = SC.save(pendingConfig);

@@ -229,6 +229,18 @@
                       <article><span>Total paid out</span><strong data-summary-won>0.00</strong></article>
                       <article><span>House RTP today</span><strong data-summary-rtp>--%</strong></article>
                     </div>
+                    <div class="sga-control sga-grid-2">
+                      <label>
+                        <span>Total Daily Payout Limit</span>
+                        <input type="number" min="0" step="1" value="25" data-slots-daily-payout-limit />
+                        <small>Maximum points all slot games can pay today.</small>
+                      </label>
+                      <label>
+                        <span>Per Player Daily Win Limit</span>
+                        <input type="number" min="0" step="1" value="8" data-slots-player-payout-limit />
+                        <small>Maximum slot winnings one player can receive today.</small>
+                      </label>
+                    </div>
                     <div class="slots-master-actions">
                       <button type="button" class="button primary" data-slots-save-all>Save All Changes</button>
                       <button type="button" class="button secondary" data-slots-reset-stats>Reset Today's Stats</button>

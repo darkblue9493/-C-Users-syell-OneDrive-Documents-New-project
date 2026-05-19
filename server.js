@@ -687,6 +687,52 @@ function normalizeArcadeSlotsConfig(config) {
   };
 }
 
+function arcadeSlotsStatsFromPayout(slotPayout) {
+  const payout = normalizeSlotPayout(slotPayout);
+  const stats = {
+    date: payout.date,
+    totalWagered: 0,
+    totalWon: 0,
+    totalSpins: 0,
+    games: Object.fromEntries(
+      Object.keys(arcadeSlotGameNames).map((key) => [
+        key,
+        { wagered: 0, won: 0, spins: 0, lastWinAmount: 0, lastWinAt: 0 },
+      ])
+    ),
+    recentWins: [],
+  };
+  for (const spin of payout.spins || []) {
+    const gameKey = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, spin.gameKey) ? spin.gameKey : "";
+    if (!gameKey) continue;
+    const bet = roundPoints(spin.bet);
+    const win = roundPoints(spin.win);
+    const createdAt = spin.createdAt ? new Date(spin.createdAt).getTime() : 0;
+    const game = stats.games[gameKey];
+    game.wagered = roundPoints(game.wagered + bet);
+    game.won = roundPoints(game.won + win);
+    game.spins += 1;
+    stats.totalWagered = roundPoints(stats.totalWagered + bet);
+    stats.totalWon = roundPoints(stats.totalWon + win);
+    stats.totalSpins += 1;
+    if (win > 0) {
+      game.lastWinAmount = win;
+      game.lastWinAt = Math.max(game.lastWinAt, createdAt || 0);
+      stats.recentWins.push({ gameKey, amount: win, wagered: bet, at: createdAt || Date.now() });
+    }
+  }
+  stats.recentWins = stats.recentWins
+    .sort((a, b) => b.at - a.at)
+    .slice(0, 50);
+  return stats;
+}
+
+function recalculateSlotPaidOut(slotPayout) {
+  const payout = normalizeSlotPayout(slotPayout);
+  payout.paidOut = roundPoints((payout.spins || []).reduce((total, spin) => total + Math.max(0, roundPoints(spin.win)), 0));
+  return payout;
+}
+
 function ensureSlotPayoutToday(data) {
   const today = currentSpinDateKey();
   data.slotSettings = normalizeSlotSettings(data.slotSettings);
@@ -1583,9 +1629,12 @@ async function handleApi(request, response, urlPath, url) {
   if (request.method === "GET" && urlPath === "/api/admin/slots-arcade-config") {
     if (!requireAdmin(request, response)) return;
     const data = await readDatabase();
+    const resetToday = ensureSlotPayoutToday(data);
+    if (resetToday) await writeDatabase(data);
     data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
     return sendJson(response, 200, {
       config: data.arcadeSlotsConfig,
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
     });
   }
 
@@ -1607,6 +1656,38 @@ async function handleApi(request, response, urlPath, url) {
     await writeDatabase(data);
     return sendJson(response, 200, {
       config: data.arcadeSlotsConfig,
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
+    });
+  }
+
+  if (request.method === "GET" && urlPath === "/api/admin/slots-arcade-stats") {
+    if (!requireAdmin(request, response)) return;
+    const data = await readDatabase();
+    const resetToday = ensureSlotPayoutToday(data);
+    if (resetToday) await writeDatabase(data);
+    return sendJson(response, 200, {
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
+      payout: data.slotPayout,
+    });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/slots-arcade-stats/reset") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const gameKey = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, body.gameKey) ? String(body.gameKey) : "";
+    const data = await readDatabase();
+    ensureSlotPayoutToday(data);
+    data.slotPayout.spins = (data.slotPayout.spins || []).filter((spin) => {
+      const isArcadeSpin = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, spin.gameKey);
+      if (!isArcadeSpin) return true;
+      return gameKey ? spin.gameKey !== gameKey : false;
+    });
+    data.slotPayout = recalculateSlotPaidOut(data.slotPayout);
+    addActivity(data, "slots-arcade-stats-reset", gameKey ? `Reset arcade stats for ${arcadeSlotGameNames[gameKey]}` : "Reset all arcade slot stats", { gameKey: gameKey || null });
+    await writeDatabase(data);
+    return sendJson(response, 200, {
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
+      payout: data.slotPayout,
     });
   }
 
@@ -1989,7 +2070,11 @@ async function handleApi(request, response, urlPath, url) {
     const remainingPayout = Math.max(0, roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut));
     const playerPaidToday = slotPayoutForUserToday(data, storedUser.id);
     const remainingPlayerPayout = Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - playerPaidToday));
-    const win = roundPoints(Math.min(requestedWin, remainingPayout, remainingPlayerPayout));
+    const gamePaidToday = (data.slotPayout.spins || []).reduce((total, spin) => {
+      return spin.gameKey === gameKey ? roundPoints(total + Math.max(0, roundPoints(spin.win))) : total;
+    }, 0);
+    const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
+    const win = roundPoints(Math.min(requestedWin, remainingPayout, remainingPlayerPayout, remainingGamePayout));
     const createdAt = new Date().toISOString();
     const transactions = [];
 
@@ -2050,6 +2135,7 @@ async function handleApi(request, response, urlPath, url) {
       capped: win < requestedWin,
       remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
       remainingPlayerPayout: Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - slotPayoutForUserToday(data, storedUser.id))),
+      remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
       user: sanitizeUser(storedUser),
       transactions: transactions.map(sanitizePointTransaction),
     });
@@ -2057,9 +2143,12 @@ async function handleApi(request, response, urlPath, url) {
 
   if (request.method === "GET" && urlPath === "/api/player/slots/arcade-config") {
     const data = await readDatabase();
+    const resetToday = ensureSlotPayoutToday(data);
+    if (resetToday) await writeDatabase(data);
     data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
     return sendJson(response, 200, {
       config: data.arcadeSlotsConfig,
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
     });
   }
 
@@ -2487,6 +2576,12 @@ async function handleRequest(request, response) {
   try {
     if (url.pathname.startsWith("/api/")) {
       await handleApi(request, response, url.pathname, url);
+      return;
+    }
+
+    if (url.pathname === "/slots-arcade.html" && !(await getPlayerUser(request))) {
+      response.writeHead(302, { Location: "/#signup" });
+      response.end();
       return;
     }
 
