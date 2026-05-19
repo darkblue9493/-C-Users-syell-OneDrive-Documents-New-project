@@ -1090,6 +1090,26 @@ function isAdminGameEnabled(gameKey) {
   return SlotsConfig.isGameEnabled(gameKey);
 }
 
+async function applyLiveArcadeControls() {
+  await refreshArcadeControls();
+  if (!State.activeGame) return;
+  clampBetToAdmin(State.activeGame);
+  if (!isAdminGameEnabled(State.activeGame)) {
+    showMaintenanceOverlay();
+    setWinMessage("This game is currently turned off by admin.");
+    stopAutoSpin();
+    return;
+  }
+  hideMaintenanceOverlay();
+}
+
+function startArcadeControlsWatcher() {
+  setInterval(() => {
+    if (!State.activeGame || State.isSpinning) return;
+    applyLiveArcadeControls();
+  }, 2000);
+}
+
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "state") || "{}");
@@ -2062,6 +2082,7 @@ async function bootstrap() {
   updateDisplays();
   bindEvents();
   startJackpotTicker();
+  startArcadeControlsWatcher();
   // Music/sound button initial state
   const mb = $("[data-music-btn]"); if (mb) { mb.textContent = State.musicOn ? "\u{1F3B5} ON" : "\u{1F3B5} OFF"; mb.classList.toggle("is-active", State.musicOn); }
   const sb = $("[data-sound-btn]"); if (sb) { sb.textContent = State.soundOn ? "\u{1F50A}" : "\u{1F507}"; sb.classList.toggle("is-active", State.soundOn); }

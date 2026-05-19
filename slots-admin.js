@@ -40,8 +40,10 @@
   function fmt(n) { return SC.fmt(n); }
   function pct(n) { return (Math.round(n * 1000) / 10).toFixed(1) + "%"; }
 
-  // Pending in-memory config (changes here saved when "Save All" clicked)
   let pendingConfig = null;
+  let saveTimer = null;
+  let saveInFlight = false;
+  let saveAgain = false;
 
   async function init() {
     try {
@@ -73,6 +75,7 @@
       globalToggle.addEventListener("change", () => {
         pendingConfig.globalEnabled = globalToggle.checked;
         updateStatusPill(globalToggle.checked);
+        queueLiveSave("Slots arcade status updated live.");
       });
     }
     $("[data-slots-save-all]")?.addEventListener("click", saveAll);
@@ -192,24 +195,51 @@
       if (enabled) enabled.addEventListener("change", () => {
         cfg.enabled = enabled.checked;
         card.classList.toggle("is-disabled", !enabled.checked);
+        queueLiveSave(`${SC.GAME_LIST.find(g => g.key === key)?.title || "Game"} ${enabled.checked ? "turned on" : "turned off"} live.`);
       });
       const rtp = $("[data-game-rtp]", card);
       const rtpDisp = $("[data-rtp-display]", card);
       if (rtp && rtpDisp) rtp.addEventListener("input", () => {
         cfg.targetRtp = parseInt(rtp.value, 10) / 100;
         rtpDisp.textContent = pct(cfg.targetRtp);
+        queueLiveSave("Target RTP updated live.");
       });
       const max = $("[data-game-max]", card);
-      if (max) max.addEventListener("change", () => { cfg.dailyMaxPayout = Number(max.value); });
+      if (max) max.addEventListener("change", () => {
+        cfg.dailyMaxPayout = Number(max.value);
+        queueLiveSave("Daily max payout updated live.");
+      });
       const min = $("[data-game-min]", card);
-      if (min) min.addEventListener("change", () => { cfg.dailyMinPayout = Number(min.value); });
+      if (min) min.addEventListener("change", () => {
+        cfg.dailyMinPayout = Number(min.value);
+        queueLiveSave("Daily min payout updated live.");
+      });
       const minBet = $("[data-game-minbet]", card);
-      if (minBet) minBet.addEventListener("change", () => { cfg.minBet = Number(minBet.value); });
+      if (minBet) minBet.addEventListener("change", () => {
+        cfg.minBet = Number(minBet.value);
+        if (Number(cfg.maxBet) < Number(cfg.minBet)) {
+          cfg.maxBet = cfg.minBet;
+          const maxBet = $("[data-game-maxbet]", card);
+          if (maxBet) maxBet.value = cfg.maxBet;
+        }
+        queueLiveSave("Min bet updated live.");
+      });
       const maxBet = $("[data-game-maxbet]", card);
-      if (maxBet) maxBet.addEventListener("change", () => { cfg.maxBet = Number(maxBet.value); });
+      if (maxBet) maxBet.addEventListener("change", () => {
+        cfg.maxBet = Number(maxBet.value);
+        if (Number(cfg.maxBet) < Number(cfg.minBet)) {
+          cfg.minBet = cfg.maxBet;
+          const minBet = $("[data-game-minbet]", card);
+          if (minBet) minBet.value = cfg.minBet;
+        }
+        queueLiveSave("Max bet updated live.");
+      });
       ["grand", "major", "minor", "mini"].forEach((level) => {
         const inp = $(`[data-jp-${level}]`, card);
-        if (inp) inp.addEventListener("change", () => { cfg.jackpotPool[level] = Number(inp.value); });
+        if (inp) inp.addEventListener("change", () => {
+          cfg.jackpotPool[level] = Number(inp.value);
+          queueLiveSave("Jackpot pool updated live.");
+        });
       });
       const resetBtn = $("[data-reset-game]", card);
       if (resetBtn) resetBtn.addEventListener("click", () => {
@@ -281,23 +311,44 @@
   }
 
   async function saveAll() {
+    await saveLive("All settings saved live.");
+  }
+
+  function queueLiveSave(message) {
+    showSaveStatus("Saving live changes...", true, 1200);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => saveLive(message), 450);
+  }
+
+  async function saveLive(successMessage = "Settings saved live.") {
+    if (saveInFlight) {
+      saveAgain = true;
+      return;
+    }
+    saveInFlight = true;
     try {
       pendingConfig = await SC.saveToServer(pendingConfig);
-      renderGameCards();
-      showSaveStatus("All settings saved live. Players will see the new rules on their next spin.", true);
+      showSaveStatus(successMessage, true);
     } catch (error) {
       const ok = SC.save(pendingConfig);
-      showSaveStatus(ok ? "Saved locally, but live server sync failed. Please check admin login and retry." : "Save failed. Please retry.", false);
+      showSaveStatus(ok ? "Saved only on this browser. Live sync failed, so players will not see it yet." : "Save failed. Please retry.", false, 6000);
+    } finally {
+      saveInFlight = false;
+      if (saveAgain) {
+        saveAgain = false;
+        saveLive(successMessage);
+      }
     }
   }
 
-  function showSaveStatus(msg, success) {
+  function showSaveStatus(msg, success, duration = 4000) {
     const el = $("[data-slots-save-status]");
     if (!el) return;
     el.textContent = msg;
     el.classList.toggle("success", !!success);
     el.classList.toggle("error", !success);
-    setTimeout(() => { el.textContent = ""; el.classList.remove("success", "error"); }, 4000);
+    clearTimeout(el._clearTimer);
+    el._clearTimer = setTimeout(() => { el.textContent = ""; el.classList.remove("success", "error"); }, duration);
   }
 
   if (document.readyState === "loading") {
