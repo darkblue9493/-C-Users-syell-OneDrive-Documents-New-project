@@ -60,6 +60,20 @@ const slotGameNames = {
   jungle: "Jungle Fortune",
   neon: "Neon Reels",
 };
+const arcadeSlotGameNames = {
+  wildBuffalo: "Wild Buffalo",
+  kingKong: "King Kong",
+  triple777: "Triple 777",
+  blackjack: "Black Jack Slots",
+  gorillaGold: "Gorilla Gold",
+  goldWolf: "Gold Wolf",
+  wildBull: "Wild Bull",
+  dragonEmpress: "Dragon Empress",
+  mammothRush: "Mammoth Rush",
+  pharaoh: "Pharaoh's Riches",
+  oceanTreasure: "Ocean Treasure",
+  vegas7s: "Vegas 7s",
+};
 const slotGameThemes = {
   buffalo: {
     symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
@@ -1824,6 +1838,101 @@ async function handleApi(request, response, urlPath, url) {
       remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
       remainingPlayerPayout: Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - slotPayoutForUserToday(data, user.id))),
       user: sanitizeUser(user),
+      transactions: transactions.map(sanitizePointTransaction),
+    });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/player/slots/arcade-spin") {
+    const user = await requirePlayer(request, response);
+    if (!user) return;
+    const body = await readBody(request);
+    const gameKey = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, body.gameKey) ? String(body.gameKey) : "";
+    const bet = roundPoints(body.bet);
+    const requestedWin = roundPoints(body.win);
+
+    if (!gameKey) {
+      return sendJson(response, 400, { error: "Arcade game was not recognized." });
+    }
+    if (!Number.isFinite(bet) || bet < 0.05 || bet > 500) {
+      return sendJson(response, 400, { error: "Choose a valid slot bet." });
+    }
+    if (!Number.isFinite(requestedWin) || requestedWin < 0 || requestedWin > 100000) {
+      return sendJson(response, 400, { error: "Slot win amount was not valid." });
+    }
+
+    const data = await readDatabase();
+    const storedUser = data.users.find((item) => item.id === user.id);
+    if (!storedUser) return sendJson(response, 401, { error: "Player login is required." });
+    if ((Number(storedUser.points) || 0) < bet) {
+      return sendJson(response, 400, { error: "Not enough South Diamond points for that bet." });
+    }
+
+    ensureSlotPayoutToday(data);
+    const remainingPayout = Math.max(0, roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut));
+    const playerPaidToday = slotPayoutForUserToday(data, storedUser.id);
+    const remainingPlayerPayout = Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - playerPaidToday));
+    const win = roundPoints(Math.min(requestedWin, remainingPayout, remainingPlayerPayout));
+    const createdAt = new Date().toISOString();
+    const transactions = [];
+
+    storedUser.points = roundPoints((Number(storedUser.points) || 0) - bet);
+    const betTransaction = createPointTransaction(
+      storedUser,
+      "redeem",
+      bet,
+      `South Diamond Slots Arcade bet - ${arcadeSlotGameNames[gameKey]}`,
+      createdAt
+    );
+    data.pointTransactions.unshift(betTransaction);
+    transactions.push(betTransaction);
+
+    if (win > 0) {
+      storedUser.points = roundPoints((Number(storedUser.points) || 0) + win);
+      const winTransaction = createPointTransaction(
+        storedUser,
+        "add",
+        win,
+        `South Diamond Slots Arcade win - ${arcadeSlotGameNames[gameKey]}`,
+        createdAt
+      );
+      data.pointTransactions.unshift(winTransaction);
+      transactions.push(winTransaction);
+    }
+
+    storedUser.lastActiveAt = createdAt;
+    data.slotPayout.paidOut = roundPoints(data.slotPayout.paidOut + win);
+    data.slotPayout.spins.unshift({
+      id: `slot-arcade-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      userId: storedUser.id,
+      username: storedUser.username,
+      gameKey,
+      gameName: arcadeSlotGameNames[gameKey],
+      bet,
+      win,
+      requestedWin,
+      createdAt,
+    });
+    data.slotPayout.spins = data.slotPayout.spins.slice(0, 500);
+    addActivity(
+      data,
+      "slots-arcade-spin",
+      `${storedUser.username} spun ${arcadeSlotGameNames[gameKey]} for ${bet} points${win ? ` and won ${win}` : ""}`,
+      { userId: storedUser.id, username: storedUser.username, gameKey, bet, win, requestedWin }
+    );
+    await writeDatabase(data);
+    playerSessions.forEach((userId, token) => {
+      if (userId === storedUser.id) playerSessions.set(token, storedUser.id);
+    });
+
+    return sendJson(response, 200, {
+      gameKey,
+      bet,
+      win,
+      requestedWin,
+      capped: win < requestedWin,
+      remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
+      remainingPlayerPayout: Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - slotPayoutForUserToday(data, storedUser.id))),
+      user: sanitizeUser(storedUser),
       transactions: transactions.map(sanitizePointTransaction),
     });
   }

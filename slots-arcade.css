@@ -90,15 +90,6 @@ button { font-family: inherit; cursor: pointer; }
   color: #52ef9f;
   text-shadow: 0 0 8px rgba(82, 239, 159, .8);
 }
-.add-credits {
-  grid-column: 2; grid-row: 1 / span 2;
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #52ef9f, #1a6e3e);
-  color: #042412;
-  border: 2px solid #fff;
-  font-weight: 900;
-}
 .arcade-toggles { display: flex; gap: 6px; }
 .toggle-btn {
   padding: 6px 10px;

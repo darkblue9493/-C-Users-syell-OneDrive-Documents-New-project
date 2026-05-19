@@ -9,7 +9,7 @@
  *   - Live progressive jackpots (Grand/Major/Minor/Mini)
  *   - Per-theme procedural music + sound effects
  *   - Fullscreen support
- *   - Persistent credits via localStorage
+ *   - Uses real South Diamond player points from the server
  * ============================================================ */
 
 "use strict";
@@ -595,7 +595,7 @@ function applyGameArt(gameKey, root) {
 // ============================================================
 const STORAGE_PREFIX = "sd_slots_v1_";
 const State = {
-  credits: 100,
+  credits: 0,
   bet: 0.25,
   betLevels: [0.05, 0.10, 0.25, 0.50, 1.00, 2.50, 5.00, 10.00],
   jackpots: { grand: 1519.23, major: 524.95, minor: 107.97, mini: 21.87 },
@@ -610,12 +610,45 @@ const State = {
   musicOn: true,
   soundOn: true,
   fullscreen: false,
+  player: null,
 };
+
+async function arcadeApi(path, options = {}) {
+  const response = await fetch(path, {
+    cache: "no-store",
+    credentials: "same-origin",
+    headers: options.body ? { "Content-Type": "application/json" } : undefined,
+    ...options,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "South Diamond account request failed.");
+  return data;
+}
+
+async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
+  try {
+    const data = await arcadeApi("/api/player/me");
+    State.player = data.user;
+    State.credits = Number(data.user?.points) || 0;
+    updateDisplays();
+    return true;
+  } catch (error) {
+    State.player = null;
+    State.credits = 0;
+    updateDisplays();
+    flashMessage("Log in to your South Diamond account to play slots.");
+    if (redirectOnFail) {
+      window.setTimeout(() => {
+        window.location.href = "index.html#signup";
+      }, 900);
+    }
+    return false;
+  }
+}
 
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "state") || "{}");
-    if (typeof saved.credits === "number") State.credits = saved.credits;
     if (typeof saved.bet === "number") State.bet = saved.bet;
     if (saved.jackpots) Object.assign(State.jackpots, saved.jackpots);
     if (typeof saved.totalWagered === "number") State.totalWagered = saved.totalWagered;
@@ -623,19 +656,12 @@ function loadState() {
     if (typeof saved.musicOn === "boolean") State.musicOn = saved.musicOn;
     if (typeof saved.soundOn === "boolean") State.soundOn = saved.soundOn;
   } catch (err) { /* fresh state */ }
-  // Try to pull player credits from main site
-  try {
-    const player = JSON.parse(localStorage.getItem("southDiamondPlayer") || "null");
-    if (player && typeof player.points === "number" && !localStorage.getItem(STORAGE_PREFIX + "state")) {
-      State.credits = player.points;
-    }
-  } catch (err) {}
 }
 
 function saveState() {
   try {
     localStorage.setItem(STORAGE_PREFIX + "state", JSON.stringify({
-      credits: State.credits, bet: State.bet, jackpots: State.jackpots,
+      bet: State.bet, jackpots: State.jackpots,
       totalWagered: State.totalWagered, totalWon: State.totalWon,
       musicOn: State.musicOn, soundOn: State.soundOn,
     }));
@@ -1131,8 +1157,13 @@ function triggerLandingEffect(reelEl, effect) {
 async function spinGame() {
   if (State.isSpinning || !State.activeGame) return;
   const game = GAMES[State.activeGame];
+  if (!State.player && !(await refreshPlayerPoints({ redirectOnFail: true }))) {
+    stopAutoSpin();
+    return;
+  }
+  await refreshPlayerPoints();
   if (State.credits < State.bet) {
-    flashMessage("Not enough credits! Lower your bet.");
+    flashMessage("Not enough South Diamond points. Ask admin to add points.");
     stopAutoSpin();
     return;
   }
@@ -1182,6 +1213,26 @@ async function spinGame() {
     animateReelSpin(reel, grid[idx], game, idx, { slowFinish: slowFinish && idx === reels.length - 1 })
   );
   await Promise.all(promises);
+
+  let settlement = null;
+  try {
+    settlement = await arcadeApi("/api/player/slots/arcade-spin", {
+      method: "POST",
+      body: JSON.stringify({
+        gameKey: State.activeGame,
+        bet: State.bet,
+        win: result.totalPay || 0,
+      }),
+    });
+    result.totalPay = Number(settlement.win) || 0;
+  } catch (error) {
+    State.credits = Math.round((State.credits + State.bet) * 100) / 100;
+    updateDisplays();
+    State.isSpinning = false;
+    flashMessage(error.message || "Spin could not be saved. Try again.");
+    stopAutoSpin();
+    return;
+  }
 
   // Highlight winning cells
   const winningCells = new Set();
@@ -1240,6 +1291,11 @@ async function spinGame() {
   }
 
   updateDisplays();
+  if (settlement?.user) {
+    State.player = settlement.user;
+    State.credits = Number(settlement.user.points) || State.credits;
+    updateDisplays();
+  }
   saveState();
   if (typeof SlotsConfig !== "undefined") {
     try { SlotsConfig.recordSpin(State.activeGame, State.bet, result.totalPay || 0); } catch (err) {}
@@ -1500,12 +1556,6 @@ function bindEvents() {
     if (e.target.closest("[data-fullscreen-btn]")) { toggleFullscreen(); return; }
     if (e.target.closest("[data-open-paytable]")) { openPaytableModal(); return; }
     if (e.target.closest("[data-paytable-close]")) { closePaytableModal(); return; }
-    if (e.target.closest("[data-add-credits]")) {
-      State.credits += 100;
-      saveState(); updateDisplays();
-      flashMessage("+100 credits added");
-      return;
-    }
   });
 
   // Keyboard: space to spin, ESC to exit
@@ -1518,7 +1568,7 @@ function bindEvents() {
 // ============================================================
 // 13) BOOTSTRAP
 // ============================================================
-function bootstrap() {
+async function bootstrap() {
   loadState();
   renderLobby();
   updateDisplays();
@@ -1527,6 +1577,7 @@ function bootstrap() {
   // Music/sound button initial state
   const mb = $("[data-music-btn]"); if (mb) { mb.textContent = State.musicOn ? "\u{1F3B5} ON" : "\u{1F3B5} OFF"; mb.classList.toggle("is-active", State.musicOn); }
   const sb = $("[data-sound-btn]"); if (sb) { sb.textContent = State.soundOn ? "\u{1F50A}" : "\u{1F507}"; sb.classList.toggle("is-active", State.soundOn); }
+  await refreshPlayerPoints();
   // If URL has ?game=xxx, open it
   try {
     const u = new URLSearchParams(window.location.search);
