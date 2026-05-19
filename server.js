@@ -73,6 +73,18 @@ const arcadeSlotGameNames = {
   pharaoh: "Pharaoh's Riches",
   oceanTreasure: "Ocean Treasure",
   vegas7s: "Vegas 7s",
+  luckyPanda: "Lucky Panda 88",
+  lionsPride: "Lion's Pride",
+  piratesTreasure: "Pirate's Treasure",
+  zeusThunder: "Zeus Thunder",
+  cleopatra: "Cleopatra Diamonds",
+  frozenRiches: "Frozen Riches",
+  galaxyStars: "Galaxy Stars",
+  fruitMania: "Fruit Mania",
+  vikingGlory: "Viking Glory",
+  aztecEmpire: "Aztec Empire",
+  halloweenHunt: "Halloween Hunt",
+  luckyCharms: "Lucky Charms",
 };
 const slotGameThemes = {
   buffalo: {

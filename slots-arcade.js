@@ -1,15 +1,15 @@
 /* ============================================================
- * SOUTH DIAMOND SLOTS ARCADE - Engine + 12 Games
+ * SOUTH DIAMOND SLOTS ARCADE - Engine + 24 Games
  * ============================================================
  * Self-contained slot engine with:
- *   - 12 distinct themed games
+ *   - 24 distinct themed games
  *   - Weighted reel strips
  *   - Multi-payline evaluation
  *   - Wild substitution, scatter bonuses
  *   - Live progressive jackpots (Grand/Major/Minor/Mini)
  *   - Per-theme procedural music + sound effects
  *   - Fullscreen support
- *   - Uses real South Diamond player points from the server
+ *   - South Diamond account points
  * ============================================================ */
 
 "use strict";
@@ -82,6 +82,31 @@ const MASCOT_ART = {
   oceanTreasure: '<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shrG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7bc1d8"/><stop offset=".5" stop-color="#3a7a9a"/><stop offset="1" stop-color="#1a3a4a"/></linearGradient></defs><path d="M20 80 Q60 40 130 60 Q170 70 185 75 Q170 85 130 90 Q60 110 20 80 Z" fill="url(#shrG)" stroke="#1a3a4a" stroke-width="2.5"/><path d="M140 60 L155 30 L150 65 Z" fill="#3a7a9a" stroke="#1a3a4a" stroke-width="2"/><path d="M180 80 L210 65 L200 90 Z" fill="#3a7a9a" stroke="#1a3a4a" stroke-width="2"/><path d="M180 80 L210 95 L200 80 Z" fill="#3a7a9a" stroke="#1a3a4a" stroke-width="2"/><path d="M70 100 L60 130 L85 110 Z" fill="#3a7a9a" stroke="#1a3a4a" stroke-width="2"/><circle cx="140" cy="68" r="6" fill="#000"/><circle cx="138" cy="66" r="2" fill="#fff"/><path d="M155 80 Q170 90 155 95 M155 85 Q170 92 155 99" stroke="#fff" stroke-width="2" fill="none"/><path d="M60 75 L75 80 L60 85 L75 90 L60 95" stroke="#fff" stroke-width="1.5" fill="none"/></svg>',
   // Vegas 7s - neon sign
   vegas7s: '<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><defs><filter id="neon"><feGaussianBlur stdDeviation="2"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect x="10" y="20" width="180" height="60" rx="30" fill="#1a0828" stroke="#ff5fe5" stroke-width="3"/><text x="100" y="65" text-anchor="middle" font-family="Impact,Arial Black" font-weight="900" font-size="38" fill="#ff5fe5" filter="url(#neon)" stroke="#fff" stroke-width="1">VEGAS 7</text><circle cx="20" cy="50" r="3" fill="#ffd76b"/><circle cx="180" cy="50" r="3" fill="#ffd76b"/><circle cx="100" cy="15" r="3" fill="#7be8ff"/></svg>',
+
+  // Lucky Panda 88 - panda head with bamboo + gold ingot
+  luckyPanda: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="pdG" cx=".5" cy=".4"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e8e8e8"/></radialGradient></defs><ellipse cx="100" cy="115" rx="60" ry="48" fill="url(#pdG)" stroke="#1a0d06" stroke-width="3"/><ellipse cx="60" cy="80" rx="18" ry="22" fill="#1a0d06"/><ellipse cx="140" cy="80" rx="18" ry="22" fill="#1a0d06"/><ellipse cx="60" cy="100" rx="14" ry="16" fill="url(#pdG)"/><ellipse cx="140" cy="100" rx="14" ry="16" fill="url(#pdG)"/><circle cx="60" cy="100" r="5" fill="#1a0d06"/><circle cx="140" cy="100" r="5" fill="#1a0d06"/><circle cx="58" cy="98" r="2" fill="#fff"/><circle cx="138" cy="98" r="2" fill="#fff"/><ellipse cx="100" cy="125" rx="10" ry="7" fill="#1a0d06"/><path d="M100 132 Q92 142 100 145 Q108 142 100 132" stroke="#1a0d06" stroke-width="2" fill="#1a0d06"/><circle cx="35" cy="60" r="14" fill="#1a0d06"/><circle cx="165" cy="60" r="14" fill="#1a0d06"/><text x="100" y="180" text-anchor="middle" font-family="Georgia" font-weight="900" font-size="26" fill="#e8222e" stroke="#ffd200" stroke-width="1.5">88</text></svg>',
+  // Lion's Pride - lion head with mane
+  lionsPride: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="manG" cx=".5" cy=".5"><stop offset="0" stop-color="#ff8a3a"/><stop offset="1" stop-color="#7a3a08"/></radialGradient></defs><circle cx="100" cy="110" r="78" fill="url(#manG)" stroke="#3a1808" stroke-width="3"/><path d="M30 110 L20 90 M30 130 L18 130 M40 70 L25 55 M50 50 L40 30 M100 30 L100 12 M150 50 L160 30 M160 70 L175 55 M170 110 L182 110 M170 130 L182 130 M40 150 L25 165 M160 150 L175 165" stroke="#7a3a08" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="110" r="52" fill="#ffce6a"/><circle cx="78" cy="100" r="6" fill="#1a0d06"/><circle cx="122" cy="100" r="6" fill="#1a0d06"/><circle cx="76" cy="98" r="2" fill="#fff"/><circle cx="120" cy="98" r="2" fill="#fff"/><ellipse cx="100" cy="125" rx="9" ry="7" fill="#1a0d06"/><path d="M100 132 L95 140 M100 132 L105 140" stroke="#1a0d06" stroke-width="2.5"/><path d="M85 135 L78 145 M115 135 L122 145" stroke="#1a0d06" stroke-width="2"/></svg>',
+  // Pirate's Treasure - skull with crossed bones
+  piratesTreasure: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="120" width="160" height="14" fill="#5a3a18" stroke="#3a1808" stroke-width="2" transform="rotate(15 100 127)"/><rect x="20" y="120" width="160" height="14" fill="#5a3a18" stroke="#3a1808" stroke-width="2" transform="rotate(-15 100 127)"/><circle cx="25" cy="115" r="14" fill="#fff" stroke="#1a0d06" stroke-width="2" transform="rotate(15 100 127)"/><circle cx="175" cy="115" r="14" fill="#fff" stroke="#1a0d06" stroke-width="2" transform="rotate(15 100 127)"/><circle cx="25" cy="140" r="14" fill="#fff" stroke="#1a0d06" stroke-width="2" transform="rotate(-15 100 127)"/><circle cx="175" cy="140" r="14" fill="#fff" stroke="#1a0d06" stroke-width="2" transform="rotate(-15 100 127)"/><ellipse cx="100" cy="80" rx="55" ry="50" fill="#fff" stroke="#1a0d06" stroke-width="3"/><ellipse cx="75" cy="80" rx="14" ry="18" fill="#1a0d06"/><ellipse cx="125" cy="80" rx="14" ry="18" fill="#1a0d06"/><circle cx="72" cy="78" r="3" fill="#ff5630"/><circle cx="128" cy="78" r="3" fill="#ff5630"/><path d="M88 105 L92 115 L96 105 L100 115 L104 105 L108 115 L112 105" stroke="#1a0d06" stroke-width="2.5" fill="none"/><ellipse cx="100" cy="105" rx="4" ry="2" fill="#1a0d06"/></svg>',
+  // Zeus Thunder - bearded zeus head with crown
+  zeusThunder: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="zsG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffd76b"/><stop offset="1" stop-color="#b8830a"/></linearGradient></defs><path d="M50 60 L60 30 L75 50 L90 25 L100 50 L110 25 L125 50 L140 30 L150 60 Z" fill="url(#zsG)" stroke="#5a3a00" stroke-width="3"/><rect x="50" y="55" width="100" height="10" fill="url(#zsG)" stroke="#5a3a00" stroke-width="2"/><circle cx="100" cy="105" r="42" fill="#ffd9a8" stroke="#3a1808" stroke-width="2.5"/><circle cx="84" cy="100" r="5" fill="#2dd6f5"/><circle cx="116" cy="100" r="5" fill="#2dd6f5"/><circle cx="84" cy="100" r="2" fill="#1a0d06"/><circle cx="116" cy="100" r="2" fill="#1a0d06"/><path d="M70 130 Q80 140 100 138 Q120 140 130 130 L130 175 Q120 165 100 168 Q80 165 70 175 Z" fill="#fff" stroke="#1a0d06" stroke-width="2"/><path d="M75 125 L70 145 M80 130 L75 150 M125 125 L130 145 M120 130 L125 150" stroke="#a0a0a0" stroke-width="2" stroke-linecap="round"/><path d="M165 70 L175 50 L168 65 L180 55 L172 75 L185 75 L173 85" fill="#fffe5a" stroke="#ff5630" stroke-width="2"/></svg>',
+  // Cleopatra Diamonds - egyptian queen with headdress
+  cleopatra: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="clG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffd200"/><stop offset="1" stop-color="#b8830a"/></linearGradient></defs><path d="M30 55 L100 25 L170 55 L170 75 L100 50 L30 75 Z" fill="url(#clG)" stroke="#5a3a00" stroke-width="2.5"/><path d="M30 75 L100 50 L170 75 L160 95 L100 75 L40 95 Z" fill="#4ec5e1" stroke="#5a3a00" stroke-width="2"/><ellipse cx="100" cy="120" rx="38" ry="46" fill="#e8b878" stroke="#3a1808" stroke-width="2"/><ellipse cx="84" cy="115" rx="9" ry="6" fill="#1a0d06"/><ellipse cx="116" cy="115" rx="9" ry="6" fill="#1a0d06"/><circle cx="84" cy="115" r="3" fill="#fff"/><circle cx="116" cy="115" r="3" fill="#fff"/><path d="M75 110 L65 105 M125 110 L135 105" stroke="#1a0d06" stroke-width="2"/><path d="M88 135 Q100 142 112 135" stroke="#d11645" stroke-width="3" fill="none"/><path d="M55 95 L40 105 M145 95 L160 105" stroke="#5a3a00" stroke-width="2"/><polygon points="100,160 96,170 100,175 104,170" fill="#4ec5e1" stroke="#5a3a00" stroke-width="1.5"/></svg>',
+  // Frozen Riches - polar bear with snowflake
+  frozenRiches: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="brG" cx=".4" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#b8d8f0"/></radialGradient></defs><ellipse cx="100" cy="115" rx="68" ry="54" fill="url(#brG)" stroke="#5a7090" stroke-width="3"/><circle cx="55" cy="80" r="18" fill="url(#brG)" stroke="#5a7090" stroke-width="2.5"/><circle cx="145" cy="80" r="18" fill="url(#brG)" stroke="#5a7090" stroke-width="2.5"/><ellipse cx="100" cy="100" rx="30" ry="22" fill="#e8f0f8"/><circle cx="86" cy="95" r="5" fill="#1a0d06"/><circle cx="114" cy="95" r="5" fill="#1a0d06"/><circle cx="84" cy="93" r="2" fill="#fff"/><circle cx="112" cy="93" r="2" fill="#fff"/><ellipse cx="100" cy="118" rx="8" ry="6" fill="#1a0d06"/><path d="M100 124 Q92 134 100 138 Q108 134 100 124" stroke="#1a0d06" stroke-width="2.5" fill="#5a3a18"/><g fill="#7be8ff" stroke="#fff" stroke-width="1.5"><polygon points="170,30 173,40 180,42 174,48 178,58 170,52 162,58 166,48 160,42 167,40"/></g></svg>',
+  // Galaxy Stars - astronaut helmet with stars
+  galaxyStars: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="hmG" cx=".4" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset=".7" stop-color="#7be8ff"/><stop offset="1" stop-color="#2a5a7a"/></radialGradient></defs><circle cx="100" cy="100" r="58" fill="url(#hmG)" stroke="#1a0d06" stroke-width="3"/><circle cx="100" cy="100" r="42" fill="#0a0a3a" stroke="#1a0d06" stroke-width="2"/><circle cx="85" cy="85" r="14" fill="#fff" opacity=".4"/><circle cx="100" cy="105" r="5" fill="#ffd76b"/><circle cx="115" cy="98" r="3" fill="#ff5fe5"/><circle cx="85" cy="115" r="3" fill="#2dd6f5"/><rect x="76" y="155" width="48" height="10" fill="#a78bff" stroke="#1a0d06" stroke-width="2"/><polygon points="40,50 43,57 50,58 45,63 47,72 40,68 33,72 35,63 30,58 37,57" fill="#fff"/><polygon points="160,40 163,47 170,48 165,53 167,62 160,58 153,62 155,53 150,48 157,47" fill="#ffd76b"/><polygon points="170,140 173,147 180,148 175,153 177,162 170,158 163,162 165,153 160,148 167,147" fill="#7be8ff"/></svg>',
+  // Fruit Mania - cherries with leaves
+  fruitMania: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ch1" cx=".4" cy=".3"><stop offset="0" stop-color="#ff8aa0"/><stop offset="1" stop-color="#5a0017"/></radialGradient></defs><path d="M50 50 Q100 10 150 50" fill="none" stroke="#3a7a00" stroke-width="5"/><path d="M70 50 L60 40 L80 50 Z" fill="#52ef9f" stroke="#3a7a00" stroke-width="2"/><path d="M130 50 L120 40 L140 50 Z" fill="#52ef9f" stroke="#3a7a00" stroke-width="2"/><circle cx="60" cy="130" r="40" fill="url(#ch1)" stroke="#5a0010" stroke-width="3"/><circle cx="140" cy="135" r="38" fill="url(#ch1)" stroke="#5a0010" stroke-width="3"/><ellipse cx="48" cy="115" rx="10" ry="6" fill="#ffb0c0" opacity=".7"/><ellipse cx="128" cy="120" rx="10" ry="6" fill="#ffb0c0" opacity=".7"/><circle cx="20" cy="60" r="5" fill="#fff45a"/><circle cx="180" cy="65" r="4" fill="#ff7530"/><circle cx="20" cy="160" r="4" fill="#a78bff"/></svg>',
+  // Viking Glory - viking head with horned helmet
+  vikingGlory: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vkG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c0c8d0"/><stop offset="1" stop-color="#5a6878"/></linearGradient></defs><path d="M30 80 Q15 50 25 30 Q40 50 50 75 Z" fill="url(#vkG)" stroke="#3a4858" stroke-width="2"/><path d="M170 80 Q185 50 175 30 Q160 50 150 75 Z" fill="url(#vkG)" stroke="#3a4858" stroke-width="2"/><path d="M40 75 L100 50 L160 75 L160 100 L40 100 Z" fill="url(#vkG)" stroke="#3a4858" stroke-width="3"/><rect x="92" y="50" width="16" height="55" fill="url(#vkG)" stroke="#3a4858" stroke-width="2"/><ellipse cx="100" cy="125" rx="38" ry="46" fill="#e8b878" stroke="#3a1808" stroke-width="2"/><circle cx="85" cy="120" r="5" fill="#1a0d06"/><circle cx="115" cy="120" r="5" fill="#1a0d06"/><path d="M75 115 L65 110 M125 115 L135 110" stroke="#3a1808" stroke-width="2.5"/><path d="M75 145 Q100 155 125 145 L120 175 Q100 165 80 175 Z" fill="#c8954a" stroke="#5a3a08" stroke-width="2"/><path d="M82 155 L78 175 M90 158 L85 178 M110 158 L115 178 M118 155 L122 175" stroke="#5a3a08" stroke-width="2"/></svg>',
+  // Aztec Empire - sun god mask
+  aztecEmpire: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="sgG" cx=".5" cy=".5"><stop offset="0" stop-color="#ffd200"/><stop offset="1" stop-color="#b8830a"/></radialGradient></defs><g stroke="#5a3a00" stroke-width="2"><polygon points="100,15 105,30 95,30" fill="url(#sgG)"/><polygon points="100,185 105,170 95,170" fill="url(#sgG)"/><polygon points="15,100 30,95 30,105" fill="url(#sgG)"/><polygon points="185,100 170,95 170,105" fill="url(#sgG)"/><polygon points="40,40 50,50 40,52 50,42 52,40" fill="url(#sgG)"/><polygon points="160,40 150,50 160,52 150,42 148,40" fill="url(#sgG)"/><polygon points="40,160 50,150 40,148 50,158 52,160" fill="url(#sgG)"/><polygon points="160,160 150,150 160,148 150,158 148,160" fill="url(#sgG)"/></g><circle cx="100" cy="100" r="55" fill="url(#sgG)" stroke="#5a3a00" stroke-width="3"/><ellipse cx="80" cy="92" rx="10" ry="7" fill="#1a0d06"/><ellipse cx="120" cy="92" rx="10" ry="7" fill="#1a0d06"/><circle cx="80" cy="92" r="3" fill="#2dd55b"/><circle cx="120" cy="92" r="3" fill="#2dd55b"/><polygon points="100,110 92,118 108,118" fill="#1a0d06"/><path d="M80 130 Q100 140 120 130 L120 140 L80 140 Z" fill="#1a0d06"/><path d="M85 142 L85 148 M95 142 L95 148 M105 142 L105 148 M115 142 L115 148" stroke="#fff" stroke-width="2"/></svg>',
+  // Halloween Hunt - jack-o-lantern
+  halloweenHunt: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="pkG" cx=".5" cy=".5"><stop offset="0" stop-color="#ff8a3a"/><stop offset=".7" stop-color="#ff5630"/><stop offset="1" stop-color="#8b3a0a"/></radialGradient></defs><ellipse cx="100" cy="115" rx="80" ry="65" fill="url(#pkG)" stroke="#5a1f08" stroke-width="3"/><path d="M85 60 L95 75 L105 70 L115 75 L120 50 L100 45 L88 50 Z" fill="#2a6e1f" stroke="#1a4810" stroke-width="2"/><path d="M105 50 Q120 35 115 25" stroke="#2a6e1f" stroke-width="3" fill="none"/><path d="M60 85 L80 75 L80 95 Z" fill="#ffd700" stroke="#1a0d06" stroke-width="2"/><path d="M140 85 L120 75 L120 95 Z" fill="#ffd700" stroke="#1a0d06" stroke-width="2"/><circle cx="70" cy="85" r="4" fill="#1a0d06"/><circle cx="130" cy="85" r="4" fill="#1a0d06"/><path d="M60 130 L80 130 L75 145 L85 138 L90 150 L100 140 L110 150 L115 138 L125 145 L120 130 L140 130" stroke="#ffd700" stroke-width="2" fill="#1a0d06"/><path d="M45 110 L50 105 M40 130 L48 130 M160 110 L155 105 M160 130 L152 130" stroke="#1a0d06" stroke-width="2"/><circle cx="172" cy="35" r="14" fill="#fff8cd" stroke="#b8830a" stroke-width="2"/></svg>',
+  // Lucky Charms - leprechaun hat with clover
+  luckyCharms: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lpG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2dd55b"/><stop offset="1" stop-color="#0a4a1f"/></linearGradient></defs><rect x="40" y="125" width="120" height="20" rx="3" fill="url(#lpG)" stroke="#1a0d06" stroke-width="2.5"/><rect x="60" y="60" width="80" height="70" rx="6" fill="url(#lpG)" stroke="#1a0d06" stroke-width="3"/><rect x="60" y="120" width="80" height="14" fill="#1a0d06"/><rect x="92" y="120" width="16" height="14" fill="url(#lpG)"/><rect x="92" y="120" width="16" height="14" fill="none" stroke="#ffd200" stroke-width="2"/><rect x="96" y="124" width="8" height="6" fill="#ffd200"/><g transform="translate(100 90)"><circle cx="0" cy="-12" r="10" fill="#52ef9f" stroke="#0a4a1f" stroke-width="2"/><circle cx="-10" cy="0" r="10" fill="#52ef9f" stroke="#0a4a1f" stroke-width="2"/><circle cx="10" cy="0" r="10" fill="#52ef9f" stroke="#0a4a1f" stroke-width="2"/><circle cx="0" cy="12" r="10" fill="#52ef9f" stroke="#0a4a1f" stroke-width="2"/><rect x="-2" y="10" width="4" height="14" fill="#5a3a08"/></g><path d="M165 30 Q180 25 175 50 Q170 60 165 70" stroke="#a78bff" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M165 30 L155 50 M170 40 L160 60 M175 50 L165 70" stroke="#ff5fe5" stroke-width="3" stroke-linecap="round" opacity=".7"/></svg>',
 };
 
 
@@ -101,6 +126,18 @@ const SPIN_PROFILES = {
   pharaoh:   { duration: 1000, stagger: 300, easing: "cubic-bezier(.22,.7,.4,1)",   effect: "sand" },
   ocean:     { duration: 950,  stagger: 290, easing: "cubic-bezier(.3,.6,.35,1)",   effect: "wave" },
   vegas:     { duration: 750,  stagger: 200, easing: "cubic-bezier(.15,.85,.3,1)",  effect: "neon" },
+  panda88:    { duration: 1050, stagger: 320, easing: "cubic-bezier(.22,.7,.35,1)",  effect: "lantern" },
+  lion:       { duration: 1100, stagger: 350, easing: "cubic-bezier(.2,.7,.35,1)",   effect: "savannah" },
+  pirate:     { duration: 980,  stagger: 290, easing: "cubic-bezier(.25,.7,.3,1)",   effect: "splash" },
+  zeus:       { duration: 900,  stagger: 240, easing: "cubic-bezier(.18,.7,.3,1)",   effect: "lightning" },
+  cleopatra:  { duration: 1050, stagger: 310, easing: "cubic-bezier(.22,.7,.4,1)",   effect: "sandgold" },
+  arctic:     { duration: 1150, stagger: 360, easing: "cubic-bezier(.25,.8,.35,1)",  effect: "snow" },
+  galaxy:     { duration: 850,  stagger: 200, easing: "cubic-bezier(.15,.85,.3,1)",  effect: "starburst" },
+  fruit:      { duration: 700,  stagger: 160, easing: "cubic-bezier(.15,.85,.3,1)",  effect: "fruitpop" },
+  viking:     { duration: 1050, stagger: 330, easing: "cubic-bezier(.2,.7,.3,1)",    effect: "axehit" },
+  aztec:      { duration: 1100, stagger: 340, easing: "cubic-bezier(.25,.75,.4,1)",  effect: "templefire" },
+  halloween:  { duration: 1100, stagger: 360, easing: "cubic-bezier(.25,.8,.4,1)",   effect: "spook" },
+  irish:      { duration: 920,  stagger: 270, easing: "cubic-bezier(.18,.7,.3,1)",   effect: "rainbow" },
 };
 function getSpinProfile(game) {
   return SPIN_PROFILES[game.theme] || { duration: 900, stagger: 280, easing: "cubic-bezier(.18,.65,.25,1)", effect: "default" };
@@ -518,12 +555,384 @@ const GAMES = {
     },
     paytableOrder: ["WILD","SEVEN","DIAMOND","BAR3","BAR2","BAR","BELL","CHERRY"],
   },
+
+  // =========================================================
+  // 13. LUCKY PANDA 88 - Asian fortune
+  // =========================================================
+  luckyPanda: {
+    rtpScale: 2.64,
+    layout: "mascot-watermark",
+    title: "Lucky Panda 88",
+    tagline: "Bamboo Fortune Awaits",
+    theme: "panda88",
+    accent: "#e8222e",
+    accent2: "#ffd200",
+    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 30) || PAYLINES_5x3,
+    mascot: "\uD83D\uDC3C",
+    sceneClass: "scene-panda",
+    bgEmoji: ["\uD83C\uDF8B","\uD83C\uDFEE","\uD83E\uDD8C","\u9670\uFE0F"],
+    music: { tempo: 95, scale: [262, 294, 349, 392, 440, 523] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD PANDA"), weight: 3, pay: [0,0,0,100,250,1000], wild: true },
+      SCATTER: { ...svgSym("SCATTER","FORTUNE"), weight: 2, pay: [0,0,0,5,25,150], scatter: true },
+      PANDA:   { ...emojiSym("\uD83D\uDC3C","PANDA"), weight: 5, pay: [0,0,0,60,150,600] },
+      INGOT:   { ...svgSym("GOLD_COIN","INGOT"), weight: 7, pay: [0,0,0,40,100,400] },
+      LANTERN: { ...emojiSym("\uD83C\uDFEE","LANTERN"), weight: 9, pay: [0,0,0,25,65,225] },
+      BAMBOO:  { ...emojiSym("\uD83C\uDF8B","BAMBOO"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,20,75] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,18,65] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","PANDA","INGOT","LANTERN","BAMBOO","A","K"],
+  },
+
+  // =========================================================
+  // 14. LION'S PRIDE - African safari
+  // =========================================================
+  lionsPride: {
+    rtpScale: 2.65,
+    layout: "mascot-watermark",
+    title: "Lion's Pride",
+    tagline: "Roar of the Savanna",
+    theme: "lion",
+    accent: "#ff7530",
+    accent2: "#ffce6a",
+    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    mascot: "\uD83E\uDD81",
+    sceneClass: "scene-savanna",
+    bgEmoji: ["\uD83E\uDD8A","\uD83D\uDC18","\uD83E\uDD92","\u2600\uFE0F"],
+    music: { tempo: 90, scale: [98, 131, 165, 196, 247, 294] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,0,90,220,900], wild: true },
+      SCATTER: { ...svgSym("SCATTER","SUN"), weight: 2, pay: [0,0,0,5,25,150], scatter: true },
+      LION:    { ...emojiSym("\uD83E\uDD81","LION"), weight: 5, pay: [0,0,0,55,140,550] },
+      ELEPHANT:{ ...emojiSym("\uD83D\uDC18","ELEPHANT"), weight: 7, pay: [0,0,0,35,90,360] },
+      GIRAFFE: { ...emojiSym("\uD83E\uDD92","GIRAFFE"), weight: 9, pay: [0,0,0,25,65,240] },
+      ZEBRA:   { ...emojiSym("\uD83E\uDD8C","ZEBRA"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,20,75] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,18,65] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","LION","ELEPHANT","GIRAFFE","ZEBRA","A","K"],
+  },
+
+  // =========================================================
+  // 15. PIRATE'S TREASURE - Pirate ship
+  // =========================================================
+  piratesTreasure: {
+    rtpScale: 2.63,
+    layout: "mascot-top",
+    title: "Pirate's Treasure",
+    tagline: "Plunder the Seas",
+    theme: "pirate",
+    accent: "#b88a3a",
+    accent2: "#d4002a",
+    rows: 4, reels: 5, paylines: PAYLINES_5x4,
+    mascot: "\u2620\uFE0F",
+    sceneClass: "scene-pirate",
+    bgEmoji: ["\u26F5","\u2693","\u26A1","\uD83D\uDC99"],
+    music: { tempo: 110, scale: [196, 233, 277, 329, 392, 466] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,0,100,250,1000], wild: true },
+      SCATTER: { ...svgSym("SCATTER","CHEST"), weight: 2, pay: [0,0,0,5,30,250], scatter: true },
+      SHIP:    { ...emojiSym("\u26F5","SHIP"), weight: 5, pay: [0,0,0,60,150,600] },
+      SKULL:   { ...emojiSym("\u2620\uFE0F","SKULL"), weight: 7, pay: [0,0,0,40,100,400] },
+      ANCHOR:  { ...emojiSym("\u2693","ANCHOR"), weight: 9, pay: [0,0,0,25,65,250] },
+      PARROT:  { ...emojiSym("\uD83E\uDD9C","PARROT"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,25,80] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,20,70] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","SHIP","SKULL","ANCHOR","PARROT","A","K"],
+  },
+
+  // =========================================================
+  // 16. ZEUS THUNDER - Greek gods
+  // =========================================================
+  zeusThunder: {
+    rtpScale: 2.61,
+    layout: "mascot-watermark",
+    title: "Zeus Thunder",
+    tagline: "Olympian Lightning",
+    theme: "zeus",
+    accent: "#2dd6f5",
+    accent2: "#ffd76b",
+    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    mascot: "\u26A1",
+    sceneClass: "scene-olympus",
+    bgEmoji: ["\u26A1","\u2601\uFE0F","\uD83C\uDFDB\uFE0F","\uD83D\uDC09"],
+    music: { tempo: 105, scale: [196, 247, 294, 392, 494, 587] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","ZEUS"), weight: 3, pay: [0,0,0,100,250,1000], wild: true },
+      SCATTER: { ...svgSym("SCATTER","BOLT"), weight: 2, pay: [0,0,0,5,30,200], scatter: true },
+      EAGLE:   { ...emojiSym("\uD83E\uDD85","EAGLE"), weight: 5, pay: [0,0,0,55,140,550] },
+      HELMET:  { ...emojiSym("\uD83E\uDE96","HELMET"), weight: 7, pay: [0,0,0,35,90,350] },
+      TEMPLE:  { ...emojiSym("\uD83C\uDFDB\uFE0F","TEMPLE"), weight: 9, pay: [0,0,0,25,65,225] },
+      VASE:    { ...emojiSym("\uD83C\uDFFA","VASE"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,20,75] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,18,65] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","EAGLE","HELMET","TEMPLE","VASE","A","K"],
+  },
+
+  // =========================================================
+  // 17. CLEOPATRA DIAMONDS - Egyptian queen
+  // =========================================================
+  cleopatra: {
+    rtpScale: 2.42,
+    layout: "mascot-watermark",
+    title: "Cleopatra Diamonds",
+    tagline: "Queen of the Nile",
+    theme: "cleopatra",
+    accent: "#ffd200",
+    accent2: "#4ec5e1",
+    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 20),
+    mascot: "\uD83D\uDC51",
+    sceneClass: "scene-cleo",
+    bgEmoji: ["\uD83D\uDC51","\uD83D\uDD3A","\uD83D\uDC0D","\u2600\uFE0F"],
+    music: { tempo: 95, scale: [196, 233, 277, 311, 349, 415] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","CLEO"), weight: 3, pay: [0,0,0,110,275,1100], wild: true },
+      SCATTER: { ...svgSym("SCATTER","ANKH"), weight: 2, pay: [0,0,0,5,30,200], scatter: true },
+      DIAMOND: { ...svgSym("DIAMOND","DIAMOND"), weight: 5, pay: [0,0,0,60,150,600] },
+      SCARAB:  { ...emojiSym("\uD83D\uDC1E","SCARAB"), weight: 7, pay: [0,0,0,40,100,400] },
+      COBRA:   { ...emojiSym("\uD83D\uDC0D","COBRA"), weight: 9, pay: [0,0,0,25,65,225] },
+      SARCOPH: { ...emojiSym("\uD83C\uDFFA","SARCO"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,20,75] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,18,65] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","DIAMOND","SCARAB","COBRA","SARCOPH","A","K"],
+  },
+
+  // =========================================================
+  // 18. FROZEN RICHES - Arctic ice
+  // =========================================================
+  frozenRiches: {
+    rtpScale: 2.65,
+    layout: "mascot-watermark",
+    title: "Frozen Riches",
+    tagline: "Icy Cold Cash",
+    theme: "arctic",
+    accent: "#5dd0f5",
+    accent2: "#c8e8ff",
+    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    mascot: "\uD83D\uDC3B\u200D\u2744\uFE0F",
+    sceneClass: "scene-arctic",
+    bgEmoji: ["\u2744\uFE0F","\uD83C\uDFD4\uFE0F","\uD83D\uDC27","\uD83D\uDC1F"],
+    music: { tempo: 78, scale: [392, 466, 523, 587, 698, 784] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,0,90,220,900], wild: true },
+      SCATTER: { ...svgSym("SCATTER","FLAKE"), weight: 2, pay: [0,0,0,5,30,200], scatter: true },
+      BEAR:    { ...emojiSym("\uD83D\uDC3B\u200D\u2744\uFE0F","POLAR"), weight: 5, pay: [0,0,0,55,140,550] },
+      PENGUIN: { ...emojiSym("\uD83D\uDC27","PENGUIN"), weight: 7, pay: [0,0,0,35,90,350] },
+      FISH:    { ...emojiSym("\uD83D\uDC1F","FISH"), weight: 9, pay: [0,0,0,25,65,225] },
+      IGLOO:   { ...emojiSym("\uD83C\uDFD4\uFE0F","IGLOO"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,20,75] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,18,65] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","BEAR","PENGUIN","FISH","IGLOO","A","K"],
+  },
+
+  // =========================================================
+  // 19. GALAXY STARS - Deep space
+  // =========================================================
+  galaxyStars: {
+    rtpScale: 2.7,
+    layout: "mascot-top",
+    title: "Galaxy Stars",
+    tagline: "Reach for the Cosmos",
+    theme: "galaxy",
+    accent: "#a78bff",
+    accent2: "#2dd6f5",
+    rows: 4, reels: 5, paylines: PAYLINES_5x4,
+    mascot: "\uD83D\uDE80",
+    sceneClass: "scene-galaxy",
+    bgEmoji: ["\u2728","\uD83C\uDF1F","\uD83E\uDE90","\uD83D\uDC7D"],
+    music: { tempo: 130, scale: [220, 277, 330, 415, 494, 622] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,0,100,250,1500], wild: true },
+      SCATTER: { ...svgSym("SCATTER","NEBULA"), weight: 2, pay: [0,0,0,5,30,300], scatter: true },
+      ALIEN:   { ...emojiSym("\uD83D\uDC7D","ALIEN"), weight: 5, pay: [0,0,0,60,150,600] },
+      ROCKET:  { ...emojiSym("\uD83D\uDE80","ROCKET"), weight: 7, pay: [0,0,0,40,100,400] },
+      PLANET:  { ...emojiSym("\uD83E\uDE90","PLANET"), weight: 9, pay: [0,0,0,25,65,250] },
+      STAR:    { ...svgSym("STAR","STAR"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,25,80] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,20,70] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      "10":    { ...svgSym("CARD_10","10"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","ALIEN","ROCKET","PLANET","STAR","A","K"],
+  },
+
+  // =========================================================
+  // 20. FRUIT MANIA - Classic fruit machine 3x3
+  // =========================================================
+  fruitMania: {
+    rtpScale: 0.363,
+    layout: "classic-compact",
+    title: "Fruit Mania",
+    tagline: "Classic Fruit Frenzy",
+    theme: "fruit",
+    accent: "#ff5630",
+    accent2: "#fff45a",
+    rows: 3, reels: 3, paylines: PAYLINES_3x3,
+    mascot: "\uD83C\uDF52",
+    sceneClass: "scene-fruit",
+    bgEmoji: ["\uD83C\uDF52","\uD83C\uDF4B","\uD83C\uDF4A","\uD83C\uDF49"],
+    music: { tempo: 145, scale: [262, 330, 392, 494, 587, 698] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,400,0,0,0], wild: true },
+      SEVEN:   { ...svgSym("SEVEN","777"), weight: 5, pay: [0,0,500,0,0,0] },
+      BAR3:    { ...svgSym("BAR3","BAR x3"), weight: 7, pay: [0,0,200,0,0,0] },
+      WATERMELON: { ...emojiSym("\uD83C\uDF49","MELON"), weight: 9, pay: [0,0,100,0,0,0] },
+      PLUM:    { ...emojiSym("\uD83C\uDF47","PLUM"), weight: 11, pay: [0,0,60,0,0,0] },
+      ORANGE:  { ...emojiSym("\uD83C\uDF4A","ORANGE"), weight: 13, pay: [0,0,40,0,0,0] },
+      LEMON:   { ...emojiSym("\uD83C\uDF4B","LEMON"), weight: 14, pay: [0,0,25,0,0,0] },
+      CHERRY:  { ...svgSym("CHERRY","CHERRY"), weight: 15, pay: [0,3,15,0,0,0] },
+    },
+    paytableOrder: ["WILD","SEVEN","BAR3","WATERMELON","PLUM","ORANGE","LEMON","CHERRY"],
+  },
+
+  // =========================================================
+  // 21. VIKING GLORY - Norse warriors
+  // =========================================================
+  vikingGlory: {
+    rtpScale: 2.77,
+    layout: "mascot-top",
+    title: "Viking Glory",
+    tagline: "Battle for Valhalla",
+    theme: "viking",
+    accent: "#4682b4",
+    accent2: "#ffd76b",
+    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    mascot: "\u2694\uFE0F",
+    sceneClass: "scene-viking",
+    bgEmoji: ["\u26F5","\u2694\uFE0F","\uD83D\uDEE1\uFE0F","\uD83D\uDC3A"],
+    music: { tempo: 100, scale: [147, 175, 196, 233, 262, 311] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,0,100,250,1000], wild: true },
+      SCATTER: { ...svgSym("SCATTER","HAMMER"), weight: 2, pay: [0,0,0,5,30,200], scatter: true },
+      VIKING:  { ...emojiSym("\uD83E\uDDD4","VIKING"), weight: 5, pay: [0,0,0,55,140,550] },
+      AXE:     { ...emojiSym("\u2694\uFE0F","AXE"), weight: 7, pay: [0,0,0,40,100,400] },
+      SHIELD:  { ...emojiSym("\uD83D\uDEE1\uFE0F","SHIELD"), weight: 9, pay: [0,0,0,25,65,225] },
+      WOLF:    { ...emojiSym("\uD83D\uDC3A","WOLF"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,20,75] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,18,65] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","VIKING","AXE","SHIELD","WOLF","A","K"],
+  },
+
+  // =========================================================
+  // 22. AZTEC EMPIRE - Mayan ruins
+  // =========================================================
+  aztecEmpire: {
+    rtpScale: 2.53,
+    layout: "mascot-watermark",
+    title: "Aztec Empire",
+    tagline: "Lost City Riches",
+    theme: "aztec",
+    accent: "#2dd55b",
+    accent2: "#ffd200",
+    rows: 4, reels: 5, paylines: PAYLINES_5x4,
+    mascot: "\u2600\uFE0F",
+    sceneClass: "scene-aztec",
+    bgEmoji: ["\uD83C\uDFEF","\u2600\uFE0F","\uD83D\uDC06","\uD83C\uDF34"],
+    music: { tempo: 100, scale: [165, 175, 196, 220, 247, 294] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","SUN GOD"), weight: 3, pay: [0,0,0,110,275,1100], wild: true },
+      SCATTER: { ...svgSym("SCATTER","SKULL"), weight: 2, pay: [0,0,0,5,30,250], scatter: true },
+      JAGUAR:  { ...emojiSym("\uD83D\uDC06","JAGUAR"), weight: 5, pay: [0,0,0,60,150,600] },
+      EAGLE:   { ...emojiSym("\uD83E\uDD85","EAGLE"), weight: 7, pay: [0,0,0,40,100,400] },
+      IDOL:    { ...emojiSym("\uD83C\uDFEF","IDOL"), weight: 9, pay: [0,0,0,25,65,250] },
+      PALM:    { ...emojiSym("\uD83C\uDF34","PALM"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,25,80] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,20,70] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      "10":    { ...svgSym("CARD_10","10"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","JAGUAR","EAGLE","IDOL","PALM","A","K"],
+  },
+
+  // =========================================================
+  // 23. HALLOWEEN HUNT - Spooky night
+  // =========================================================
+  halloweenHunt: {
+    rtpScale: 2.77,
+    layout: "mascot-watermark",
+    title: "Halloween Hunt",
+    tagline: "Trick or Treasure",
+    theme: "halloween",
+    accent: "#ff7530",
+    accent2: "#9c5cff",
+    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    mascot: "\uD83C\uDF83",
+    sceneClass: "scene-halloween",
+    bgEmoji: ["\uD83D\uDC7B","\uD83E\uDDD9\u200D\u2640\uFE0F","\uD83E\uDD87","\uD83C\uDF83"],
+    music: { tempo: 80, scale: [185, 220, 247, 277, 311, 370] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,0,95,240,950], wild: true },
+      SCATTER: { ...svgSym("SCATTER","MOON"), weight: 2, pay: [0,0,0,5,30,200], scatter: true },
+      PUMPKIN: { ...emojiSym("\uD83C\uDF83","PUMPKIN"), weight: 5, pay: [0,0,0,55,140,550] },
+      WITCH:   { ...emojiSym("\uD83E\uDDD9\u200D\u2640\uFE0F","WITCH"), weight: 7, pay: [0,0,0,40,100,400] },
+      GHOST:   { ...emojiSym("\uD83D\uDC7B","GHOST"), weight: 9, pay: [0,0,0,25,65,225] },
+      BAT:     { ...emojiSym("\uD83E\uDD87","BAT"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,20,75] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,18,65] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","PUMPKIN","WITCH","GHOST","BAT","A","K"],
+  },
+
+  // =========================================================
+  // 24. LUCKY CHARMS - Irish leprechaun
+  // =========================================================
+  luckyCharms: {
+    rtpScale: 2.62,
+    layout: "mascot-watermark",
+    title: "Lucky Charms",
+    tagline: "Find the Pot of Gold",
+    theme: "irish",
+    accent: "#2dd55b",
+    accent2: "#ffd200",
+    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 20),
+    mascot: "\uD83C\uDF40",
+    sceneClass: "scene-irish",
+    bgEmoji: ["\uD83C\uDF08","\uD83C\uDF40","\uD83D\uDCB0","\uD83C\uDFB6"],
+    music: { tempo: 130, scale: [196, 247, 277, 349, 392, 440] },
+    symbols: {
+      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,0,100,250,1000], wild: true },
+      SCATTER: { ...svgSym("SCATTER","RAINBOW"), weight: 2, pay: [0,0,0,5,30,200], scatter: true },
+      LEPRECHAUN: { ...emojiSym("\uD83E\uDDD9","LUCKY"), weight: 5, pay: [0,0,0,60,150,600] },
+      POT:     { ...emojiSym("\uD83D\uDCB0","GOLD"), weight: 7, pay: [0,0,0,40,100,400] },
+      CLOVER:  { ...emojiSym("\uD83C\uDF40","CLOVER"), weight: 9, pay: [0,0,0,25,65,250] },
+      HORSE:   { ...svgSym("HORSESHOE","HORSESHOE"), weight: 11, pay: [0,0,0,15,40,150] },
+      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,8,20,75] },
+      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,6,18,65] },
+      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,5,15,50] },
+      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,4,12,40] },
+    },
+    paytableOrder: ["WILD","LEPRECHAUN","POT","CLOVER","HORSE","A","K"],
+  },
 };
 
 // Order in which to show games in the lobby
 const GAME_ORDER = [
   "wildBuffalo","kingKong","triple777","blackjack","gorillaGold","goldWolf",
-  "wildBull","dragonEmpress","mammothRush","pharaoh","oceanTreasure","vegas7s"
+  "wildBull","dragonEmpress","mammothRush","pharaoh","oceanTreasure","vegas7s",
+  "luckyPanda","lionsPride","piratesTreasure","zeusThunder","cleopatra","frozenRiches",
+  "galaxyStars","fruitMania","vikingGlory","aztecEmpire","halloweenHunt","luckyCharms"
 ];
 
 
@@ -536,7 +945,7 @@ const GAME_ORDER = [
 //   - {gameKey}-bg.jpg     -> in-game background scene (1920x1080)
 // ============================================================
 const ASSET_BASE = "assets/slots/";
-const ASSET_KEYS = ["wildBuffalo","kingKong","triple777","blackjack","gorillaGold","goldWolf","wildBull","dragonEmpress","mammothRush","pharaoh","oceanTreasure","vegas7s"];
+const ASSET_KEYS = GAME_ORDER;
 const ASSET_CACHE = {};
 
 function checkAssetExists(url) {
@@ -611,6 +1020,7 @@ const State = {
   soundOn: true,
   fullscreen: false,
   player: null,
+  pointsSyncedAt: 0,
 };
 
 async function arcadeApi(path, options = {}) {
@@ -630,6 +1040,7 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
     const data = await arcadeApi("/api/player/me");
     State.player = data.user;
     State.credits = Number(data.user?.points) || 0;
+    State.pointsSyncedAt = Date.now();
     updateDisplays();
     return true;
   } catch (error) {
@@ -1161,7 +1572,6 @@ async function spinGame() {
     stopAutoSpin();
     return;
   }
-  await refreshPlayerPoints();
   if (State.credits < State.bet) {
     flashMessage("Not enough South Diamond points. Ask admin to add points.");
     stopAutoSpin();
@@ -1183,6 +1593,11 @@ async function spinGame() {
     } catch (err) {}
   }
   State.isSpinning = true;
+  const spinButton = $("[data-spin-btn]");
+  if (spinButton) {
+    spinButton.classList.add("is-spinning");
+    spinButton.disabled = true;
+  }
   Audio.resume();
   Audio.spinStart();
 
@@ -1200,6 +1615,14 @@ async function spinGame() {
   // Generate result
   const grid = generateGrid(game);
   const result = evaluateSpin(game, grid, State.bet);
+  const settlementPromise = arcadeApi("/api/player/slots/arcade-spin", {
+    method: "POST",
+    body: JSON.stringify({
+      gameKey: State.activeGame,
+      bet: State.bet,
+      win: result.totalPay || 0,
+    }),
+  });
 
   // Determine if we should show anticipation
   const isJackpot = !!result.jpHit;
@@ -1212,23 +1635,21 @@ async function spinGame() {
   const promises = reels.map((reel, idx) =>
     animateReelSpin(reel, grid[idx], game, idx, { slowFinish: slowFinish && idx === reels.length - 1 })
   );
-  await Promise.all(promises);
 
   let settlement = null;
   try {
-    settlement = await arcadeApi("/api/player/slots/arcade-spin", {
-      method: "POST",
-      body: JSON.stringify({
-        gameKey: State.activeGame,
-        bet: State.bet,
-        win: result.totalPay || 0,
-      }),
-    });
+    const settled = await Promise.all([Promise.all(promises), settlementPromise]);
+    settlement = settled[1];
     result.totalPay = Number(settlement.win) || 0;
   } catch (error) {
+    await Promise.allSettled(promises);
     State.credits = Math.round((State.credits + State.bet) * 100) / 100;
     updateDisplays();
     State.isSpinning = false;
+    if (spinButton) {
+      spinButton.classList.remove("is-spinning");
+      spinButton.disabled = false;
+    }
     flashMessage(error.message || "Spin could not be saved. Try again.");
     stopAutoSpin();
     return;
@@ -1294,6 +1715,7 @@ async function spinGame() {
   if (settlement?.user) {
     State.player = settlement.user;
     State.credits = Number(settlement.user.points) || State.credits;
+    State.pointsSyncedAt = Date.now();
     updateDisplays();
   }
   saveState();
@@ -1301,10 +1723,14 @@ async function spinGame() {
     try { SlotsConfig.recordSpin(State.activeGame, State.bet, result.totalPay || 0); } catch (err) {}
   }
   State.isSpinning = false;
+  if (spinButton) {
+    spinButton.classList.remove("is-spinning");
+    spinButton.disabled = false;
+  }
 
   // Auto-spin
   if (State.autoSpin) {
-    setTimeout(() => { if (State.autoSpin) spinGame(); }, 900);
+    setTimeout(() => { if (State.autoSpin) spinGame(); }, 650);
   }
 }
 
@@ -1465,15 +1891,23 @@ function closePaytableModal() {
 async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        try { if (screen.orientation?.lock) await screen.orientation.lock("landscape"); } catch (err) {}
+      } else {
+        document.body.classList.add("is-pseudo-fullscreen");
+      }
       State.fullscreen = true;
-      try { if (screen.orientation?.lock) await screen.orientation.lock("landscape"); } catch (err) {}
     } else {
       await document.exitFullscreen();
       State.fullscreen = false;
     }
     $("[data-fullscreen-btn]")?.classList.toggle("is-active", State.fullscreen);
-  } catch (err) { /* not supported */ }
+  } catch (err) {
+    document.body.classList.toggle("is-pseudo-fullscreen");
+    State.fullscreen = document.body.classList.contains("is-pseudo-fullscreen");
+    $("[data-fullscreen-btn]")?.classList.toggle("is-active", State.fullscreen);
+  }
 }
 
 // ============================================================
@@ -1482,6 +1916,11 @@ async function toggleFullscreen() {
 function backToLobby() {
   stopAutoSpin();
   Audio.stopMusic();
+  if (document.body.classList.contains("is-pseudo-fullscreen")) {
+    document.body.classList.remove("is-pseudo-fullscreen");
+    State.fullscreen = false;
+    $("[data-fullscreen-btn]")?.classList.remove("is-active");
+  }
   State.activeGame = null;
   $("[data-game-view]").classList.add("hidden");
   $("[data-lobby-view]").classList.remove("hidden");

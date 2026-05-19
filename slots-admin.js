@@ -19,6 +19,10 @@
     blackjack: "#2dd55b", gorilla: "#ffd200", wolf: "#95e3ff",
     bull: "#ffd95e", dragon: "#d4002a", mammoth: "#5dcef0",
     pharaoh: "#f7c000", ocean: "#00b4d8", vegas: "#ff5fe5",
+    panda88: "#e8222e", lion: "#ff7530", pirate: "#b88a3a",
+    zeus: "#2dd6f5", cleopatra: "#ffd200", arctic: "#5dd0f5",
+    galaxy: "#a78bff", fruit: "#ff5630", viking: "#4682b4",
+    aztec: "#2dd55b", halloween: "#ff7530", irish: "#2dd55b",
   };
 
   // Per-game mascot emoji for admin display
@@ -27,6 +31,10 @@
     blackjack: "\u{1F0A1}", gorilla: "\u{1F98D}", wolf: "\u{1F43A}",
     bull: "\u{1F402}", dragon: "\u{1F409}", mammoth: "\u{1F9A3}",
     pharaoh: "\u{1F9DD}", ocean: "\u{1F988}", vegas: "7⃣",
+    panda88: "\u{1F43C}", lion: "\u{1F981}", pirate: "☠️",
+    zeus: "⚡", cleopatra: "\u{1F451}", arctic: "❄️",
+    galaxy: "\u{1F680}", fruit: "\u{1F352}", viking: "⚔️",
+    aztec: "☀️", halloween: "\u{1F383}", irish: "\u{1F340}",
   };
 
   function fmt(n) { return SC.fmt(n); }

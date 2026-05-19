@@ -543,6 +543,9 @@ button { font-family: inherit; cursor: pointer; }
   margin: 4px auto 8px;
   max-width: 700px;
 }
+.mobile-lobby-btn {
+  display: none;
+}
 .game-mascot {
   font-size: 3rem;
   filter: drop-shadow(0 4px 0 rgba(0,0,0,.5)) drop-shadow(0 0 16px var(--accent, #ffd76b));
@@ -2239,3 +2242,674 @@ button { font-family: inherit; cursor: pointer; }
 }
 .game-view.has-real-bg::before,
 .game-view.has-real-bg .game-decor { opacity: .3; }
+
+/* ============================================================
+   v6: 12 NEW GAME THEMES (Lucky Panda through Lucky Charms)
+   ============================================================ */
+
+/* ----- LUCKY PANDA 88 - Asian fortune ----- */
+.game-view.scene-panda {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 210, 0, .35), transparent 60%),
+    linear-gradient(180deg, #e8222e 0%, #8b0017 50%, #2a0005 100%);
+}
+.game-view.scene-panda::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(circle 40px at 15% 25%, rgba(255, 210, 0, .35), transparent 70%),
+    radial-gradient(circle 35px at 85% 30%, rgba(255, 210, 0, .35), transparent 70%),
+    radial-gradient(circle 50px at 30% 75%, rgba(255, 210, 0, .25), transparent 70%);
+  pointer-events: none;
+}
+.lobby-tile.theme-panda88 { --tile-accent: #e8222e; border-color: #ffd200; }
+.lobby-tile.theme-panda88 .tile-bg {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 210, 0, .4), transparent 60%),
+    linear-gradient(180deg, #e8222e 0%, #5a0010 100%);
+}
+.fx-lantern {
+  background:
+    radial-gradient(circle 30px at 20% 60%, rgba(255, 210, 0, .7), transparent 70%),
+    radial-gradient(circle 30px at 80% 60%, rgba(232, 34, 46, .7), transparent 70%);
+  animation: fx-lantern-rise 500ms ease-out forwards;
+}
+@keyframes fx-lantern-rise {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-40%); }
+}
+
+/* ----- LION'S PRIDE - Safari ----- */
+.game-view.scene-savanna {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 220, 120, .4), transparent 60%),
+    linear-gradient(180deg, #f5c876 0%, #ce8838 50%, #6a3a18 100%);
+}
+.game-view.scene-savanna::before {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 30%; z-index: 0;
+  background:
+    radial-gradient(ellipse 120px 70px at 15% 80%, #8b4a18, transparent 70%),
+    radial-gradient(ellipse 180px 80px at 80% 75%, #6a3a08, transparent 70%);
+  pointer-events: none;
+}
+.lobby-tile.theme-lion { --tile-accent: #ff7530; border-color: #ffce6a; }
+.lobby-tile.theme-lion .tile-bg {
+  background: linear-gradient(180deg, #ffce6a 0%, #ce8838 60%, #6a3a18 100%);
+}
+.fx-savannah {
+  background:
+    radial-gradient(ellipse 70% 30% at 50% 100%, rgba(255, 200, 100, .55), transparent 70%);
+  animation: fx-dust-rise 500ms ease-out forwards;
+}
+
+/* ----- PIRATE'S TREASURE - Sea ----- */
+.game-view.scene-pirate {
+  background:
+    radial-gradient(ellipse at top, rgba(184, 138, 58, .3), transparent 50%),
+    linear-gradient(180deg, #2a2030 0%, #1a3a5a 40%, #082030 100%);
+}
+.game-view.scene-pirate::before {
+  content: ""; position: absolute; inset: 50% 0 0 0; z-index: 0;
+  background:
+    repeating-linear-gradient(180deg, rgba(0, 50, 100, .3) 0 8px, transparent 8px 16px);
+  pointer-events: none;
+}
+.lobby-tile.theme-pirate { --tile-accent: #b88a3a; border-color: #d4002a; }
+.lobby-tile.theme-pirate .tile-bg {
+  background: linear-gradient(180deg, #2a2030 0%, #1a3a5a 50%, #082030 100%);
+}
+.fx-splash {
+  background:
+    radial-gradient(ellipse 80% 30% at 50% 100%, rgba(123, 232, 255, .65), transparent 70%);
+  animation: fx-stomp-impact 480ms ease-out forwards;
+}
+
+/* ----- ZEUS THUNDER - Olympus ----- */
+.game-view.scene-olympus {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 255, 255, .35), transparent 60%),
+    linear-gradient(180deg, #2dd6f5 0%, #4a78a8 50%, #1a3858 100%);
+}
+.game-view.scene-olympus::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(circle 80px at 20% 30%, rgba(255, 255, 255, .4), transparent 70%),
+    radial-gradient(circle 100px at 75% 25%, rgba(255, 255, 255, .35), transparent 70%);
+  pointer-events: none;
+}
+.lobby-tile.theme-zeus { --tile-accent: #2dd6f5; border-color: #ffd76b; }
+.lobby-tile.theme-zeus .tile-bg {
+  background: linear-gradient(180deg, #2dd6f5 0%, #4a78a8 60%, #1a3858 100%);
+}
+.fx-lightning {
+  background:
+    linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, .9) 50%, transparent 70%);
+  animation: fx-flash-burst 380ms ease-out forwards;
+}
+
+/* ----- CLEOPATRA DIAMONDS - Egyptian queen ----- */
+.game-view.scene-cleo {
+  background:
+    radial-gradient(ellipse at top, rgba(78, 197, 225, .35), transparent 60%),
+    linear-gradient(180deg, #f7c000 0%, #c89000 50%, #6a5008 100%);
+}
+.lobby-tile.theme-cleopatra { --tile-accent: #ffd200; border-color: #4ec5e1; }
+.lobby-tile.theme-cleopatra .tile-bg {
+  background: linear-gradient(180deg, #ffd76b 0%, #c89000 60%, #4ec5e1 100%);
+}
+.fx-sandgold {
+  background:
+    radial-gradient(ellipse 70% 30% at 50% 100%, rgba(247, 192, 0, .55), transparent 70%);
+  animation: fx-sand-puff 520ms ease-out forwards;
+}
+
+/* ----- FROZEN RICHES - Arctic ----- */
+.game-view.scene-arctic {
+  background:
+    linear-gradient(180deg, #5dd0f5 0%, #b8e3f0 30%, #2a6e8a 100%);
+}
+.game-view.scene-arctic::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(circle at 25% 30%, rgba(255,255,255,.7) 0, transparent 2px),
+    radial-gradient(circle at 75% 15%, rgba(255,255,255,.5) 0, transparent 2px),
+    radial-gradient(circle at 55% 60%, rgba(255,255,255,.6) 0, transparent 2px);
+  background-size: 80px 80px;
+  animation: snow-fall 25s linear infinite;
+  pointer-events: none;
+}
+.lobby-tile.theme-arctic { --tile-accent: #5dd0f5; border-color: #c8e8ff; }
+.lobby-tile.theme-arctic .tile-bg {
+  background: linear-gradient(180deg, #c8e8ff 0%, #5dd0f5 60%, #2a6e8a 100%);
+}
+.fx-snow {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, .7), transparent 5%),
+    radial-gradient(circle at 70% 50%, rgba(255, 255, 255, .7), transparent 5%),
+    radial-gradient(circle at 40% 70%, rgba(255, 255, 255, .7), transparent 5%);
+  animation: fx-mist-fade 600ms ease-out forwards;
+}
+
+/* ----- GALAXY STARS - Deep space ----- */
+.game-view.scene-galaxy {
+  background:
+    radial-gradient(ellipse at center, rgba(167, 139, 255, .3), transparent 60%),
+    linear-gradient(180deg, #0a0628 0%, #2a0848 50%, #050010 100%);
+}
+.game-view.scene-galaxy::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(255,255,255,1) 0, transparent 2px),
+    radial-gradient(circle at 45% 10%, rgba(255,255,255,.8) 0, transparent 1.5px),
+    radial-gradient(circle at 78% 35%, rgba(255,255,255,1) 0, transparent 2px),
+    radial-gradient(circle at 92% 60%, rgba(255,255,255,.6) 0, transparent 1.5px),
+    radial-gradient(circle at 30% 75%, rgba(255,255,255,1) 0, transparent 2px),
+    radial-gradient(circle at 8% 50%, rgba(255,255,255,.7) 0, transparent 1.5px);
+  background-size: 200px 200px;
+  pointer-events: none;
+}
+.lobby-tile.theme-galaxy { --tile-accent: #a78bff; border-color: #2dd6f5; }
+.lobby-tile.theme-galaxy .tile-bg {
+  background: linear-gradient(180deg, #0a0628 0%, #2a0848 50%, #050010 100%);
+}
+.fx-starburst {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(167, 139, 255, .8), transparent 60%);
+  animation: fx-neon-flash 420ms ease-out forwards;
+}
+
+/* ----- FRUIT MANIA - Bright classic ----- */
+.game-view.scene-fruit {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 244, 90, .35), transparent 60%),
+    linear-gradient(180deg, #ff5630 0%, #d4002a 100%);
+}
+.lobby-tile.theme-fruit { --tile-accent: #ff5630; border-color: #fff45a; }
+.lobby-tile.theme-fruit .tile-bg {
+  background:
+    radial-gradient(circle, #ff8aa0 0%, #ff5630 50%, #5a0010 100%);
+}
+.fx-fruitpop {
+  background:
+    radial-gradient(circle at 30% 50%, rgba(255, 86, 48, .6), transparent 30%),
+    radial-gradient(circle at 70% 50%, rgba(255, 244, 90, .6), transparent 30%);
+  animation: fx-neon-flash 400ms ease-out forwards;
+}
+
+/* ----- VIKING GLORY - Norse ----- */
+.game-view.scene-viking {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 215, 107, .25), transparent 50%),
+    linear-gradient(180deg, #4682b4 0%, #2a4878 50%, #0a1830 100%);
+}
+.game-view.scene-viking::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(circle at 15% 25%, rgba(200, 230, 255, .25) 0, transparent 30px);
+  pointer-events: none;
+}
+.lobby-tile.theme-viking { --tile-accent: #4682b4; border-color: #ffd76b; }
+.lobby-tile.theme-viking .tile-bg {
+  background: linear-gradient(180deg, #4682b4 0%, #2a4878 60%, #0a1830 100%);
+}
+.fx-axehit {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 8px, rgba(255, 215, 107, .4) 8px 10px);
+  animation: fx-streak-fade 400ms ease-out forwards;
+}
+
+/* ----- AZTEC EMPIRE - Mayan ----- */
+.game-view.scene-aztec {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 210, 0, .3), transparent 60%),
+    linear-gradient(180deg, #5a8a32 0%, #2a4810 50%, #0a1a05 100%);
+}
+.game-view.scene-aztec::before {
+  content: ""; position: absolute; inset: 30% 0 0 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 160px 100px at 18% 60%, #3a6e22, transparent 70%),
+    radial-gradient(ellipse 200px 120px at 82% 65%, #3a6e22, transparent 70%);
+  pointer-events: none;
+}
+.lobby-tile.theme-aztec { --tile-accent: #2dd55b; border-color: #ffd200; }
+.lobby-tile.theme-aztec .tile-bg {
+  background: linear-gradient(180deg, #5a8a32 0%, #2a4810 60%, #0a1a05 100%);
+}
+.fx-templefire {
+  background:
+    radial-gradient(circle at 30% 80%, rgba(255, 80, 30, .7), transparent 30%),
+    radial-gradient(circle at 70% 80%, rgba(255, 215, 0, .7), transparent 30%);
+  animation: fx-embers-rise 500ms ease-out forwards;
+}
+
+/* ----- HALLOWEEN HUNT - Spooky ----- */
+.game-view.scene-halloween {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 248, 200, .25), transparent 50%),
+    linear-gradient(180deg, #2a1838 0%, #5a2840 50%, #1a0810 100%);
+}
+.game-view.scene-halloween::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(circle at 80% 15%, rgba(255, 240, 180, .8) 0, transparent 40px);
+  pointer-events: none;
+}
+.lobby-tile.theme-halloween { --tile-accent: #ff7530; border-color: #9c5cff; }
+.lobby-tile.theme-halloween .tile-bg {
+  background: linear-gradient(180deg, #2a1838 0%, #5a2840 60%, #1a0810 100%);
+}
+.fx-spook {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(167, 139, 255, .5), transparent 60%);
+  animation: fx-mist-fade 600ms ease-out forwards;
+}
+
+/* ----- LUCKY CHARMS - Irish ----- */
+.game-view.scene-irish {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 210, 0, .25), transparent 60%),
+    linear-gradient(180deg, #52ef9f 0%, #2dd55b 40%, #0a4a1f 100%);
+}
+.game-view.scene-irish::before {
+  content: ""; position: absolute; inset: 0 0 30% 0; z-index: 0;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(255, 0, 0, .15) 16%, rgba(255, 165, 0, .15) 33%, rgba(255, 255, 0, .15) 50%, rgba(0, 255, 0, .15) 67%, rgba(0, 100, 255, .15) 83%, transparent 100%);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  pointer-events: none;
+}
+.lobby-tile.theme-irish { --tile-accent: #2dd55b; border-color: #ffd200; }
+.lobby-tile.theme-irish .tile-bg {
+  background: linear-gradient(180deg, #52ef9f 0%, #2dd55b 50%, #0a4a1f 100%);
+}
+.fx-rainbow {
+  background:
+    linear-gradient(135deg, rgba(255,0,0,.4), rgba(255,165,0,.4), rgba(255,255,0,.4), rgba(0,255,0,.4), rgba(0,100,255,.4));
+  animation: fx-flash-burst 480ms ease-out forwards;
+}
+
+/* ============================================================
+   Phone play fixes: readable points, jackpots, and controls
+   ============================================================ */
+body.is-pseudo-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  overflow: auto;
+  background: #0a0210;
+}
+
+body.is-pseudo-fullscreen .arcade-header {
+  position: sticky;
+  top: 0;
+}
+
+body.is-pseudo-fullscreen .game-view {
+  min-height: calc(100dvh - 72px);
+}
+
+@media (max-width: 768px) {
+  body.slots-arcade-body {
+    min-height: 100dvh;
+  }
+
+  .arcade-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand balance"
+      "toggles toggles";
+    align-items: center;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px;
+    gap: 8px;
+  }
+
+  .arcade-brand {
+    grid-area: brand;
+    min-width: 0;
+  }
+
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+    flex: 0 0 auto;
+  }
+
+  .brand-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .95rem;
+  }
+
+  .arcade-balance {
+    grid-area: balance;
+    min-width: 108px;
+    justify-self: end;
+    padding: 6px 9px;
+    border-radius: 9px;
+  }
+
+  .balance-label {
+    letter-spacing: .14em;
+  }
+
+  .arcade-balance strong {
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1rem;
+  }
+
+  .arcade-toggles {
+    grid-area: toggles;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
+  .toggle-btn {
+    min-height: 36px;
+    padding: 6px 4px;
+    font-size: .68rem;
+    letter-spacing: 0;
+  }
+
+  .arcade-back:not(.hidden) {
+    display: none;
+  }
+
+  .jackpot-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .jp-panel {
+    min-width: 0;
+    padding: 5px;
+    border-radius: 10px;
+  }
+
+  .jp-stars,
+  .jp-bulbs {
+    display: none;
+  }
+
+  .jp-label {
+    margin: 0 0 3px;
+    border-radius: 7px;
+    font-size: .7rem;
+    letter-spacing: .08em;
+  }
+
+  .jp-value {
+    width: 100%;
+    font-size: .88rem;
+    padding: 4px 3px;
+    letter-spacing: 0;
+  }
+
+  .game-view {
+    min-height: calc(100dvh - 176px);
+    padding: 6px 6px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  }
+
+  .game-logo-bar {
+    display: grid;
+    grid-template-columns: 64px auto minmax(0, 1fr) auto;
+    gap: 8px;
+    width: 100%;
+    margin: 2px auto 6px;
+    padding: 6px 4px;
+  }
+
+  .mobile-lobby-btn {
+    display: block;
+    min-height: 36px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #f6c85f, #b8830a);
+    color: #1a0d06;
+    border: 2px solid #fff;
+    font-size: .68rem;
+    font-weight: 900;
+    letter-spacing: .05em;
+    box-shadow: 0 3px 0 #5a3a00, 0 6px 12px rgba(0,0,0,.35);
+  }
+
+  .game-titles {
+    min-width: 0;
+  }
+
+  .game-titles strong,
+  .game-titles span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .paytable-btn {
+    min-height: 36px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    font-size: .62rem;
+    letter-spacing: .02em;
+  }
+
+  .play-area {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 5px;
+    align-items: start;
+    align-content: start;
+    flex: 0 0 auto;
+    max-width: 520px;
+  }
+
+  .reels-shell {
+    grid-column: 1 / -1;
+    order: 2;
+    width: 100%;
+  }
+
+  .paytable {
+    order: 1;
+    min-width: 0;
+  }
+
+  .paytable-list {
+    gap: 2px;
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .pt-row {
+    grid-template-columns: 22px 1fr;
+    min-height: 26px;
+  }
+
+  .reels-frame {
+    --cell-base: clamp(50px, 15.5vw, 68px);
+    max-width: min(100%, 390px);
+    margin: 0 auto;
+    padding: 6px;
+  }
+
+  .reel-strip {
+    gap: 3px !important;
+  }
+
+  .win-msg-bar {
+    width: 100%;
+    margin: 6px auto;
+    padding: 7px 9px;
+    border-radius: 10px;
+  }
+
+  .win-msg-bar span {
+    display: block;
+    font-size: .82rem;
+    letter-spacing: .04em;
+    line-height: 1.2;
+  }
+
+  .controls-bar {
+    grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
+    width: 100%;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 14px;
+  }
+
+  .bet-row {
+    gap: 4px;
+    padding: 4px 5px;
+  }
+
+  .bet-row span {
+    min-width: 42px;
+  }
+
+  .spin-btn {
+    width: 76px;
+    height: 76px;
+  }
+
+  .aux-controls {
+    width: 100%;
+  }
+
+  .aux-controls button {
+    min-height: 33px;
+    padding: 5px 6px;
+    letter-spacing: .06em;
+  }
+}
+
+@media (max-width: 420px) {
+  .arcade-header {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .arcade-balance {
+    min-width: 98px;
+  }
+
+  .arcade-balance strong {
+    max-width: 86px;
+    font-size: .9rem;
+  }
+
+  .jackpot-strip {
+    padding: 6px;
+    gap: 5px;
+  }
+
+  .jp-label {
+    font-size: .62rem;
+  }
+
+  .jp-value {
+    font-size: .76rem;
+  }
+
+  .game-logo-bar {
+    grid-template-columns: 56px auto minmax(0, 1fr) 68px;
+  }
+
+  .mobile-lobby-btn {
+    min-height: 34px;
+    padding: 5px 4px;
+    font-size: .58rem;
+  }
+
+  .game-mascot {
+    font-size: 1.7rem;
+  }
+
+  .game-titles strong {
+    font-size: 1rem;
+  }
+
+  .game-titles span {
+    font-size: .62rem;
+  }
+
+  .paytable-btn {
+    font-size: .54rem;
+    padding: 5px 4px;
+  }
+
+  .play-area {
+    gap: 4px;
+  }
+
+  .pt-row {
+    grid-template-columns: 18px 1fr;
+    min-height: 22px;
+  }
+
+  .pt-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pt-emoji {
+    font-size: .86rem;
+  }
+
+  .pt-value {
+    font-size: .58rem;
+    padding-right: 1px;
+  }
+
+  .reels-frame {
+    --cell-base: clamp(44px, 14.4vw, 56px);
+    padding: 5px;
+    border-width: 2px;
+    border-radius: 12px;
+  }
+
+  .sym-cell.sym-emoji .sym-inner {
+    font-size: 1.15rem;
+  }
+
+  .controls-bar {
+    grid-template-columns: minmax(0, 1fr) 68px minmax(0, 1fr);
+    padding: 6px;
+  }
+
+  .spin-btn {
+    width: 68px;
+    height: 68px;
+    font-size: .78rem;
+    border-width: 4px;
+  }
+
+  .ctrl-label,
+  .bet-meta {
+    font-size: .55rem;
+    letter-spacing: .08em;
+  }
+
+  .bet-row button {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+@media (max-height: 740px) and (max-width: 480px) {
+  .game-view {
+    padding-top: 4px;
+  }
+
+  .game-logo-bar {
+    margin-bottom: 3px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  .win-msg-bar {
+    margin: 4px auto;
+  }
+}
