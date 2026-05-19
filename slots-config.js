@@ -1,14 +1,15 @@
 /* ============================================================
  * SOUTH DIAMOND SLOTS CONFIG - Shared by admin + arcade
  * ============================================================
- * - Stored in localStorage so admin writes and arcade reads
- * - Easily portable to backend later (replace the storage adapter)
+ * - Stored on the server so admin writes and arcade/player pages read
+ * - localStorage remains only as a same-browser fallback
  * ============================================================ */
 (function (global) {
   "use strict";
 
   const STORAGE_KEY = "sd_slots_admin_v1";
   const STATS_KEY = "sd_slots_stats_v1";
+  let serverConfig = null;
 
   // List of game keys + display titles (kept in sync with slots-arcade.js GAMES)
   const GAME_LIST = [
@@ -86,30 +87,69 @@
   }
 
   function load() {
+    if (serverConfig) return mergeConfig(serverConfig);
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return defaultConfig();
       const parsed = JSON.parse(raw);
-      // Merge with defaults so new games appear automatically
-      const def = defaultConfig();
-      for (const g of GAME_LIST) {
-        parsed.games = parsed.games || {};
-        if (!parsed.games[g.key]) parsed.games[g.key] = def.games[g.key];
-        // Ensure nested fields exist
-        if (!parsed.games[g.key].jackpotPool) parsed.games[g.key].jackpotPool = def.games[g.key].jackpotPool;
-      }
-      return parsed;
+      return mergeConfig(parsed);
     } catch (err) {
       return defaultConfig();
     }
   }
 
+  function mergeConfig(config) {
+    const parsed = config && typeof config === "object" ? config : {};
+    const def = defaultConfig();
+    parsed.games = parsed.games || {};
+    for (const g of GAME_LIST) {
+      parsed.games[g.key] = { ...def.games[g.key], ...(parsed.games[g.key] || {}) };
+      parsed.games[g.key].jackpotPool = {
+        ...def.games[g.key].jackpotPool,
+        ...(parsed.games[g.key].jackpotPool || {}),
+      };
+    }
+    return { ...def, ...parsed, games: parsed.games };
+  }
+
   function save(cfg) {
     try {
       cfg.lastModified = Date.now();
+      serverConfig = mergeConfig(cfg);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
       return true;
     } catch (err) { return false; }
+  }
+
+  async function refreshFromServer({ admin = false } = {}) {
+    const endpoint = admin ? "/api/admin/slots-arcade-config" : "/api/player/slots/arcade-config";
+    const response = await fetch(endpoint, {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    if (!response.ok) throw new Error("Could not load slots arcade controls.");
+    const data = await response.json();
+    if (!data.config) throw new Error("Admin login is required to load live slots arcade controls.");
+    serverConfig = mergeConfig(data.config || data);
+    save(serverConfig);
+    return serverConfig;
+  }
+
+  async function saveToServer(cfg) {
+    const merged = mergeConfig(cfg);
+    const response = await fetch("/api/admin/slots-arcade-config", {
+      method: "POST",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config: merged }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not save slots arcade controls.");
+    if (!data.config) throw new Error("Admin login is required to save live slots arcade controls.");
+    serverConfig = mergeConfig(data.config || merged);
+    save(serverConfig);
+    return serverConfig;
   }
 
   function loadStats() {
@@ -213,6 +253,7 @@
   global.SlotsConfig = {
     GAME_LIST,
     load, save,
+    refreshFromServer, saveToServer,
     loadStats, saveStats,
     recordSpin,
     computeRtpMultiplier,

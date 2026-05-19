@@ -1057,6 +1057,39 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
   }
 }
 
+async function refreshArcadeControls({ admin = false } = {}) {
+  if (typeof SlotsConfig === "undefined" || typeof SlotsConfig.refreshFromServer !== "function") {
+    return typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
+  }
+  try {
+    return await SlotsConfig.refreshFromServer({ admin });
+  } catch (error) {
+    return SlotsConfig.load();
+  }
+}
+
+function adminGameConfig(gameKey) {
+  if (typeof SlotsConfig === "undefined") return null;
+  const cfg = SlotsConfig.load();
+  return cfg.games?.[gameKey] || null;
+}
+
+function clampBetToAdmin(gameKey) {
+  const gcfg = adminGameConfig(gameKey);
+  if (!gcfg) return true;
+  const minBet = Number(gcfg.minBet) || 0.05;
+  const maxBet = Number(gcfg.maxBet) || 10;
+  if (State.bet < minBet) State.bet = minBet;
+  if (State.bet > maxBet) State.bet = maxBet;
+  updateDisplays();
+  return State.bet >= minBet && State.bet <= maxBet;
+}
+
+function isAdminGameEnabled(gameKey) {
+  if (typeof SlotsConfig === "undefined") return true;
+  return SlotsConfig.isGameEnabled(gameKey);
+}
+
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "state") || "{}");
@@ -1332,9 +1365,19 @@ function renderSymbolHtml(symKey, game, opts = {}) {
   return `<span class="sym-cell sym-emoji${winClass}" data-sym="${symKey}"><span class="sym-inner">${sym.icon}</span></span>`;
 }
 
-function renderGameView(gameKey) {
+async function renderGameView(gameKey) {
   const game = GAMES[gameKey];
   if (!game) return;
+  await refreshArcadeControls();
+  if (!isAdminGameEnabled(gameKey)) {
+    State.activeGame = gameKey;
+    $("[data-lobby-view]").classList.add("hidden");
+    $("[data-game-view]").classList.remove("hidden");
+    $("[data-back-button]").classList.remove("hidden");
+    showMaintenanceOverlay();
+    setWinMessage("This game is currently turned off by admin.");
+    return;
+  }
   State.activeGame = gameKey;
   const root = $("[data-game-view]");
   if (!root) return;
@@ -1414,6 +1457,7 @@ function renderGameView(gameKey) {
   renderPaytable(game);
 
   // Update bet & credit displays
+  clampBetToAdmin(gameKey);
   updateDisplays();
 
   // Show game view, hide lobby
@@ -1572,25 +1616,23 @@ async function spinGame() {
     stopAutoSpin();
     return;
   }
+  await refreshArcadeControls();
   if (State.credits < State.bet) {
     flashMessage("Not enough South Diamond points. Ask admin to add points.");
     stopAutoSpin();
     return;
   }
-  if (typeof SlotsConfig !== "undefined" && !SlotsConfig.isGameEnabled(State.activeGame)) {
+  if (!isAdminGameEnabled(State.activeGame)) {
     showMaintenanceOverlay();
+    flashMessage("This game is currently turned off by admin.");
     stopAutoSpin();
     return;
   }
-  if (typeof SlotsConfig !== "undefined") {
-    try {
-      const adminCfg = SlotsConfig.load();
-      const gcfg = adminCfg.games[State.activeGame];
-      if (gcfg) {
-        if (State.bet < gcfg.minBet) State.bet = gcfg.minBet;
-        if (State.bet > gcfg.maxBet) State.bet = gcfg.maxBet;
-      }
-    } catch (err) {}
+  clampBetToAdmin(State.activeGame);
+  if (State.credits < State.bet) {
+    flashMessage("Not enough South Diamond points for this game's admin bet limit.");
+    stopAutoSpin();
+    return;
   }
   State.isSpinning = true;
   const spinButton = $("[data-spin-btn]");
@@ -1948,13 +1990,19 @@ function changeBet(direction) {
   const idx = State.betLevels.indexOf(State.bet);
   const next = Math.max(0, Math.min(State.betLevels.length - 1, (idx === -1 ? 2 : idx) + direction));
   State.bet = State.betLevels[next];
+  if (State.activeGame) clampBetToAdmin(State.activeGame);
   Audio.click();
   updateDisplays();
   saveState();
 }
 function setMaxBet() {
-  const maxAffordable = State.betLevels.filter(b => b <= State.credits).slice(-1)[0] || 0.05;
+  const gcfg = State.activeGame ? adminGameConfig(State.activeGame) : null;
+  const adminMax = gcfg ? Number(gcfg.maxBet) || 10 : 10;
+  const adminMin = gcfg ? Number(gcfg.minBet) || 0.05 : 0.05;
+  const maxAllowed = Math.min(State.credits, adminMax);
+  const maxAffordable = State.betLevels.filter(b => b <= maxAllowed).slice(-1)[0] || adminMin;
   State.bet = maxAffordable;
+  if (State.activeGame) clampBetToAdmin(State.activeGame);
   Audio.click();
   updateDisplays();
   saveState();
@@ -2009,6 +2057,7 @@ function bindEvents() {
 // ============================================================
 async function bootstrap() {
   loadState();
+  await refreshArcadeControls();
   renderLobby();
   updateDisplays();
   bindEvents();
@@ -2021,7 +2070,7 @@ async function bootstrap() {
   try {
     const u = new URLSearchParams(window.location.search);
     const g = u.get("game");
-    if (g && GAMES[g]) renderGameView(g);
+    if (g && GAMES[g]) await renderGameView(g);
   } catch (err) {}
 }
 

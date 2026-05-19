@@ -43,8 +43,13 @@
   // Pending in-memory config (changes here saved when "Save All" clicked)
   let pendingConfig = null;
 
-  function init() {
-    pendingConfig = SC.load();
+  async function init() {
+    try {
+      pendingConfig = await SC.refreshFromServer({ admin: true });
+    } catch (error) {
+      pendingConfig = SC.load();
+      showSaveStatus("Using local arcade settings. Log in as admin to sync live controls.", false);
+    }
     bindMasterControls();
     renderGameCards();
     refreshSummary();
@@ -275,9 +280,15 @@
     }).join("");
   }
 
-  function saveAll() {
-    const ok = SC.save(pendingConfig);
-    showSaveStatus(ok ? "All settings saved. Players will see the new rules on their next spin." : "Save failed. Please retry.", ok);
+  async function saveAll() {
+    try {
+      pendingConfig = await SC.saveToServer(pendingConfig);
+      renderGameCards();
+      showSaveStatus("All settings saved live. Players will see the new rules on their next spin.", true);
+    } catch (error) {
+      const ok = SC.save(pendingConfig);
+      showSaveStatus(ok ? "Saved locally, but live server sync failed. Please check admin login and retry." : "Save failed. Please retry.", false);
+    }
   }
 
   function showSaveStatus(msg, success) {

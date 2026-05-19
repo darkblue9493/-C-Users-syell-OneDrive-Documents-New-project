@@ -86,6 +86,29 @@ const arcadeSlotGameNames = {
   halloweenHunt: "Halloween Hunt",
   luckyCharms: "Lucky Charms",
 };
+
+function defaultArcadeGameConfig() {
+  return {
+    enabled: true,
+    targetRtp: 0.92,
+    dailyMaxPayout: 1000,
+    dailyMinPayout: 50,
+    maxBet: 10,
+    minBet: 0.05,
+    jackpotPool: { grand: 1500, major: 500, minor: 100, mini: 20 },
+  };
+}
+
+function defaultArcadeSlotsConfig() {
+  return {
+    version: 1,
+    globalEnabled: true,
+    defaultBet: 0.25,
+    dailyResetUtcHour: 0,
+    lastModified: Date.now(),
+    games: Object.fromEntries(Object.keys(arcadeSlotGameNames).map((key) => [key, defaultArcadeGameConfig()])),
+  };
+}
 const slotGameThemes = {
   buffalo: {
     symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
@@ -326,6 +349,7 @@ function starterDatabase() {
     spinSettings: { limits: { ...defaultSpinLimits } },
     spinWheel: { date: currentSpinDateKey(), awards: [] },
     slotSettings: { ...defaultSlotSettings },
+    arcadeSlotsConfig: defaultArcadeSlotsConfig(),
     slotPayout: { date: currentSpinDateKey(), paidOut: 0, spins: [] },
   };
 }
@@ -342,6 +366,7 @@ function normalizeDatabase(data) {
   normalized.spinSettings = normalizeSpinSettings(normalized.spinSettings);
   normalized.spinWheel = normalizeSpinWheel(normalized.spinWheel);
   normalized.slotSettings = normalizeSlotSettings(normalized.slotSettings);
+  normalized.arcadeSlotsConfig = normalizeArcadeSlotsConfig(normalized.arcadeSlotsConfig);
   normalized.slotPayout = normalizeSlotPayout(normalized.slotPayout);
   const now = Date.now();
   normalized.adminSessions = normalized.adminSessions.filter((session) => {
@@ -620,6 +645,45 @@ function normalizeSlotPayout(slotPayout) {
     date: typeof payout.date === "string" && payout.date ? payout.date : currentSpinDateKey(),
     paidOut: roundPoints(payout.paidOut),
     spins: Array.isArray(payout.spins) ? payout.spins : [],
+  };
+}
+
+function normalizeArcadeGameConfig(config) {
+  const source = config && typeof config === "object" ? config : {};
+  const defaults = defaultArcadeGameConfig();
+  const jackpotSource = source.jackpotPool && typeof source.jackpotPool === "object" ? source.jackpotPool : {};
+  const minBet = roundPoints(source.minBet ?? defaults.minBet);
+  const maxBet = roundPoints(source.maxBet ?? defaults.maxBet);
+  return {
+    enabled: source.enabled !== false,
+    targetRtp: Math.max(0.7, Math.min(Number(source.targetRtp ?? defaults.targetRtp) || defaults.targetRtp, 0.99)),
+    dailyMaxPayout: Math.max(0, roundPoints(source.dailyMaxPayout ?? defaults.dailyMaxPayout)),
+    dailyMinPayout: Math.max(0, roundPoints(source.dailyMinPayout ?? defaults.dailyMinPayout)),
+    minBet: Math.max(0.01, Math.min(minBet, 500)),
+    maxBet: Math.max(0.01, Math.min(Math.max(maxBet, minBet), 500)),
+    jackpotPool: {
+      grand: Math.max(0, roundPoints(jackpotSource.grand ?? defaults.jackpotPool.grand)),
+      major: Math.max(0, roundPoints(jackpotSource.major ?? defaults.jackpotPool.major)),
+      minor: Math.max(0, roundPoints(jackpotSource.minor ?? defaults.jackpotPool.minor)),
+      mini: Math.max(0, roundPoints(jackpotSource.mini ?? defaults.jackpotPool.mini)),
+    },
+  };
+}
+
+function normalizeArcadeSlotsConfig(config) {
+  const source = config && typeof config === "object" ? config : {};
+  const defaults = defaultArcadeSlotsConfig();
+  const games = {};
+  for (const key of Object.keys(arcadeSlotGameNames)) {
+    games[key] = normalizeArcadeGameConfig(source.games?.[key]);
+  }
+  return {
+    version: 1,
+    globalEnabled: source.globalEnabled !== false,
+    defaultBet: Math.max(0.01, Math.min(roundPoints(source.defaultBet ?? defaults.defaultBet), 500)),
+    dailyResetUtcHour: Math.max(0, Math.min(Number(source.dailyResetUtcHour ?? 0) || 0, 23)),
+    lastModified: Number(source.lastModified) || Date.now(),
+    games,
   };
 }
 
@@ -1516,6 +1580,36 @@ async function handleApi(request, response, urlPath, url) {
     });
   }
 
+  if (request.method === "GET" && urlPath === "/api/admin/slots-arcade-config") {
+    if (!requireAdmin(request, response)) return;
+    const data = await readDatabase();
+    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
+    return sendJson(response, 200, {
+      config: data.arcadeSlotsConfig,
+    });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/slots-arcade-config") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const data = await readDatabase();
+    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(body.config || body);
+    data.arcadeSlotsConfig.lastModified = Date.now();
+    addActivity(data, "slots-arcade-config", "Updated South Diamond Slots Arcade game controls", {
+      globalEnabled: data.arcadeSlotsConfig.globalEnabled,
+      games: Object.fromEntries(Object.entries(data.arcadeSlotsConfig.games).map(([key, cfg]) => [key, {
+        enabled: cfg.enabled,
+        minBet: cfg.minBet,
+        maxBet: cfg.maxBet,
+        targetRtp: cfg.targetRtp,
+      }])),
+    });
+    await writeDatabase(data);
+    return sendJson(response, 200, {
+      config: data.arcadeSlotsConfig,
+    });
+  }
+
   if (request.method === "POST" && urlPath === "/api/admin/points") {
     if (!requireAdmin(request, response)) return;
     const body = await readBody(request);
@@ -1873,6 +1967,18 @@ async function handleApi(request, response, urlPath, url) {
     }
 
     const data = await readDatabase();
+    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
+    const arcadeGameConfig = data.arcadeSlotsConfig.games[gameKey];
+    if (!data.arcadeSlotsConfig.globalEnabled || arcadeGameConfig?.enabled === false) {
+      return sendJson(response, 403, { error: "This arcade game is currently turned off by admin." });
+    }
+    if (bet < arcadeGameConfig.minBet || bet > arcadeGameConfig.maxBet) {
+      return sendJson(response, 400, {
+        error: `Bet must be between ${arcadeGameConfig.minBet} and ${arcadeGameConfig.maxBet} points for this game.`,
+        minBet: arcadeGameConfig.minBet,
+        maxBet: arcadeGameConfig.maxBet,
+      });
+    }
     const storedUser = data.users.find((item) => item.id === user.id);
     if (!storedUser) return sendJson(response, 401, { error: "Player login is required." });
     if ((Number(storedUser.points) || 0) < bet) {
@@ -1946,6 +2052,14 @@ async function handleApi(request, response, urlPath, url) {
       remainingPlayerPayout: Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - slotPayoutForUserToday(data, storedUser.id))),
       user: sanitizeUser(storedUser),
       transactions: transactions.map(sanitizePointTransaction),
+    });
+  }
+
+  if (request.method === "GET" && urlPath === "/api/player/slots/arcade-config") {
+    const data = await readDatabase();
+    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
+    return sendJson(response, 200, {
+      config: data.arcadeSlotsConfig,
     });
   }
 
