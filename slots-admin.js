@@ -46,6 +46,22 @@
   let saveInFlight = false;
   let saveAgain = false;
 
+  function adoptSavedConfig(savedConfig) {
+    if (!savedConfig || !pendingConfig) return;
+    pendingConfig.version = savedConfig.version;
+    pendingConfig.globalEnabled = savedConfig.globalEnabled !== false;
+    pendingConfig.defaultBet = savedConfig.defaultBet;
+    pendingConfig.dailyResetUtcHour = savedConfig.dailyResetUtcHour;
+    pendingConfig.lastModified = savedConfig.lastModified;
+    pendingConfig.games = pendingConfig.games || {};
+    Object.entries(savedConfig.games || {}).forEach(([key, savedGame]) => {
+      const currentGame = pendingConfig.games[key] || (pendingConfig.games[key] = {});
+      Object.assign(currentGame, savedGame);
+      currentGame.jackpotPool = currentGame.jackpotPool || {};
+      Object.assign(currentGame.jackpotPool, savedGame.jackpotPool || {});
+    });
+  }
+
   async function init() {
     try {
       pendingConfig = await SC.refreshFromServer({ admin: true });
@@ -389,6 +405,31 @@
     }).join("");
   }
 
+  function syncVisibleGameCardsToPendingConfig() {
+    $$("[data-game-card]").forEach((card) => {
+      const key = card.dataset.gameCard;
+      if (!key) return;
+      const cfg = pendingConfig.games[key] || (pendingConfig.games[key] = SC.defaultGameConfig());
+      const enabled = $("[data-game-enabled]", card);
+      const rtp = $("[data-game-rtp]", card);
+      const max = $("[data-game-max]", card);
+      const min = $("[data-game-min]", card);
+      const minBet = $("[data-game-minbet]", card);
+      const maxBet = $("[data-game-maxbet]", card);
+      if (enabled) cfg.enabled = enabled.checked;
+      if (rtp) cfg.targetRtp = parseInt(rtp.value, 10) / 100;
+      if (max) cfg.dailyMaxPayout = Number(max.value);
+      if (min) cfg.dailyMinPayout = Number(min.value);
+      if (minBet) cfg.minBet = Number(minBet.value);
+      if (maxBet) cfg.maxBet = Number(maxBet.value);
+      cfg.jackpotPool = cfg.jackpotPool || {};
+      ["grand", "major", "minor", "mini"].forEach((level) => {
+        const inp = $(`[data-jp-${level}]`, card);
+        if (inp) cfg.jackpotPool[level] = Number(inp.value);
+      });
+    });
+  }
+
   async function saveAll() {
     await saveLive("All settings saved live.");
   }
@@ -406,11 +447,12 @@
     }
     saveInFlight = true;
     try {
+      syncVisibleGameCardsToPendingConfig();
       const saved = await Promise.all([
         SC.saveToServer(pendingConfig),
         saveSlotSettings(),
       ]);
-      pendingConfig = saved[0];
+      adoptSavedConfig(saved[0]);
       showSaveStatus(successMessage, true);
     } catch (error) {
       const ok = SC.save(pendingConfig);

@@ -800,6 +800,11 @@ function adminConfigForLegacySlot(gameKey = activeSlotGame) {
   return slotAdminConfig?.games?.[arcadeKey] || null;
 }
 
+function legacySlotIsEnabled(gameKey) {
+  const cfg = adminConfigForLegacySlot(gameKey);
+  return slotAdminConfig?.globalEnabled !== false && (!cfg || cfg.enabled !== false);
+}
+
 function legacyBetLevels(gameKey = activeSlotGame) {
   const cfg = adminConfigForLegacySlot(gameKey);
   const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.25;
@@ -812,8 +817,7 @@ function legacyBetLevels(gameKey = activeSlotGame) {
 
 function applySlotAdminControls({ forceDefault = false } = {}) {
   const cfg = adminConfigForLegacySlot();
-  const globalEnabled = slotAdminConfig?.globalEnabled !== false;
-  const enabled = globalEnabled && (!cfg || cfg.enabled !== false);
+  const enabled = legacySlotIsEnabled(activeSlotGame);
   const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.25;
   const maxBet = cfg ? Math.max(minBet, numberSetting(cfg.maxBet, 10)) : 10;
   const defaultBet = Math.max(minBet, Math.min(numberSetting(slotAdminConfig?.defaultBet, 0.25), maxBet));
@@ -836,12 +840,54 @@ function applySlotAdminControls({ forceDefault = false } = {}) {
   return enabled;
 }
 
+function updateLegacySlotJackpots(gameKey = activeSlotGame) {
+  const cfg = adminConfigForLegacySlot(gameKey);
+  const pool = cfg?.jackpotPool || {};
+  const levels = ["grand", "major", "minor", "mini"];
+  document.querySelectorAll(".slots-jackpot-strip").forEach((strip) => {
+    levels.forEach((level) => {
+      const value = pool[level];
+      if (!Number.isFinite(Number(value))) return;
+      const item = strip.querySelector(`.jackpot-${level} b`) || strip.querySelectorAll("b")[levels.indexOf(level)];
+      if (item) item.textContent = formatPoints(Number(value));
+    });
+  });
+}
+
+function updateLegacySlotsLobbyControls() {
+  if (!slotsLobby) return;
+  const defaultBet = numberSetting(slotAdminConfig?.defaultBet, 0.25);
+  const marquee = slotsLobby.querySelector(".slots-marquee");
+  if (marquee) marquee.textContent = `Welcome to South Diamond Slots. Bets start at ${formatPoints(defaultBet)} points.`;
+  slotsLobby.querySelectorAll("[data-slot-game]").forEach((tile) => {
+    const gameKey = tile.dataset.slotGame;
+    const cfg = adminConfigForLegacySlot(gameKey);
+    const enabled = legacySlotIsEnabled(gameKey);
+    const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.25;
+    const maxBet = cfg ? Math.max(minBet, numberSetting(cfg.maxBet, 10)) : 10;
+    const badge = tile.querySelector("span");
+    const copy = tile.querySelector("small");
+    if (badge && !badge.dataset.baseText) badge.dataset.baseText = badge.textContent;
+    if (copy && !copy.dataset.baseText) copy.dataset.baseText = copy.textContent;
+    if (badge) badge.textContent = enabled ? (badge.dataset.baseText || "Play") : "Offline";
+    if (copy) {
+      const base = copy.dataset.baseText || copy.textContent;
+      copy.textContent = enabled ? `${base} | Bet ${formatPoints(minBet)}-${formatPoints(maxBet)}` : "Temporarily unavailable";
+    }
+    tile.classList.toggle("is-maintenance", !enabled);
+    tile.disabled = !enabled;
+    tile.setAttribute("aria-disabled", enabled ? "false" : "true");
+  });
+}
+
 async function refreshLegacySlotControls({ forceDefault = false } = {}) {
   if (slotControlsRefreshInFlight) return slotAdminConfig;
   slotControlsRefreshInFlight = true;
   try {
     const data = await api("/api/player/slots/arcade-config");
     slotAdminConfig = data.config || null;
+    updateLegacySlotsLobbyControls();
+    updateLegacySlotJackpots();
     if (slotAdminConfig) applySlotAdminControls({ forceDefault });
     return slotAdminConfig;
   } catch (error) {
@@ -866,6 +912,7 @@ function updateSlotUi() {
     if (game.accent) slotMachine.style.setProperty("--slot-accent", game.accent);
   }
   if (slotWinAmount && !slotIsSpinning) slotWinAmount.textContent = formatPoints(slotCurrentWin);
+  updateLegacySlotJackpots(activeSlotGame);
 }
 
 function renderSymbolCell(symbol, isWinning) {
@@ -1753,6 +1800,11 @@ slotsModal?.addEventListener("click", (event) => {
 slotsLobby?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-slot-game]");
   if (!button) return;
+  if (button.disabled || button.getAttribute("aria-disabled") === "true") {
+    event.preventDefault();
+    if (slotWinLabel) slotWinLabel.textContent = "This slot game is currently turned off by admin.";
+    return;
+  }
   openSlotGame(button.dataset.slotGame);
 });
 

@@ -2772,6 +2772,27 @@ blockquote {
   border-color: rgba(255, 226, 142, 0.68);
 }
 
+.slot-feature-tile.is-maintenance,
+.slot-game-tile.is-maintenance {
+  cursor: not-allowed;
+  opacity: 0.62;
+  filter: grayscale(0.72);
+}
+
+.slot-feature-tile.is-maintenance:hover,
+.slot-feature-tile.is-maintenance:focus-visible,
+.slot-game-tile.is-maintenance:hover,
+.slot-game-tile.is-maintenance:focus-visible {
+  transform: none;
+  border-color: rgba(255, 226, 142, 0.26);
+}
+
+.slot-feature-tile.is-maintenance span,
+.slot-game-tile.is-maintenance span {
+  background: #2a2d34;
+  color: #d9dde8;
+}
+
 .slot-game-tile::before {
   content: "";
   position: absolute;
