@@ -795,6 +795,7 @@ function numberSetting(value, fallback = 0) {
 }
 
 function adminConfigForLegacySlot(gameKey = activeSlotGame) {
+  if (slotAdminConfig?.games?.[gameKey]) return slotAdminConfig.games[gameKey];
   const arcadeKey = legacySlotArcadeMap[gameKey] || "wildBuffalo";
   return slotAdminConfig?.games?.[arcadeKey] || null;
 }

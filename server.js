@@ -106,6 +106,7 @@ const legacySlotArcadeMap = {
 };
 
 function arcadeKeyForLegacySlot(gameKey) {
+  if (Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, gameKey)) return gameKey;
   return legacySlotArcadeMap[gameKey] || "wildBuffalo";
 }
 
@@ -781,6 +782,38 @@ function arcadeSlotsStatsFromPayout(slotPayout) {
     .sort((a, b) => b.at - a.at)
     .slice(0, 50);
   return stats;
+}
+
+function arcadeGameStatsFromPayout(slotPayout, gameKey) {
+  const stats = { wagered: 0, won: 0, spins: 0 };
+  const payout = normalizeSlotPayout(slotPayout);
+  for (const spin of payout.spins || []) {
+    const spinGameKey = spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey);
+    if (spinGameKey !== gameKey) continue;
+    stats.wagered = roundPoints(stats.wagered + Math.max(0, roundPoints(spin.bet)));
+    stats.won = roundPoints(stats.won + Math.max(0, roundPoints(spin.win)));
+    stats.spins += 1;
+  }
+  return stats;
+}
+
+function arcadePayoutMultiplier(gameConfig, gameStats) {
+  const cfg = normalizeArcadeGameConfig(gameConfig);
+  const stats = gameStats || { wagered: 0, won: 0, spins: 0 };
+  if (stats.won >= cfg.dailyMaxPayout) return 0;
+  let multiplier = 1;
+  if (stats.spins > 50 && stats.won < cfg.dailyMinPayout && stats.wagered > 0) {
+    multiplier *= 1.25;
+  }
+  if (stats.wagered > 0) {
+    const currentRtp = stats.won / stats.wagered;
+    if (currentRtp > cfg.targetRtp + 0.05) {
+      multiplier *= Math.max(0.15, cfg.targetRtp / Math.max(currentRtp, 0.01));
+    } else if (currentRtp < cfg.targetRtp - 0.05) {
+      multiplier *= Math.min(1.35, cfg.targetRtp / Math.max(currentRtp, 0.25));
+    }
+  }
+  return Math.max(0, Math.min(multiplier, 1.5));
 }
 
 function recalculateSlotPaidOut(slotPayout) {
@@ -2023,7 +2056,11 @@ async function handleApi(request, response, urlPath, url) {
     const remainingPayout = Math.max(0, roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut));
     const playerPaidToday = slotPayoutForUserToday(data, user.id);
     const remainingPlayerPayout = Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - playerPaidToday));
-    const availablePayout = Math.min(remainingPayout, remainingPlayerPayout);
+    const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, arcadeGameKey);
+    const gamePaidToday = arcadeGameStats.won;
+    const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
+    const availablePayout = Math.min(remainingPayout, remainingPlayerPayout, remainingGamePayout);
+    const payoutMultiplier = arcadePayoutMultiplier(arcadeGameConfig, arcadeGameStats);
     let grid = [];
     let result = [];
     let wins = [];
@@ -2035,7 +2072,9 @@ async function handleApi(request, response, urlPath, url) {
       wins = evaluation.wins;
       const bonusWin = Math.random() < 0.015 ? roundPoints(bet * 5) : 0;
       bonus = bonusWin > 0 ? { label: "South Diamond bonus", amount: bonusWin } : null;
-      win = roundPoints(evaluation.totalWin + bonusWin);
+      win = roundPoints((evaluation.totalWin + bonusWin) * payoutMultiplier);
+      if (win <= 0) wins = [];
+      if (!win) bonus = null;
       if (win <= availablePayout) break;
     }
     if (win > availablePayout) {
@@ -2066,6 +2105,7 @@ async function handleApi(request, response, urlPath, url) {
       userId: user.id,
       username: user.username,
       gameKey,
+      arcadeGameKey,
       gameName: slotGameNames[gameKey],
       bet,
       win,
@@ -2102,6 +2142,7 @@ async function handleApi(request, response, urlPath, url) {
       win,
       remainingPayout: roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut),
       remainingPlayerPayout: Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - slotPayoutForUserToday(data, user.id))),
+      remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
       user: sanitizeUser(user),
       transactions: transactions.map(sanitizePointTransaction),
     });
@@ -2148,11 +2189,12 @@ async function handleApi(request, response, urlPath, url) {
     const remainingPayout = Math.max(0, roundPoints(data.slotSettings.dailyPayoutLimit - data.slotPayout.paidOut));
     const playerPaidToday = slotPayoutForUserToday(data, storedUser.id);
     const remainingPlayerPayout = Math.max(0, roundPoints(data.slotSettings.playerDailyPayoutLimit - playerPaidToday));
-    const gamePaidToday = (data.slotPayout.spins || []).reduce((total, spin) => {
-      return spin.gameKey === gameKey ? roundPoints(total + Math.max(0, roundPoints(spin.win))) : total;
-    }, 0);
+    const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey);
+    const gamePaidToday = arcadeGameStats.won;
     const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
-    const win = roundPoints(Math.min(requestedWin, remainingPayout, remainingPlayerPayout, remainingGamePayout));
+    const payoutMultiplier = arcadePayoutMultiplier(arcadeGameConfig, arcadeGameStats);
+    const adjustedWin = roundPoints(requestedWin * payoutMultiplier);
+    const win = roundPoints(Math.min(adjustedWin, remainingPayout, remainingPlayerPayout, remainingGamePayout));
     const createdAt = new Date().toISOString();
     const transactions = [];
 
@@ -2187,6 +2229,7 @@ async function handleApi(request, response, urlPath, url) {
       userId: storedUser.id,
       username: storedUser.username,
       gameKey,
+      arcadeGameKey: gameKey,
       gameName: arcadeSlotGameNames[gameKey],
       bet,
       win,
