@@ -377,6 +377,9 @@ let slotMusicTimer = null;
 let slotAutoSpinning = false;
 let slotAutoSpinTimer = null;
 let slotCurrentWin = 0;
+let slotAdminConfig = null;
+let slotAdminDefaultBet = null;
+let slotControlsRefreshInFlight = false;
 let lastPlayerOperatorMessageId = "";
 let playerNotificationsReady = false;
 const referralCodeFromUrl = (() => {
@@ -396,6 +399,23 @@ const adminSearchState = {
   broadcast: "",
   spin: "",
   slots: "",
+};
+const legacySlotArcadeMap = {
+  buffalo: "wildBuffalo",
+  diamond: "triple777",
+  diamond777: "triple777",
+  lucky777: "triple777",
+  milkyway: "vegas7s",
+  dragon: "dragonEmpress",
+  ocean: "oceanTreasure",
+  firekirin: "dragonEmpress",
+  pandamaster: "gorillaGold",
+  orion: "vegas7s",
+  goldendragon: "dragonEmpress",
+  gamevault: "wildBuffalo",
+  ultrapanda: "gorillaGold",
+  jungle: "gorillaGold",
+  neon: "vegas7s",
 };
 
 let adminPlayerFilter = "all";
@@ -769,6 +789,67 @@ function loadSlotBalance() {
   slotBalance = Number(currentPlayer?.points) || 0;
 }
 
+function numberSetting(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function adminConfigForLegacySlot(gameKey = activeSlotGame) {
+  const arcadeKey = legacySlotArcadeMap[gameKey] || "wildBuffalo";
+  return slotAdminConfig?.games?.[arcadeKey] || null;
+}
+
+function legacyBetLevels(gameKey = activeSlotGame) {
+  const cfg = adminConfigForLegacySlot(gameKey);
+  const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.25;
+  const maxBet = cfg ? Math.max(minBet, numberSetting(cfg.maxBet, 10)) : 10;
+  return [...new Set([0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, minBet, maxBet]
+    .map((value) => Math.round(Number(value) * 100) / 100)
+    .filter((value) => Number.isFinite(value) && value >= minBet && value <= maxBet))]
+    .sort((a, b) => a - b);
+}
+
+function applySlotAdminControls({ forceDefault = false } = {}) {
+  const cfg = adminConfigForLegacySlot();
+  const globalEnabled = slotAdminConfig?.globalEnabled !== false;
+  const enabled = globalEnabled && (!cfg || cfg.enabled !== false);
+  const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.25;
+  const maxBet = cfg ? Math.max(minBet, numberSetting(cfg.maxBet, 10)) : 10;
+  const defaultBet = Math.max(minBet, Math.min(numberSetting(slotAdminConfig?.defaultBet, 0.25), maxBet));
+  if (
+    forceDefault ||
+    slotAdminDefaultBet === null ||
+    slotBet < minBet ||
+    slotBet > maxBet ||
+    Math.abs(slotBet - slotAdminDefaultBet) < 0.001
+  ) {
+    slotBet = defaultBet;
+  }
+  slotAdminDefaultBet = defaultBet;
+  if (slotSpinButton) slotSpinButton.disabled = !enabled;
+  if (!enabled) {
+    stopSlotAutoSpin();
+    if (slotWinLabel) slotWinLabel.textContent = "This slot game is currently turned off by admin.";
+  }
+  updateSlotUi();
+  return enabled;
+}
+
+async function refreshLegacySlotControls({ forceDefault = false } = {}) {
+  if (slotControlsRefreshInFlight) return slotAdminConfig;
+  slotControlsRefreshInFlight = true;
+  try {
+    const data = await api("/api/player/slots/arcade-config");
+    slotAdminConfig = data.config || null;
+    if (slotAdminConfig) applySlotAdminControls({ forceDefault });
+    return slotAdminConfig;
+  } catch (error) {
+    return slotAdminConfig;
+  } finally {
+    slotControlsRefreshInFlight = false;
+  }
+}
+
 function updateSlotUi() {
   const game = slotGames[activeSlotGame] || slotGames.buffalo;
   slotBalance = Number(currentPlayer?.points) || slotBalance || 0;
@@ -888,12 +969,13 @@ function stopSlotMusic() {
   if (slotsMusicButton) slotsMusicButton.textContent = "Music Off";
 }
 
-function openSlotsLobby() {
+async function openSlotsLobby() {
   if (!currentPlayer) {
     document.querySelector('[data-auth-tab="login"]')?.click();
     playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
+  await refreshLegacySlotControls();
   loadSlotBalance();
   updateSlotUi();
   slotsModal?.classList.remove("is-hidden");
@@ -910,15 +992,16 @@ function closeSlotsLobby() {
   stopSlotMusic();
 }
 
-function openSlotGame(gameKey) {
+async function openSlotGame(gameKey) {
   activeSlotGame = slotGames[gameKey] ? gameKey : "buffalo";
+  await refreshLegacySlotControls({ forceDefault: true });
   const game = slotGames[activeSlotGame];
   slotsLobby?.classList.add("is-hidden");
   slotMachine?.classList.remove("is-hidden");
   slotsBack?.classList.remove("is-hidden");
   renderSlotReels(shuffleItems(game.symbols).slice(0, 5));
   if (slotWinLabel) slotWinLabel.textContent = "Tap Spin to start.";
-  updateSlotUi();
+  applySlotAdminControls({ forceDefault: true });
 }
 
 function animateCount(el, fromVal, toVal, duration = 1200) {
@@ -970,6 +1053,8 @@ function showWinBurst(amount, isBig) {
 
 async function spinSlotGame() {
   if (slotIsSpinning || !currentPlayer) return;
+  await refreshLegacySlotControls();
+  if (!applySlotAdminControls()) return;
   slotBalance = Number(currentPlayer.points) || 0;
   if (slotBalance < slotBet) {
     if (slotWinLabel) slotWinLabel.textContent = "Not enough points. Lower your bet or ask admin to add points.";
@@ -1085,9 +1170,12 @@ function stopSlotAutoSpin() {
 }
 
 function setMaxBet() {
-  const maxBets = [0.25, 0.5, 1, 2, 5, 10];
-  const affordable = maxBets.filter((b) => b <= slotBalance);
-  slotBet = affordable.length ? affordable[affordable.length - 1] : 0.25;
+  const cfg = adminConfigForLegacySlot();
+  const adminMax = cfg ? numberSetting(cfg.maxBet, 10) : 10;
+  const maxAllowed = Math.min(slotBalance, adminMax);
+  const maxBets = legacyBetLevels();
+  const affordable = maxBets.filter((b) => b <= maxAllowed);
+  slotBet = affordable.length ? affordable[affordable.length - 1] : maxBets[0] || 0.25;
   updateSlotUi();
 }
 
@@ -1668,13 +1756,19 @@ slotsLobby?.addEventListener("click", (event) => {
 });
 
 slotBetDown?.addEventListener("click", () => {
-  slotBet = Math.max(0.25, Math.round((slotBet - 0.25) * 100) / 100);
+  const levels = legacyBetLevels();
+  const currentIndex = levels.findIndex((level) => Math.abs(level - slotBet) < 0.001);
+  const fallbackIndex = levels.reduce((best, level, index) => (level <= slotBet ? index : best), 0);
+  slotBet = levels[Math.max(0, (currentIndex === -1 ? fallbackIndex : currentIndex) - 1)] || slotBet;
   playSlotSound("click");
   updateSlotUi();
 });
 
 slotBetUp?.addEventListener("click", () => {
-  slotBet = Math.min(500, Math.round((slotBet + 0.25) * 100) / 100);
+  const levels = legacyBetLevels();
+  const currentIndex = levels.findIndex((level) => Math.abs(level - slotBet) < 0.001);
+  const fallbackIndex = levels.reduce((best, level, index) => (level <= slotBet ? index : best), 0);
+  slotBet = levels[Math.min(levels.length - 1, (currentIndex === -1 ? fallbackIndex : currentIndex) + 1)] || slotBet;
   playSlotSound("click");
   updateSlotUi();
 });
@@ -1685,6 +1779,19 @@ slotsMusicButton?.addEventListener("click", () => {
   if (slotMusicOn) stopSlotMusic();
   else startSlotMusic();
 });
+
+function startLegacySlotLiveUpdates() {
+  if (!("EventSource" in window)) return;
+  try {
+    const source = new EventSource("/api/player/slots/live");
+    source.onmessage = () => {
+      if (slotIsSpinning) return;
+      refreshLegacySlotControls({ forceDefault: Boolean(slotMachine && !slotMachine.classList.contains("is-hidden")) });
+    };
+  } catch (error) {}
+}
+
+startLegacySlotLiveUpdates();
 
 const adminInbox = document.querySelector("[data-admin-inbox]");
 const adminMessages = document.querySelector("[data-admin-messages]");

@@ -87,6 +87,27 @@ const arcadeSlotGameNames = {
   halloweenHunt: "Halloween Hunt",
   luckyCharms: "Lucky Charms",
 };
+const legacySlotArcadeMap = {
+  buffalo: "wildBuffalo",
+  diamond: "triple777",
+  diamond777: "triple777",
+  lucky777: "triple777",
+  milkyway: "vegas7s",
+  dragon: "dragonEmpress",
+  ocean: "oceanTreasure",
+  firekirin: "dragonEmpress",
+  pandamaster: "gorillaGold",
+  orion: "vegas7s",
+  goldendragon: "dragonEmpress",
+  gamevault: "wildBuffalo",
+  ultrapanda: "gorillaGold",
+  jungle: "gorillaGold",
+  neon: "vegas7s",
+};
+
+function arcadeKeyForLegacySlot(gameKey) {
+  return legacySlotArcadeMap[gameKey] || "wildBuffalo";
+}
 
 function defaultArcadeGameConfig() {
   return {
@@ -1974,13 +1995,22 @@ async function handleApi(request, response, urlPath, url) {
     const body = await readBody(request);
     const gameKey = Object.prototype.hasOwnProperty.call(slotGameSymbols, body.gameKey) ? String(body.gameKey) : "diamond777";
     const bet = roundPoints(body.bet);
-    const validQuarterBet = Math.abs(bet * 4 - Math.round(bet * 4)) < 0.0001;
-    if (!Number.isFinite(bet) || bet < 0.25 || bet > 500 || !validQuarterBet) {
-      return sendJson(response, 400, { error: "Choose a valid bet from 0.25 to 500 points." });
-    }
 
     const data = await readDatabase();
     ensureSlotPayoutToday(data);
+    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
+    const arcadeGameKey = arcadeKeyForLegacySlot(gameKey);
+    const arcadeGameConfig = data.arcadeSlotsConfig.games[arcadeGameKey] || defaultArcadeGameConfig();
+    if (!data.arcadeSlotsConfig.globalEnabled || arcadeGameConfig.enabled === false) {
+      return sendJson(response, 403, { error: "This slot game is currently turned off by admin." });
+    }
+    if (!Number.isFinite(bet) || bet < arcadeGameConfig.minBet || bet > arcadeGameConfig.maxBet) {
+      return sendJson(response, 400, {
+        error: `Bet must be between ${arcadeGameConfig.minBet} and ${arcadeGameConfig.maxBet} points for this game.`,
+        minBet: arcadeGameConfig.minBet,
+        maxBet: arcadeGameConfig.maxBet,
+      });
+    }
     const user = data.users.find((item) => item.id === sessionUser.id);
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
     user.points = roundPoints(user.points);
