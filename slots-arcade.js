@@ -1023,6 +1023,7 @@ const State = {
   pointsSyncedAt: 0,
   appliedControlGame: null,
   appliedControlSignature: "",
+  appliedDefaultBet: null,
 };
 
 async function arcadeApi(path, options = {}) {
@@ -1082,9 +1083,11 @@ function numberSetting(value, fallback = 0) {
 }
 
 function gameControlSignature(gameKey) {
+  const rootCfg = typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
   const cfg = adminGameConfig(gameKey);
   if (!cfg) return "";
   return JSON.stringify({
+    defaultBet: numberSetting(rootCfg?.defaultBet, 0.25),
     enabled: cfg.enabled !== false,
     minBet: numberSetting(cfg.minBet, 0.05),
     maxBet: numberSetting(cfg.maxBet, 10),
@@ -1106,11 +1109,16 @@ function betLevelsForGame(gameKey) {
 }
 
 function applyAdminGameControls(gameKey, { force = false } = {}) {
+  const rootCfg = typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
   const cfg = adminGameConfig(gameKey);
   if (!cfg) return false;
   const signature = gameControlSignature(gameKey);
   const changed = force || State.appliedControlGame !== gameKey || State.appliedControlSignature !== signature;
   if (!changed) return false;
+  const previousDefaultBet = State.appliedDefaultBet;
+  const minBet = Math.max(0.01, numberSetting(cfg.minBet, 0.05));
+  const maxBet = Math.max(minBet, numberSetting(cfg.maxBet, 10));
+  const defaultBet = Math.max(minBet, Math.min(numberSetting(rootCfg?.defaultBet, 0.25), maxBet));
   const pool = cfg.jackpotPool || {};
   ["grand", "major", "minor", "mini"].forEach((level) => {
     const fallback = State.jackpots[level] || 0;
@@ -1118,6 +1126,16 @@ function applyAdminGameControls(gameKey, { force = false } = {}) {
   });
   State.appliedControlGame = gameKey;
   State.appliedControlSignature = signature;
+  if (
+    force ||
+    State.bet < minBet ||
+    State.bet > maxBet ||
+    previousDefaultBet === null ||
+    Math.abs(State.bet - previousDefaultBet) < 0.001
+  ) {
+    State.bet = defaultBet;
+  }
+  State.appliedDefaultBet = defaultBet;
   clampBetToAdmin(gameKey);
   updateDisplays();
   return true;

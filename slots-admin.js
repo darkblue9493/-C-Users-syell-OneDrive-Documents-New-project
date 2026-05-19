@@ -120,6 +120,14 @@
         queueLiveSave("Slots arcade status updated live.");
       });
     }
+    const defaultBet = $("[data-slots-default-bet]");
+    if (defaultBet) {
+      defaultBet.value = pendingConfig.defaultBet ?? 0.25;
+      defaultBet.addEventListener("input", () => {
+        pendingConfig.defaultBet = Math.max(0.01, Number(defaultBet.value) || 0.25);
+        queueLiveSave("Default bet updated live.");
+      });
+    }
     const dailyPayout = $("[data-slots-daily-payout-limit]");
     const playerPayout = $("[data-slots-player-payout-limit]");
     if (dailyPayout) {
