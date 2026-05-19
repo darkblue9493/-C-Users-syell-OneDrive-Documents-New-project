@@ -27,6 +27,7 @@ const sessions = new Map();
 const playerSessions = new Map();
 const adminLoginAttempts = new Map();
 const pendingAdminLogins = new Map();
+const slotLiveClients = new Set();
 const maxJsonBodyBytes = 8_000_000;
 const playerSessionMaxAge = 60 * 60 * 24 * 400;
 const adminSessionMaxAge = 60 * 60 * 2;
@@ -554,6 +555,40 @@ function sendJson(response, statusCode, body) {
     "Cache-Control": "no-store",
   });
   response.end(JSON.stringify(body));
+}
+
+function sendSlotLiveEvent(payload) {
+  const event = `data: ${JSON.stringify({ at: Date.now(), ...payload })}\n\n`;
+  for (const client of [...slotLiveClients]) {
+    try {
+      client.write(event);
+    } catch (error) {
+      slotLiveClients.delete(client);
+    }
+  }
+}
+
+function openSlotLiveStream(request, response) {
+  response.writeHead(200, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-store, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+  response.write(`data: ${JSON.stringify({ type: "connected", at: Date.now() })}\n\n`);
+  slotLiveClients.add(response);
+  const heartbeat = setInterval(() => {
+    try {
+      response.write(`: keep-alive ${Date.now()}\n\n`);
+    } catch (error) {
+      clearInterval(heartbeat);
+      slotLiveClients.delete(response);
+    }
+  }, 25000);
+  request.on("close", () => {
+    clearInterval(heartbeat);
+    slotLiveClients.delete(response);
+  });
 }
 
 function csvCell(value) {
@@ -1340,6 +1375,11 @@ function serveFile(response, filePath, statusCode = 200, cacheControl = "no-stor
 }
 
 async function handleApi(request, response, urlPath, url) {
+  if (request.method === "GET" && urlPath === "/api/player/slots/live") {
+    openSlotLiveStream(request, response);
+    return;
+  }
+
   if (request.method === "POST" && urlPath === "/api/admin/login") {
     const lockout = getLockout(request);
     if (lockout) {
@@ -1619,6 +1659,7 @@ async function handleApi(request, response, urlPath, url) {
     data.slotSettings = normalizeSlotSettings(body);
     addActivity(data, "slots-settings", "Updated South Diamond Slots daily payout limit", data.slotSettings);
     await writeDatabase(data);
+    sendSlotLiveEvent({ type: "slot-settings", settings: data.slotSettings });
     return sendJson(response, 200, {
       settings: data.slotSettings,
       payout: data.slotPayout,
@@ -1655,6 +1696,11 @@ async function handleApi(request, response, urlPath, url) {
       }])),
     });
     await writeDatabase(data);
+    sendSlotLiveEvent({
+      type: "arcade-config",
+      lastModified: data.arcadeSlotsConfig.lastModified,
+      defaultBet: data.arcadeSlotsConfig.defaultBet,
+    });
     return sendJson(response, 200, {
       config: data.arcadeSlotsConfig,
       stats: arcadeSlotsStatsFromPayout(data.slotPayout),
@@ -1686,6 +1732,7 @@ async function handleApi(request, response, urlPath, url) {
     data.slotPayout = recalculateSlotPaidOut(data.slotPayout);
     addActivity(data, "slots-arcade-stats-reset", gameKey ? `Reset arcade stats for ${arcadeSlotGameNames[gameKey]}` : "Reset all arcade slot stats", { gameKey: gameKey || null });
     await writeDatabase(data);
+    sendSlotLiveEvent({ type: "arcade-stats-reset", gameKey: gameKey || null });
     return sendJson(response, 200, {
       stats: arcadeSlotsStatsFromPayout(data.slotPayout),
       payout: data.slotPayout,

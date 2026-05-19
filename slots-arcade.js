@@ -1024,6 +1024,7 @@ const State = {
   appliedControlGame: null,
   appliedControlSignature: "",
   appliedDefaultBet: null,
+  controlRefreshInFlight: false,
 };
 
 async function arcadeApi(path, options = {}) {
@@ -1158,6 +1159,9 @@ function isAdminGameEnabled(gameKey) {
 }
 
 async function applyLiveArcadeControls() {
+  if (State.controlRefreshInFlight) return;
+  State.controlRefreshInFlight = true;
+  try {
   await refreshArcadeControls();
   if ($("[data-lobby-grid]")) renderLobby();
   if (!State.activeGame) return;
@@ -1169,6 +1173,9 @@ async function applyLiveArcadeControls() {
     return;
   }
   hideMaintenanceOverlay();
+  } finally {
+    State.controlRefreshInFlight = false;
+  }
 }
 
 function startArcadeControlsWatcher() {
@@ -1176,6 +1183,17 @@ function startArcadeControlsWatcher() {
     if (State.isSpinning) return;
     applyLiveArcadeControls();
   }, 750);
+}
+
+function startArcadeLiveUpdates() {
+  if (!("EventSource" in window)) return;
+  try {
+    const source = new EventSource("/api/player/slots/live");
+    source.onmessage = () => {
+      if (State.isSpinning) return;
+      applyLiveArcadeControls();
+    };
+  } catch (error) {}
 }
 
 function loadState() {
@@ -2163,6 +2181,7 @@ async function bootstrap() {
   updateDisplays();
   bindEvents();
   startJackpotTicker();
+  startArcadeLiveUpdates();
   startArcadeControlsWatcher();
   // Music/sound button initial state
   const mb = $("[data-music-btn]"); if (mb) { mb.textContent = State.musicOn ? "\u{1F3B5} ON" : "\u{1F3B5} OFF"; mb.classList.toggle("is-active", State.musicOn); }
