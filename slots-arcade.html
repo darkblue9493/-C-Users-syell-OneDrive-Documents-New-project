@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>South Diamond Slots Arcade</title>
+  <meta name="description" content="South Diamond Slots Arcade - 12 themed slot games with live progressive jackpots." />
+  <meta name="theme-color" content="#0a0210" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="slots-arcade.css" />
+</head>
+<body class="slots-arcade-body">
+  <!-- Persistent header with brand + balance + controls -->
+  <header class="arcade-header">
+    <button class="arcade-back hidden" type="button" data-back-button aria-label="Back to lobby">&larr;</button>
+    <a class="arcade-brand" href="index.html" aria-label="South Diamond home">
+      <span class="brand-mark"></span>
+      <span class="brand-text">South Diamond</span>
+    </a>
+    <div class="arcade-balance">
+      <span class="balance-label">CREDITS</span>
+      <strong data-credits>0.00</strong>
+      <button class="add-credits" type="button" data-add-credits title="Add demo credits">+</button>
+    </div>
+    <div class="arcade-toggles">
+      <button class="toggle-btn is-active" type="button" data-music-btn aria-label="Toggle music">🎵 ON</button>
+      <button class="toggle-btn is-active" type="button" data-sound-btn aria-label="Toggle sound">🔊</button>
+      <button class="toggle-btn" type="button" data-fullscreen-btn aria-label="Toggle fullscreen">⛶</button>
+    </div>
+  </header>
+
+  <!-- Live progressive jackpot strip - always visible -->
+  <section class="jackpot-strip">
+    <div class="jp-panel jp-grand">
+      <div class="jp-frame">
+        <div class="jp-stars">★★★★★</div>
+        <div class="jp-label">GRAND</div>
+        <div class="jp-value" data-jp-grand>$1,519.23</div>
+      </div>
+      <div class="jp-bulbs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="jp-panel jp-major">
+      <div class="jp-frame">
+        <div class="jp-stars">★★★★</div>
+        <div class="jp-label">MAJOR</div>
+        <div class="jp-value" data-jp-major>$524.95</div>
+      </div>
+      <div class="jp-bulbs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="jp-panel jp-minor">
+      <div class="jp-frame">
+        <div class="jp-stars">★★</div>
+        <div class="jp-label">MINOR</div>
+        <div class="jp-value" data-jp-minor>$107.97</div>
+      </div>
+      <div class="jp-bulbs" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
+    <div class="jp-panel jp-mini">
+      <div class="jp-frame">
+        <div class="jp-stars">★</div>
+        <div class="jp-label">MINI</div>
+        <div class="jp-value" data-jp-mini>$21.87</div>
+      </div>
+      <div class="jp-bulbs" aria-hidden="true"><i></i><i></i></div>
+    </div>
+  </section>
+
+  <!-- Lobby view: grid of game tiles -->
+  <main class="lobby-view" data-lobby-view>
+    <div class="lobby-intro">
+      <h1>SOUTH DIAMOND SLOTS</h1>
+      <p>12 premium games · Live jackpots · Real spin action</p>
+    </div>
+    <div class="lobby-grid" data-lobby-grid>
+      <!-- Tiles injected by JS -->
+    </div>
+    <p class="lobby-tip">Tip: Tap a game to start. Tap the fullscreen button (⛶) for the best experience on mobile.</p>
+  </main>
+
+  <!-- Game view: full slot machine -->
+  <main class="game-view hidden" data-game-view>
+    <!-- Decorative background emojis -->
+    <!-- Maintenance overlay -->
+    <div class="maintenance-overlay hidden" data-maintenance-overlay aria-hidden="true">
+      <div class="maint-card">
+        <div class="maint-icon">🔧</div>
+        <h2>Game Under Maintenance</h2>
+        <p>This game is temporarily unavailable. Pick another from the lobby.</p>
+        <button class="game-link" type="button" data-back-button>Back to Lobby</button>
+      </div>
+    </div>
+    <div class="game-decor" data-game-decor aria-hidden="true"></div>
+
+    <!-- Game logo bar -->
+    <div class="game-logo-bar">
+      <span class="game-mascot" data-game-mascot></span>
+      <div class="game-titles">
+        <strong data-game-title>Game</strong>
+        <span data-game-tagline>Tagline</span>
+      </div>
+      <button class="paytable-btn" type="button" data-open-paytable aria-label="View paytable">
+        <span>i</span>PAYTABLE
+      </button>
+    </div>
+
+    <!-- Main play area: paytable | reels | paytable -->
+    <div class="play-area">
+      <aside class="paytable paytable-left" aria-label="Pay table left">
+        <div class="paytable-list" data-paytable-left></div>
+      </aside>
+
+      <div class="reels-shell">
+        <div class="reels-frame">
+          <div class="reel-strip" data-reel-strip></div>
+          <!-- Win burst overlay -->
+          <div class="win-burst hidden" data-win-burst>
+            <div class="burst-amount" data-burst-amount>+0.00</div>
+            <div class="coin-box" data-coin-box></div>
+          </div>
+          <!-- Jackpot burst -->
+          <div class="jackpot-burst hidden" data-jackpot-burst>
+            <div class="jp-burst-stars">★ ★ ★ ★ ★</div>
+            <div class="jp-burst-level" data-jp-burst-level>JACKPOT</div>
+            <div class="jp-burst-amount" data-jp-burst-amount>$0.00</div>
+            <div class="jp-burst-confetti" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="paytable paytable-right" aria-label="Pay table right">
+        <div class="paytable-list" data-paytable-right></div>
+      </aside>
+    </div>
+
+    <!-- Win message bar -->
+    <div class="win-msg-bar">
+      <span data-win-msg>Tap SPIN to play</span>
+    </div>
+
+    <!-- Controls bar at bottom -->
+    <div class="controls-bar">
+      <div class="bet-control">
+        <div class="ctrl-label">TOTAL BET</div>
+        <div class="bet-row">
+          <button type="button" data-bet-down aria-label="Decrease bet">−</button>
+          <span data-bet>0.25</span>
+          <button type="button" data-bet-up aria-label="Increase bet">+</button>
+        </div>
+        <div class="bet-meta"><b data-lines>9</b> LINES</div>
+      </div>
+
+      <div class="win-control">
+        <div class="ctrl-label">WIN</div>
+        <strong data-win-amount>0.00</strong>
+      </div>
+
+      <button class="spin-btn" type="button" data-spin-btn aria-label="Spin reels">
+        <span class="spin-btn-glow" aria-hidden="true"></span>
+        <span class="spin-btn-text">SPIN</span>
+      </button>
+
+      <div class="aux-controls">
+        <button type="button" data-max-bet>MAX</button>
+        <button type="button" data-auto-btn>AUTO</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Anticipation overlay shown before jackpot/big-win prize reveal -->
+  <div class="anticipation-overlay hidden" data-anticipation aria-hidden="true">
+    <div class="ant-vignette"></div>
+    <div class="ant-rays"></div>
+    <div class="ant-sparkles">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="ant-content">
+      <div class="ant-stars">★ ★ ★ ★ ★</div>
+      <div class="ant-text" data-anticipation-text>BIG WIN INCOMING!</div>
+      <div class="ant-subtext">Get Ready...</div>
+    </div>
+  </div>
+
+  
+  <!-- Full paytable modal (per-game) -->
+  <div class="paytable-modal hidden" data-paytable-modal aria-hidden="true">
+    <div class="ptm-backdrop" data-paytable-close></div>
+    <div class="ptm-card">
+      <button class="ptm-close" type="button" data-paytable-close aria-label="Close">x</button>
+      <h2 data-ptm-title>Paytable</h2>
+      <p class="ptm-game-info" data-ptm-info></p>
+      <div class="ptm-symbols-grid" data-ptm-symbols></div>
+      <div class="ptm-rules">
+        <h3>How wins work</h3>
+        <ul>
+          <li><b>Match 3, 4, or 5</b> of the same symbol left-to-right on a payline.</li>
+          <li><b>WILD</b> substitutes for any symbol (except SCATTER) to complete winning lines.</li>
+          <li><b>SCATTER / BONUS</b> pays anywhere on the reels - 3+ trigger bonus rounds.</li>
+          <li>Higher bets unlock proportionally higher payouts.</li>
+          <li><b>Progressive Jackpots</b> (Grand, Major, Minor, Mini) can hit on any spin.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="slots-config.js"></script>
+  <script src="slots-arcade.js"></script>
+</body>
+</html>

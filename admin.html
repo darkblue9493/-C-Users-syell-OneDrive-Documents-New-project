@@ -207,27 +207,46 @@
                 <div class="chat-topbar">
                   <div>
                     <span class="status-dot"></span>
-                    <strong>Slots Control</strong>
+                    <strong>Slots Arcade Control Center</strong>
                   </div>
-                  <small data-slots-admin-date>Daily payout controls</small>
+                  <small data-slots-admin-date>Daily controls reset at UTC midnight</small>
                 </div>
-                <div class="spin-admin-grid">
-                  <form class="spin-admin-settings" data-slots-settings-form>
-                    <label>
-                      <span>Daily slot payout limit</span>
-                      <input name="dailyPayoutLimit" type="number" min="0" step="0.25" value="25" />
-                    </label>
-                    <label>
-                      <span>Max win per player per day</span>
-                      <input name="playerDailyPayoutLimit" type="number" min="0" step="0.25" value="8" />
-                    </label>
-                    <button class="button primary" type="submit">Save Slot Limit</button>
-                    <p data-slots-settings-status></p>
-                  </form>
-                  <div>
-                    <div class="spin-admin-stats" data-slots-admin-stats></div>
-                    <div class="points-transaction-list spin-awards-list" data-slots-spins></div>
+
+                <!-- Master controls -->
+                <div class="slots-admin-master">
+                  <div class="slots-master-card">
+                    <div class="slots-master-row">
+                      <label class="slots-toggle">
+                        <input type="checkbox" data-slots-global-enabled checked />
+                        <span class="toggle-slider"></span>
+                        <strong>Slots Arcade Online</strong>
+                      </label>
+                      <span data-slots-status-pill class="slots-status-pill online">LIVE</span>
+                    </div>
+                    <div class="slots-summary-grid" data-slots-summary>
+                      <article><span>Today's spins</span><strong data-summary-spins>0</strong></article>
+                      <article><span>Total wagered</span><strong data-summary-wagered>0.00</strong></article>
+                      <article><span>Total paid out</span><strong data-summary-won>0.00</strong></article>
+                      <article><span>House RTP today</span><strong data-summary-rtp>--%</strong></article>
+                    </div>
+                    <div class="slots-master-actions">
+                      <button type="button" class="button primary" data-slots-save-all>Save All Changes</button>
+                      <button type="button" class="button secondary" data-slots-reset-stats>Reset Today's Stats</button>
+                      <button type="button" class="button secondary" data-slots-export-config>Export Config</button>
+                    </div>
+                    <p class="slots-save-status" data-slots-save-status></p>
                   </div>
+                </div>
+
+                <!-- Per-game control grid -->
+                <h3 class="slots-admin-section-title">Per-Game Controls</h3>
+                <p class="slots-admin-section-tip">Click any game card to expand full details. Changes save when you click "Save All".</p>
+                <div class="slots-admin-games-grid" data-slots-admin-games></div>
+
+                <!-- Recent wins -->
+                <h3 class="slots-admin-section-title">Recent Wins (last 50)</h3>
+                <div class="slots-admin-recent-wins" data-slots-recent-wins>
+                  <p style="opacity:.6;text-align:center;padding:20px">No wins recorded yet today.</p>
                 </div>
               </section>
 
@@ -376,5 +395,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="slots-config.js"></script>
+    <script src="slots-admin.js"></script>
   </body>
 </html>

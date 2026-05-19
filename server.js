@@ -1175,6 +1175,11 @@ function publicFilePath(urlPath) {
   const allowedPublicFiles = new Set([
     "/styles.css",
     "/script.js",
+    "/slots-arcade.html",
+    "/slots-arcade.css",
+    "/slots-arcade.js",
+    "/slots-config.js",
+    "/slots-admin.js",
     "/service-worker.js",
     "/manifest.webmanifest",
     "/admin.webmanifest",
@@ -2254,6 +2259,11 @@ async function handleRequest(request, response) {
       url.pathname.startsWith("/assets/") ||
       url.pathname === "/styles.css" ||
       url.pathname === "/script.js" ||
+      url.pathname === "/slots-arcade.html" ||
+      url.pathname === "/slots-arcade.css" ||
+      url.pathname === "/slots-arcade.js" ||
+      url.pathname === "/slots-config.js" ||
+      url.pathname === "/slots-admin.js" ||
       url.pathname === "/service-worker.js" ||
       url.pathname === "/manifest.webmanifest" ||
       url.pathname === "/admin.webmanifest";

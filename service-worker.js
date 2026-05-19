@@ -1,4 +1,4 @@
-const CACHE_NAME = "south-diamond-app-v18";
+const CACHE_NAME = "south-diamond-app-v19";
 const CORE_ASSETS = [
   "/",
   "/index.html",
@@ -6,6 +6,11 @@ const CORE_ASSETS = [
   "/admin9493",
   "/styles.css",
   "/script.js",
+  "/slots-arcade.html",
+  "/slots-arcade.css",
+  "/slots-arcade.js",
+  "/slots-config.js",
+  "/slots-admin.js",
   "/manifest.webmanifest",
   "/admin.webmanifest",
   "/assets/app-icon.svg",

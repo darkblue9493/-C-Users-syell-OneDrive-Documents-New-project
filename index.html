@@ -250,7 +250,7 @@
               <p>PLAY IN SITE</p>
               <h3>South Diamond Slots</h3>
               <span>Open original South Diamond spin games with reels, bets, bonus symbols, and casino-style effects.</span>
-              <button class="game-link" type="button" data-sd-slots-open>Play Slots</button>
+              <a class="game-link" href="slots-arcade.html" data-sd-slots-arcade>Play Slots Arcade</a>
             </article>
             <article class="game-card">
               <div class="game-brand-media">
@@ -871,5 +871,58 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+      // Bridge to South Diamond Slots Arcade
+      (function() {
+        function syncPlayer() {
+          try {
+            // Look for player data in any common storage keys this site uses
+            var keys = ["southDiamondPlayer", "currentPlayer", "sd_player"];
+            for (var i = 0; i < keys.length; i++) {
+              var raw = localStorage.getItem(keys[i]);
+              if (raw) {
+                try { localStorage.setItem("southDiamondPlayer", raw); break; }
+                catch (e) {}
+              }
+            }
+          } catch (err) {}
+        }
+        syncPlayer();
+        // Map old slot-game keys to new arcade game keys
+        var gameMap = {
+          diamond777: "triple777",
+          milkyway: "vegas7s",
+          lucky777: "triple777",
+          dragon: "dragonEmpress",
+          ocean: "oceanTreasure",
+          firekirin: "dragonEmpress",
+          pandamaster: "gorillaGold",
+          orion: "vegas7s",
+          goldendragon: "dragonEmpress",
+          gamevault: "wildBuffalo",
+          ultrapanda: "gorillaGold",
+          buffalo: "wildBuffalo",
+          jungle: "gorillaGold",
+          neon: "vegas7s",
+        };
+        document.addEventListener("click", function(e) {
+          var btn = e.target.closest("[data-slot-game]");
+          if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            var key = btn.dataset.slotGame;
+            var mapped = gameMap[key] || "wildBuffalo";
+            syncPlayer();
+            window.location.href = "slots-arcade.html?game=" + encodeURIComponent(mapped);
+            return;
+          }
+          var arcade = e.target.closest("[data-sd-slots-arcade]");
+          if (arcade) {
+            syncPlayer();
+            // Let default link navigation happen
+          }
+        }, true);
+      })();
+    </script>
   </body>
 </html>
