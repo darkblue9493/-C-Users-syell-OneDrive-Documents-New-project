@@ -250,7 +250,7 @@
               <p>PLAY IN SITE</p>
               <h3>South Diamond Slots</h3>
               <span>Open original South Diamond spin games with reels, bets, bonus symbols, and casino-style effects.</span>
-              <a class="game-link" href="slots-arcade.html" data-sd-slots-arcade>Play Slots Arcade</a>
+              <a class="game-link" href="/slots-arcade.html" data-sd-slots-arcade>Play Slots Arcade</a>
             </article>
             <article class="game-card">
               <div class="game-brand-media">
@@ -918,7 +918,7 @@
             var key = btn.dataset.slotGame;
             var mapped = gameMap[key] || "wildBuffalo";
             syncPlayer();
-            window.location.href = "slots-arcade.html?game=" + encodeURIComponent(mapped);
+            window.location.href = "/slots-arcade.html?game=" + encodeURIComponent(mapped);
             return;
           }
           var arcade = e.target.closest("[data-sd-slots-arcade]");

@@ -1021,6 +1021,8 @@ const State = {
   fullscreen: false,
   player: null,
   pointsSyncedAt: 0,
+  appliedControlGame: null,
+  appliedControlSignature: "",
 };
 
 async function arcadeApi(path, options = {}) {
@@ -1050,7 +1052,7 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
     flashMessage("Log in to your South Diamond account to play slots.");
     if (redirectOnFail) {
       window.setTimeout(() => {
-        window.location.href = "index.html#signup";
+        window.location.href = "/#signup";
       }, 900);
     }
     return false;
@@ -1074,11 +1076,58 @@ function adminGameConfig(gameKey) {
   return cfg.games?.[gameKey] || null;
 }
 
+function numberSetting(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function gameControlSignature(gameKey) {
+  const cfg = adminGameConfig(gameKey);
+  if (!cfg) return "";
+  return JSON.stringify({
+    enabled: cfg.enabled !== false,
+    minBet: numberSetting(cfg.minBet, 0.05),
+    maxBet: numberSetting(cfg.maxBet, 10),
+    targetRtp: numberSetting(cfg.targetRtp, 0.92),
+    dailyMaxPayout: numberSetting(cfg.dailyMaxPayout, 1000),
+    dailyMinPayout: numberSetting(cfg.dailyMinPayout, 50),
+    jackpotPool: cfg.jackpotPool || {},
+  });
+}
+
+function betLevelsForGame(gameKey) {
+  const cfg = adminGameConfig(gameKey);
+  const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.05;
+  const maxBet = cfg ? Math.max(minBet, numberSetting(cfg.maxBet, 10)) : 10;
+  return [...new Set([...State.betLevels, minBet, maxBet]
+    .map((value) => Math.round(Number(value) * 100) / 100)
+    .filter((value) => Number.isFinite(value) && value >= minBet && value <= maxBet))]
+    .sort((a, b) => a - b);
+}
+
+function applyAdminGameControls(gameKey, { force = false } = {}) {
+  const cfg = adminGameConfig(gameKey);
+  if (!cfg) return false;
+  const signature = gameControlSignature(gameKey);
+  const changed = force || State.appliedControlGame !== gameKey || State.appliedControlSignature !== signature;
+  if (!changed) return false;
+  const pool = cfg.jackpotPool || {};
+  ["grand", "major", "minor", "mini"].forEach((level) => {
+    const fallback = State.jackpots[level] || 0;
+    State.jackpots[level] = Math.max(0, numberSetting(pool[level], fallback));
+  });
+  State.appliedControlGame = gameKey;
+  State.appliedControlSignature = signature;
+  clampBetToAdmin(gameKey);
+  updateDisplays();
+  return true;
+}
+
 function clampBetToAdmin(gameKey) {
   const gcfg = adminGameConfig(gameKey);
   if (!gcfg) return true;
-  const minBet = Number(gcfg.minBet) || 0.05;
-  const maxBet = Number(gcfg.maxBet) || 10;
+  const minBet = Math.max(0.01, numberSetting(gcfg.minBet, 0.05));
+  const maxBet = Math.max(minBet, numberSetting(gcfg.maxBet, 10));
   if (State.bet < minBet) State.bet = minBet;
   if (State.bet > maxBet) State.bet = maxBet;
   updateDisplays();
@@ -1094,7 +1143,7 @@ async function applyLiveArcadeControls() {
   await refreshArcadeControls();
   if ($("[data-lobby-grid]")) renderLobby();
   if (!State.activeGame) return;
-  clampBetToAdmin(State.activeGame);
+  applyAdminGameControls(State.activeGame);
   if (!isAdminGameEnabled(State.activeGame)) {
     showMaintenanceOverlay();
     setWinMessage("This game is currently turned off by admin.");
@@ -1242,7 +1291,12 @@ function evaluateSpin(game, grid, bet) {
   else if (r < State.jackpotChance.grand + State.jackpotChance.major) { jpHit = "major"; totalPay += State.jackpots.major; }
   else if (r < State.jackpotChance.grand + State.jackpotChance.major + State.jackpotChance.minor) { jpHit = "minor"; totalPay += State.jackpots.minor; }
   else if (r < State.jackpotChance.grand + State.jackpotChance.major + State.jackpotChance.minor + State.jackpotChance.mini) { jpHit = "mini"; totalPay += State.jackpots.mini; }
-  if (jpHit) { State.jackpots[jpHit] = jpHit === "grand" ? 1500 : jpHit === "major" ? 500 : jpHit === "minor" ? 100 : 20; }
+  if (jpHit) {
+    const cfg = adminGameConfig(State.activeGame);
+    const pool = cfg?.jackpotPool || {};
+    State.jackpots[jpHit] = Math.max(0, numberSetting(pool[jpHit], jpHit === "grand" ? 1500 : jpHit === "major" ? 500 : jpHit === "minor" ? 100 : 20));
+    State.appliedControlSignature = gameControlSignature(State.activeGame);
+  }
   return { wins, totalPay: Math.round(totalPay * 100) / 100, jpHit };
 }
 
@@ -1401,6 +1455,7 @@ async function renderGameView(gameKey) {
     return;
   }
   State.activeGame = gameKey;
+  applyAdminGameControls(gameKey, { force: true });
   const root = $("[data-game-view]");
   if (!root) return;
 
@@ -2009,9 +2064,11 @@ function stopAutoSpin() {
 }
 
 function changeBet(direction) {
-  const idx = State.betLevels.indexOf(State.bet);
-  const next = Math.max(0, Math.min(State.betLevels.length - 1, (idx === -1 ? 2 : idx) + direction));
-  State.bet = State.betLevels[next];
+  const levels = State.activeGame ? betLevelsForGame(State.activeGame) : State.betLevels;
+  const idx = levels.indexOf(State.bet);
+  const fallback = levels.reduce((best, value, index) => (value <= State.bet ? index : best), 0);
+  const next = Math.max(0, Math.min(levels.length - 1, (idx === -1 ? fallback : idx) + direction));
+  State.bet = levels[next];
   if (State.activeGame) clampBetToAdmin(State.activeGame);
   Audio.click();
   updateDisplays();
@@ -2019,10 +2076,11 @@ function changeBet(direction) {
 }
 function setMaxBet() {
   const gcfg = State.activeGame ? adminGameConfig(State.activeGame) : null;
-  const adminMax = gcfg ? Number(gcfg.maxBet) || 10 : 10;
-  const adminMin = gcfg ? Number(gcfg.minBet) || 0.05 : 0.05;
+  const adminMax = gcfg ? numberSetting(gcfg.maxBet, 10) : 10;
+  const adminMin = gcfg ? numberSetting(gcfg.minBet, 0.05) : 0.05;
   const maxAllowed = Math.min(State.credits, adminMax);
-  const maxAffordable = State.betLevels.filter(b => b <= maxAllowed).slice(-1)[0] || adminMin;
+  const levels = State.activeGame ? betLevelsForGame(State.activeGame) : State.betLevels;
+  const maxAffordable = levels.filter(b => b <= maxAllowed).slice(-1)[0] || adminMin;
   State.bet = maxAffordable;
   if (State.activeGame) clampBetToAdmin(State.activeGame);
   Audio.click();

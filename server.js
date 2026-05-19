@@ -1303,6 +1303,7 @@ function publicFilePath(urlPath) {
   const cleanPath = decodeURIComponent(urlPath.split("?")[0]);
   const routeMap = {
     "/": "index.html",
+    "/index.html": "index.html",
     [adminPath]: "admin.html",
     [adminLoginPath]: "login.html",
     "/maintenance": "maintenance.html",

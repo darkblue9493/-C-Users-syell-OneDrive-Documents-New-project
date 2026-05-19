@@ -124,7 +124,7 @@
     const playerPayout = $("[data-slots-player-payout-limit]");
     if (dailyPayout) {
       dailyPayout.value = pendingSlotSettings?.dailyPayoutLimit ?? 25;
-      dailyPayout.addEventListener("change", () => {
+      dailyPayout.addEventListener("input", () => {
         pendingSlotSettings.dailyPayoutLimit = Math.max(0, Number(dailyPayout.value) || 0);
         if (playerPayout && Number(playerPayout.value) > pendingSlotSettings.dailyPayoutLimit) {
           playerPayout.value = pendingSlotSettings.dailyPayoutLimit;
@@ -135,7 +135,7 @@
     }
     if (playerPayout) {
       playerPayout.value = pendingSlotSettings?.playerDailyPayoutLimit ?? 8;
-      playerPayout.addEventListener("change", () => {
+      playerPayout.addEventListener("input", () => {
         pendingSlotSettings.playerDailyPayoutLimit = Math.max(0, Number(playerPayout.value) || 0);
         queueLiveSave("Per-player payout limit saved live.");
       });
@@ -264,17 +264,17 @@
         queueLiveSave("Target RTP updated live.");
       });
       const max = $("[data-game-max]", card);
-      if (max) max.addEventListener("change", () => {
+      if (max) max.addEventListener("input", () => {
         cfg.dailyMaxPayout = Number(max.value);
         queueLiveSave("Daily max payout updated live.");
       });
       const min = $("[data-game-min]", card);
-      if (min) min.addEventListener("change", () => {
+      if (min) min.addEventListener("input", () => {
         cfg.dailyMinPayout = Number(min.value);
         queueLiveSave("Daily min payout updated live.");
       });
       const minBet = $("[data-game-minbet]", card);
-      if (minBet) minBet.addEventListener("change", () => {
+      if (minBet) minBet.addEventListener("input", () => {
         cfg.minBet = Number(minBet.value);
         if (Number(cfg.maxBet) < Number(cfg.minBet)) {
           cfg.maxBet = cfg.minBet;
@@ -284,7 +284,7 @@
         queueLiveSave("Min bet updated live.");
       });
       const maxBet = $("[data-game-maxbet]", card);
-      if (maxBet) maxBet.addEventListener("change", () => {
+      if (maxBet) maxBet.addEventListener("input", () => {
         cfg.maxBet = Number(maxBet.value);
         if (Number(cfg.maxBet) < Number(cfg.minBet)) {
           cfg.minBet = cfg.maxBet;
@@ -295,7 +295,7 @@
       });
       ["grand", "major", "minor", "mini"].forEach((level) => {
         const inp = $(`[data-jp-${level}]`, card);
-        if (inp) inp.addEventListener("change", () => {
+        if (inp) inp.addEventListener("input", () => {
           cfg.jackpotPool[level] = Number(inp.value);
           queueLiveSave("Jackpot pool updated live.");
         });
