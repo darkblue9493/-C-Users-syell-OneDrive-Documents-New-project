@@ -2589,7 +2589,7 @@ body.is-pseudo-fullscreen .game-view {
 .lobby-view {
   position: relative;
   min-height: calc(100vh - 150px);
-  padding: 18px 18px 116px 104px;
+  padding: 18px 18px 28px 104px;
   background:
     radial-gradient(circle at 50% 18%, rgba(70, 198, 255, .25), transparent 34%),
     radial-gradient(circle at 15% 85%, rgba(255, 215, 107, .22), transparent 24%),
@@ -2719,40 +2719,15 @@ body.is-pseudo-fullscreen .game-view {
   color: #e7fbff;
 }
 .lobby-tip { display: none; }
-.lobby-bottom-jackpot {
-  position: fixed;
-  z-index: 35;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
-  display: grid;
-  grid-template-columns: auto auto;
-  align-items: center;
-  gap: 18px;
-  min-width: min(440px, 72vw);
-  padding: 10px 22px 12px;
-  border-radius: 22px 22px 8px 8px;
-  border: 3px solid #ffd76b;
-  background: linear-gradient(180deg, rgba(2, 85, 88, .96), rgba(0, 34, 42, .98));
-  box-shadow: 0 0 22px rgba(37, 216, 255, .75), inset 0 0 18px rgba(0,0,0,.75);
-}
-.lobby-bottom-jackpot strong {
+.lobby-empty {
   grid-column: 1 / -1;
-  margin-top: -36px;
+  padding: 28px;
   text-align: center;
-  font-family: Impact, "Arial Black", sans-serif;
-  font-size: 1.7rem;
-  color: #ffcd38;
-  -webkit-text-stroke: 1px #a61700;
-  text-shadow: 0 3px 0 #4e1300, 0 0 12px rgba(255,215,107,.8);
-}
-.lobby-bottom-jackpot span {
-  grid-column: 1 / -1;
-  text-align: center;
-  font-family: "Courier New", monospace;
-  font-size: 1.4rem;
-  color: #ff5fe5;
+  border-radius: 10px;
+  background: rgba(0,0,0,.62);
+  border: 1px solid rgba(37,216,255,.45);
   font-weight: 900;
+  letter-spacing: .08em;
 }
 
 /* Make row matching obvious and keep all symbols visible */
@@ -2811,16 +2786,302 @@ body.is-pseudo-fullscreen .game-view {
   .game-view.layout-table-felt .reels-frame { --cell-base: 96px; }
 }
 @media (max-width: 620px) {
-  .lobby-view { padding: 14px 10px 108px; }
-  .lobby-rail { display: none; }
+  .lobby-view { padding: 14px 10px 24px; }
+  .lobby-rail {
+    position: relative;
+    left: auto;
+    top: auto;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    margin: 0 0 10px;
+  }
+  .lobby-rail button { min-height: 42px; }
   .lobby-news { width: calc(100vw - 20px); }
   .lobby-view .lobby-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .lobby-view .lobby-tile { height: 178px !important; }
   .lobby-view .lobby-tile .tile-info strong { font-size: 1.08rem !important; }
   .lobby-view .tile-badge { font-size: .62rem; padding: 5px 9px; }
-  .lobby-bottom-jackpot { min-width: calc(100vw - 76px); }
   .reels-frame { --cell-base: 72px; }
   .game-view.layout-table-felt .reels-frame { --cell-base: 76px; }
+}
+
+body.is-phone-panorama {
+  min-height: 100dvh;
+}
+
+body.is-phone-panorama .arcade-header {
+  position: sticky;
+  top: 0;
+}
+
+@media (max-width: 950px) and (orientation: landscape), (max-height: 540px) {
+  body.is-phone-panorama,
+  body.is-pseudo-fullscreen {
+    overflow: hidden;
+  }
+  body.is-phone-panorama .arcade-header,
+  body.is-pseudo-fullscreen .arcade-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    padding: 4px 8px;
+    grid-template-columns: auto minmax(120px, 1fr) auto auto;
+    gap: 6px;
+  }
+  body.is-phone-panorama .brand-text,
+  body.is-pseudo-fullscreen .brand-text,
+  body.is-phone-panorama .balance-label,
+  body.is-pseudo-fullscreen .balance-label {
+    display: none;
+  }
+  body.is-phone-panorama .arcade-balance,
+  body.is-pseudo-fullscreen .arcade-balance {
+    min-width: 86px;
+    padding: 4px 7px;
+  }
+  body.is-phone-panorama .arcade-balance strong,
+  body.is-pseudo-fullscreen .arcade-balance strong {
+    font-size: .88rem;
+  }
+  body.is-phone-panorama .toggle-btn,
+  body.is-pseudo-fullscreen .toggle-btn {
+    min-height: 32px;
+    padding: 4px 7px;
+    font-size: .64rem;
+  }
+  body.is-phone-panorama .jackpot-strip,
+  body.is-pseudo-fullscreen .jackpot-strip {
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    height: 44px;
+    padding: 4px 8px;
+    gap: 5px;
+  }
+  body.is-phone-panorama .jp-panel,
+  body.is-pseudo-fullscreen .jp-panel {
+    padding: 2px 4px;
+    border-width: 1px;
+    border-radius: 8px;
+  }
+  body.is-phone-panorama .jp-stars,
+  body.is-pseudo-fullscreen .jp-stars {
+    display: none;
+  }
+  body.is-phone-panorama .jp-label,
+  body.is-pseudo-fullscreen .jp-label {
+    font-size: .56rem;
+    margin: 0;
+    padding: 1px 4px;
+  }
+  body.is-phone-panorama .jp-value,
+  body.is-pseudo-fullscreen .jp-value {
+    font-size: .72rem;
+    padding: 1px 4px;
+  }
+  body.is-phone-panorama .lobby-view,
+  body.is-pseudo-fullscreen .lobby-view {
+    height: 100dvh;
+    overflow-y: auto;
+    padding: 98px 10px 12px;
+  }
+  body.is-phone-panorama .lobby-rail,
+  body.is-pseudo-fullscreen .lobby-rail {
+    position: sticky;
+    top: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  body.is-phone-panorama .lobby-rail button,
+  body.is-pseudo-fullscreen .lobby-rail button {
+    min-height: 34px;
+    font-size: .68rem;
+  }
+  body.is-phone-panorama .lobby-intro,
+  body.is-pseudo-fullscreen .lobby-intro {
+    margin-bottom: 8px;
+  }
+  body.is-phone-panorama .lobby-intro h1,
+  body.is-pseudo-fullscreen .lobby-intro h1 {
+    font-size: clamp(1.25rem, 5vw, 1.8rem);
+  }
+  body.is-phone-panorama .lobby-intro p,
+  body.is-phone-panorama .lobby-news,
+  body.is-pseudo-fullscreen .lobby-intro p,
+  body.is-pseudo-fullscreen .lobby-news {
+    display: none;
+  }
+  body.is-phone-panorama .lobby-view .lobby-grid,
+  body.is-pseudo-fullscreen .lobby-view .lobby-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  body.is-phone-panorama .lobby-view .lobby-tile,
+  body.is-pseudo-fullscreen .lobby-view .lobby-tile {
+    height: clamp(120px, 27vh, 160px) !important;
+  }
+  body.is-phone-panorama .lobby-tile .tile-mascot-art,
+  body.is-pseudo-fullscreen .lobby-tile .tile-mascot-art {
+    height: 66px;
+    top: 8px;
+  }
+  body.is-phone-panorama .lobby-view .tile-badge,
+  body.is-pseudo-fullscreen .lobby-view .tile-badge {
+    font-size: .56rem;
+    padding: 4px 7px;
+  }
+  body.is-phone-panorama .lobby-view .lobby-tile .tile-info,
+  body.is-pseudo-fullscreen .lobby-view .lobby-tile .tile-info {
+    padding: 34px 5px 7px !important;
+  }
+  body.is-phone-panorama .lobby-view .lobby-tile .tile-info strong,
+  body.is-pseudo-fullscreen .lobby-view .lobby-tile .tile-info strong {
+    font-size: clamp(.78rem, 2.7vw, 1rem) !important;
+  }
+  body.is-phone-panorama .lobby-view .lobby-tile .tile-info span,
+  body.is-phone-panorama .lobby-view .lobby-tile .tile-info small,
+  body.is-pseudo-fullscreen .lobby-view .lobby-tile .tile-info span,
+  body.is-pseudo-fullscreen .lobby-view .lobby-tile .tile-info small {
+    display: none;
+  }
+  body.is-phone-panorama .game-view,
+  body.is-pseudo-fullscreen .game-view {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: 96px 8px 6px;
+    display: flex;
+    flex-direction: column;
+  }
+  body.is-phone-panorama .game-logo-bar,
+  body.is-pseudo-fullscreen .game-logo-bar {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 54px 34px minmax(0, 1fr) 76px;
+    gap: 5px;
+    margin: 0 auto 4px;
+    padding: 4px;
+  }
+  body.is-phone-panorama .mobile-lobby-btn,
+  body.is-pseudo-fullscreen .mobile-lobby-btn {
+    min-height: 30px;
+    font-size: .56rem;
+  }
+  body.is-phone-panorama .game-mascot,
+  body.is-pseudo-fullscreen .game-mascot {
+    font-size: 1.4rem;
+  }
+  body.is-phone-panorama .game-titles strong,
+  body.is-pseudo-fullscreen .game-titles strong {
+    font-size: .95rem;
+  }
+  body.is-phone-panorama .game-titles span,
+  body.is-pseudo-fullscreen .game-titles span {
+    display: none;
+  }
+  body.is-phone-panorama .paytable-btn,
+  body.is-pseudo-fullscreen .paytable-btn {
+    min-height: 30px;
+    font-size: .52rem;
+    padding: 4px;
+  }
+  body.is-phone-panorama .character-paytable,
+  body.is-phone-panorama .paytable,
+  body.is-pseudo-fullscreen .character-paytable,
+  body.is-pseudo-fullscreen .paytable {
+    display: none !important;
+  }
+  body.is-phone-panorama .play-area,
+  body.is-pseudo-fullscreen .play-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: min(96vw, 760px);
+    margin: 0 auto;
+  }
+  body.is-phone-panorama .reels-shell,
+  body.is-pseudo-fullscreen .reels-shell {
+    min-height: 0;
+  }
+  body.is-phone-panorama .reels-frame,
+  body.is-pseudo-fullscreen .reels-frame {
+    --cell-base: min(15.5vh, 72px);
+    max-width: min(92vw, 640px);
+    padding: 5px;
+    border-width: 3px;
+  }
+  body.is-phone-panorama .game-view.layout-classic-compact .reels-frame,
+  body.is-pseudo-fullscreen .game-view.layout-classic-compact .reels-frame {
+    --cell-base: min(18vh, 78px);
+    max-width: min(64vw, 360px);
+  }
+  body.is-phone-panorama .win-msg-bar,
+  body.is-pseudo-fullscreen .win-msg-bar {
+    flex: 0 0 auto;
+    width: min(92vw, 560px);
+    margin: 4px auto;
+    padding: 5px 8px;
+  }
+  body.is-phone-panorama .win-msg-bar span,
+  body.is-pseudo-fullscreen .win-msg-bar span {
+    font-size: .72rem;
+    letter-spacing: .05em;
+    line-height: 1.1;
+  }
+  body.is-phone-panorama .controls-bar,
+  body.is-pseudo-fullscreen .controls-bar {
+    flex: 0 0 auto;
+    width: min(96vw, 660px);
+    grid-template-columns: minmax(96px, 1fr) minmax(72px, .8fr) 70px minmax(88px, .9fr);
+    gap: 5px;
+    padding: 5px;
+    margin-bottom: 0;
+    border-radius: 12px;
+  }
+  body.is-phone-panorama .spin-btn,
+  body.is-pseudo-fullscreen .spin-btn {
+    width: 68px;
+    height: 68px;
+    min-height: 68px;
+    font-size: .78rem;
+  }
+  body.is-phone-panorama .bet-row span,
+  body.is-pseudo-fullscreen .bet-row span {
+    min-width: 42px;
+    font-size: .9rem;
+  }
+  body.is-phone-panorama .bet-row button,
+  body.is-pseudo-fullscreen .bet-row button {
+    width: 25px;
+    height: 25px;
+  }
+  body.is-phone-panorama .ctrl-label,
+  body.is-phone-panorama .bet-meta,
+  body.is-pseudo-fullscreen .ctrl-label,
+  body.is-pseudo-fullscreen .bet-meta {
+    font-size: .5rem;
+    letter-spacing: .05em;
+  }
+  body.is-phone-panorama .win-control strong,
+  body.is-pseudo-fullscreen .win-control strong {
+    font-size: 1rem;
+  }
+  body.is-phone-panorama .aux-controls button,
+  body.is-pseudo-fullscreen .aux-controls button {
+    min-height: 28px;
+    padding: 3px 5px;
+    font-size: .6rem;
+  }
 }
 
 @media (max-width: 768px) {

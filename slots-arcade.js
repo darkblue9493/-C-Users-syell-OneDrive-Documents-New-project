@@ -1059,6 +1059,7 @@ const State = {
   musicOn: true,
   soundOn: true,
   fullscreen: false,
+  lobbyFilter: "all",
   player: null,
   pointsSyncedAt: 0,
   appliedControlGame: null,
@@ -1486,6 +1487,7 @@ function $$(sel, root = document) { return Array.from(root.querySelectorAll(sel)
 const FEATURED_GAMES = new Set(["wildBuffalo", "kingKong", "dragonEmpress"]);
 const NEW_GAMES = new Set(["gorillaGold", "mammothRush", "oceanTreasure"]);
 const HOT_GAMES = new Set(["triple777", "vegas7s", "pharaoh"]);
+const TABLE_GAMES = new Set(["blackjack"]);
 const GAME_CATEGORIES = {
   wildBuffalo: "HOT", kingKong: "HOT", triple777: "CLASSIC", blackjack: "TABLE",
   gorillaGold: "NEW", goldWolf: "WILD", wildBull: "CLASSIC", dragonEmpress: "HOT",
@@ -1498,7 +1500,17 @@ const GAME_CATEGORIES = {
 function renderLobby() {
   const lobby = $("[data-lobby-grid]");
   if (!lobby) return;
-  lobby.innerHTML = GAME_ORDER.map(key => {
+  const filter = State.lobbyFilter || "all";
+  const visibleGames = GAME_ORDER.filter((key) => {
+    if (filter === "hot") return HOT_GAMES.has(key) || FEATURED_GAMES.has(key);
+    if (filter === "new") return NEW_GAMES.has(key);
+    if (filter === "slot") return !TABLE_GAMES.has(key);
+    return true;
+  });
+  $$("[data-lobby-filter]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.lobbyFilter === filter);
+  });
+  lobby.innerHTML = visibleGames.map(key => {
     const game = GAMES[key];
     const enabled = isAdminGameEnabled(key);
     const mascotSvg = MASCOT_ART[key] || "";
@@ -1523,9 +1535,9 @@ function renderLobby() {
         </div>
       </button>
     `;
-  }).join("");
+  }).join("") || '<p class="lobby-empty">No games in this section right now.</p>';
   // Apply real images (PNG) if available - SVG is fallback
-  GAME_ORDER.forEach((key) => {
+  visibleGames.forEach((key) => {
     const tile = lobby.querySelector(`[data-game="${key}"]`);
     if (tile) applyTileArt(tile, key);
   });
@@ -1544,6 +1556,7 @@ function renderSymbolHtml(symKey, game, opts = {}) {
 async function renderGameView(gameKey) {
   const game = GAMES[gameKey];
   if (!game) return;
+  enterPhoneFullscreen();
   if (!isAdminGameEnabled(gameKey)) {
     State.activeGame = gameKey;
     $("[data-lobby-view]").classList.add("hidden");
@@ -2136,13 +2149,42 @@ async function toggleFullscreen() {
   }
 }
 
+function isPhoneViewport() {
+  return window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
+}
+
+async function enterPhoneFullscreen() {
+  if (!isPhoneViewport() || State.fullscreen) return;
+  document.body.classList.add("is-phone-panorama");
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+    }
+    try { if (screen.orientation?.lock) await screen.orientation.lock("landscape"); } catch (err) {}
+    State.fullscreen = !!document.fullscreenElement || document.body.classList.contains("is-phone-panorama");
+  } catch (err) {
+    document.body.classList.add("is-pseudo-fullscreen");
+    State.fullscreen = true;
+  }
+  $("[data-fullscreen-btn]")?.classList.toggle("is-active", State.fullscreen);
+}
+
+function setupPhonePanoramaMode() {
+  if (!isPhoneViewport()) return;
+  document.body.classList.add("is-phone-panorama");
+  enterPhoneFullscreen();
+  const retry = () => enterPhoneFullscreen();
+  window.addEventListener("pointerdown", retry, { once: true, passive: true });
+  window.addEventListener("touchstart", retry, { once: true, passive: true });
+}
+
 // ============================================================
 // 11) NAVIGATION
 // ============================================================
 function backToLobby() {
   stopAutoSpin();
   Audio.stopMusic();
-  if (document.body.classList.contains("is-pseudo-fullscreen")) {
+  if (document.body.classList.contains("is-pseudo-fullscreen") && !isPhoneViewport()) {
     document.body.classList.remove("is-pseudo-fullscreen");
     State.fullscreen = false;
     $("[data-fullscreen-btn]")?.classList.remove("is-active");
@@ -2200,6 +2242,13 @@ function setMaxBet() {
 // ============================================================
 function bindEvents() {
   document.addEventListener("click", (e) => {
+    const filterBtn = e.target.closest("[data-lobby-filter]");
+    if (filterBtn) {
+      State.lobbyFilter = filterBtn.dataset.lobbyFilter || "all";
+      Audio.click();
+      renderLobby();
+      return;
+    }
     const tile = e.target.closest("[data-game]");
     if (tile) {
       Audio.resume();
@@ -2255,6 +2304,7 @@ async function bootstrap() {
   startJackpotTicker();
   startArcadeLiveUpdates();
   startArcadeControlsWatcher();
+  setupPhonePanoramaMode();
   // Music/sound button initial state
   const mb = $("[data-music-btn]"); if (mb) { mb.textContent = State.musicOn ? "\u{1F3B5} ON" : "\u{1F3B5} OFF"; mb.classList.toggle("is-active", State.musicOn); }
   const sb = $("[data-sound-btn]"); if (sb) { sb.textContent = State.soundOn ? "\u{1F50A}" : "\u{1F507}"; sb.classList.toggle("is-active", State.soundOn); }

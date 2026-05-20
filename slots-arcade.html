@@ -71,10 +71,10 @@
   <!-- Lobby view: grid of game tiles -->
   <main class="lobby-view" data-lobby-view>
     <aside class="lobby-rail" aria-label="Game categories">
-      <button class="is-active" type="button">ALL</button>
-      <button type="button">HOT</button>
-      <button type="button">NEW</button>
-      <button type="button">SLOT</button>
+      <button class="is-active" type="button" data-lobby-filter="all">ALL</button>
+      <button type="button" data-lobby-filter="hot">HOT</button>
+      <button type="button" data-lobby-filter="new">NEW</button>
+      <button type="button" data-lobby-filter="slot">SLOT</button>
     </aside>
     <div class="lobby-intro">
       <h1>SOUTH DIAMOND SLOTS</h1>
@@ -87,10 +87,6 @@
       <!-- Tiles injected by JS -->
     </div>
     <p class="lobby-tip">Tip: Tap a game to start. Tap the fullscreen button (⛶) for the best experience on mobile.</p>
-    <div class="lobby-bottom-jackpot" aria-hidden="true">
-      <strong>JACKPOT</strong>
-      <span>MINI <b data-jp-mini>$21.87</b></span>
-    </div>
   </main>
 
   <!-- Game view: full slot machine -->
