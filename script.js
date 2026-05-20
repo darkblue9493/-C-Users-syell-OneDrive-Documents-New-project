@@ -1898,6 +1898,12 @@ const modalOpenChat = document.querySelector("[data-modal-open-chat]");
 const modalPointsForm = document.querySelector("[data-modal-points-form]");
 const modalResetForm = document.querySelector("[data-modal-reset-form]");
 const modalNoteForm = document.querySelector("[data-modal-note-form]");
+const modalGameSummary = document.querySelector("[data-modal-game-summary]");
+const modalGameHistory = document.querySelector("[data-modal-game-history]");
+const modalGameHistoryCount = document.querySelector("[data-modal-game-history-count]");
+const modalPointsSummary = document.querySelector("[data-modal-points-summary]");
+const modalPointsHistory = document.querySelector("[data-modal-points-history]");
+const modalPointsHistoryCount = document.querySelector("[data-modal-points-history-count]");
 const playerFilterButtons = document.querySelectorAll("[data-player-filter]");
 const loginForm = document.querySelector("[data-login-form]");
 const loginUsername = document.querySelector("[data-login-username]");
@@ -2189,6 +2195,101 @@ function formatAdminDate(value, fallback = "-") {
   return value ? new Date(value).toLocaleDateString() : fallback;
 }
 
+function renderAdminPlayerPointsHistory(transactions = [], totals = {}) {
+  if (modalPointsHistoryCount) {
+    modalPointsHistoryCount.textContent = `${transactions.length} transaction${transactions.length === 1 ? "" : "s"}`;
+  }
+  if (modalPointsSummary) {
+    modalPointsSummary.innerHTML = `
+      <article><span>Added</span><strong class="positive">+${formatPoints(totals.added || 0)}</strong></article>
+      <article><span>Redeemed</span><strong class="negative">-${formatPoints(totals.redeemed || 0)}</strong></article>
+      <article><span>Net Change</span><strong class="${Number(totals.net || 0) >= 0 ? "positive" : "negative"}">${Number(totals.net || 0) >= 0 ? "+" : ""}${formatPoints(totals.net || 0)}</strong></article>
+      <article><span>Last Balance</span><strong>${formatPoints(totals.currentBalance || 0)}</strong></article>
+    `;
+  }
+  if (!modalPointsHistory) return;
+  modalPointsHistory.innerHTML = "";
+  if (!transactions.length) {
+    modalPointsHistory.innerHTML = `<article class="points-transaction empty">No point history yet.</article>`;
+    return;
+  }
+  transactions.forEach((transaction) => {
+    const isRedeem = transaction.type === "redeem";
+    const item = document.createElement("article");
+    item.className = `points-transaction ${isRedeem ? "redeem" : "add"}`;
+    item.innerHTML = `<div><strong></strong><span></span><small></small></div><b></b>`;
+    item.querySelector("strong").textContent = isRedeem ? "Redeemed Points" : "Added Points";
+    item.querySelector("span").textContent = transaction.note || (isRedeem ? "Redeemed from player account" : "Added to player account");
+    item.querySelector("small").textContent = `${transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : ""} | Balance ${formatPoints(transaction.balanceAfter)}`;
+    item.querySelector("b").textContent = `${isRedeem ? "-" : "+"}${formatPoints(transaction.points)}`;
+    modalPointsHistory.appendChild(item);
+  });
+}
+
+async function refreshAdminPlayerPointsHistory(userId) {
+  if (!modalPointsHistory || !userId) return;
+  modalPointsHistory.innerHTML = `<article class="points-transaction empty">Loading point history...</article>`;
+  if (modalPointsSummary) modalPointsSummary.innerHTML = "";
+  if (modalPointsHistoryCount) modalPointsHistoryCount.textContent = "Loading";
+  try {
+    const data = await api(`/api/admin/player-points-history?userId=${encodeURIComponent(userId)}`);
+    renderAdminPlayerPointsHistory(data.transactions || [], data.totals || {});
+  } catch (error) {
+    if (modalPointsHistoryCount) modalPointsHistoryCount.textContent = "Unavailable";
+    modalPointsHistory.innerHTML = `<article class="points-transaction empty">${error.message}</article>`;
+  }
+}
+
+function renderAdminPlayerGameHistory(history = [], totals = {}) {
+  if (modalGameHistoryCount) {
+    modalGameHistoryCount.textContent = `${history.length} spin${history.length === 1 ? "" : "s"}`;
+  }
+  if (modalGameSummary) {
+    const wagered = Number(totals.wagered) || 0;
+    const won = Number(totals.won) || 0;
+    const net = won - wagered;
+    modalGameSummary.innerHTML = `
+      <article><span>Total Spins</span><strong>${formatPoints(Number(totals.spins) || history.length)}</strong></article>
+      <article><span>Total Bet</span><strong>${formatPoints(wagered)}</strong></article>
+      <article><span>Total Won</span><strong>${formatPoints(won)}</strong></article>
+      <article><span>Net</span><strong class="${net >= 0 ? "positive" : "negative"}">${net >= 0 ? "+" : ""}${formatPoints(net)}</strong></article>
+    `;
+  }
+  if (!modalGameHistory) return;
+  modalGameHistory.innerHTML = "";
+  if (!history.length) {
+    modalGameHistory.innerHTML = `<article class="points-transaction empty">No game history yet.</article>`;
+    return;
+  }
+  history.forEach((spin) => {
+    const bet = Number(spin.bet) || 0;
+    const win = Number(spin.win) || 0;
+    const net = win - bet;
+    const item = document.createElement("article");
+    item.className = `points-transaction ${net >= 0 ? "add" : "redeem"}`;
+    item.innerHTML = `<div><strong></strong><span></span><small></small></div><b></b>`;
+    item.querySelector("strong").textContent = spin.gameName || "South Diamond Slots";
+    item.querySelector("span").textContent = `Bet ${formatPoints(bet)} | Won ${formatPoints(win)}`;
+    item.querySelector("small").textContent = spin.createdAt ? new Date(spin.createdAt).toLocaleString() : "";
+    item.querySelector("b").textContent = `${net >= 0 ? "+" : ""}${formatPoints(net)}`;
+    modalGameHistory.appendChild(item);
+  });
+}
+
+async function refreshAdminPlayerGameHistory(userId) {
+  if (!modalGameHistory || !userId) return;
+  modalGameHistory.innerHTML = `<article class="points-transaction empty">Loading game history...</article>`;
+  if (modalGameSummary) modalGameSummary.innerHTML = "";
+  if (modalGameHistoryCount) modalGameHistoryCount.textContent = "Loading";
+  try {
+    const data = await api(`/api/admin/player-game-history?userId=${encodeURIComponent(userId)}`);
+    renderAdminPlayerGameHistory(data.history || [], data.totals || {});
+  } catch (error) {
+    if (modalGameHistoryCount) modalGameHistoryCount.textContent = "Unavailable";
+    modalGameHistory.innerHTML = `<article class="points-transaction empty">${error.message}</article>`;
+  }
+}
+
 function openAdminPlayerModal(userId, focusTarget = "") {
   const user = getAdminUser(userId);
   if (!user || !playerModal) return;
@@ -2208,6 +2309,10 @@ function openAdminPlayerModal(userId, focusTarget = "") {
   modalResetForm.dataset.userId = user.id;
   modalNoteForm.dataset.userId = user.id;
   modalNoteForm.note.value = user.adminNote || "";
+  renderAdminPlayerPointsHistory([], { currentBalance: user.points });
+  refreshAdminPlayerPointsHistory(user.id);
+  renderAdminPlayerGameHistory([], {});
+  refreshAdminPlayerGameHistory(user.id);
   playerModal.classList.remove("is-hidden");
   playerModal.setAttribute("aria-hidden", "false");
   if (focusTarget === "points") modalPointsForm.points.focus();

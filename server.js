@@ -374,6 +374,7 @@ function starterDatabase() {
     slotSettings: { ...defaultSlotSettings },
     arcadeSlotsConfig: defaultArcadeSlotsConfig(),
     slotPayout: { date: currentSpinDateKey(), paidOut: 0, spins: [] },
+    gameHistory: [],
   };
 }
 
@@ -383,6 +384,7 @@ function normalizeDatabase(data) {
   if (!Array.isArray(normalized.users)) normalized.users = [];
   if (!Array.isArray(normalized.pointTransactions)) normalized.pointTransactions = [];
   if (!Array.isArray(normalized.activityLog)) normalized.activityLog = [];
+  if (!Array.isArray(normalized.gameHistory)) normalized.gameHistory = [];
   if (!Array.isArray(normalized.adminSessions)) normalized.adminSessions = [];
   if (!Array.isArray(normalized.adminPasswordResetTokens)) normalized.adminPasswordResetTokens = [];
   if (typeof normalized.adminPasswordHash !== "string") normalized.adminPasswordHash = "";
@@ -1305,6 +1307,22 @@ function sanitizePointTransaction(transaction) {
   };
 }
 
+function sanitizeGameHistorySpin(spin) {
+  return {
+    id: spin.id,
+    userId: spin.userId,
+    username: spin.username,
+    gameKey: spin.gameKey,
+    arcadeGameKey: spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey),
+    gameName: spin.gameName || arcadeSlotGameNames[spin.arcadeGameKey] || slotGameNames[spin.gameKey] || "South Diamond Slots",
+    bet: roundPoints(spin.bet),
+    win: roundPoints(spin.win),
+    requestedWin: spin.requestedWin == null ? null : roundPoints(spin.requestedWin),
+    balanceAfter: spin.balanceAfter == null ? null : roundPoints(spin.balanceAfter),
+    createdAt: spin.createdAt,
+  };
+}
+
 function sanitizeActivity(item) {
   return {
     id: item.id,
@@ -1949,6 +1967,54 @@ async function handleApi(request, response, urlPath, url) {
     return sendJson(response, 200, { user: sanitizeUser(user) });
   }
 
+  if (request.method === "GET" && urlPath === "/api/admin/player-game-history") {
+    if (!requireAdmin(request, response)) return;
+    const userId = String(url.searchParams.get("userId") || "");
+    const data = await readDatabase();
+    const user = data.users.find((item) => item.id === userId);
+    if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    const historyById = new Map();
+    [...(data.gameHistory || []), ...(data.slotPayout?.spins || [])].forEach((spin) => {
+      if (spin?.userId !== user.id || !spin.id) return;
+      historyById.set(spin.id, sanitizeGameHistorySpin(spin));
+    });
+    const history = [...historyById.values()]
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const totals = history.reduce(
+      (summary, spin) => {
+        summary.spins += 1;
+        summary.wagered = roundPoints(summary.wagered + Math.max(0, Number(spin.bet) || 0));
+        summary.won = roundPoints(summary.won + Math.max(0, Number(spin.win) || 0));
+        return summary;
+      },
+      { spins: 0, wagered: 0, won: 0 }
+    );
+    return sendJson(response, 200, { user: sanitizeUser(user), history, totals });
+  }
+
+  if (request.method === "GET" && urlPath === "/api/admin/player-points-history") {
+    if (!requireAdmin(request, response)) return;
+    const userId = String(url.searchParams.get("userId") || "");
+    const data = await readDatabase();
+    const user = data.users.find((item) => item.id === userId);
+    if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    const transactions = (data.pointTransactions || [])
+      .filter((transaction) => transaction.userId === user.id)
+      .map(sanitizePointTransaction)
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const totals = transactions.reduce(
+      (summary, transaction) => {
+        const points = Math.max(0, Number(transaction.points) || 0);
+        if (transaction.type === "redeem") summary.redeemed = roundPoints(summary.redeemed + points);
+        else summary.added = roundPoints(summary.added + points);
+        summary.net = roundPoints(summary.added - summary.redeemed);
+        return summary;
+      },
+      { added: 0, redeemed: 0, net: 0, currentBalance: roundPoints(user.points) }
+    );
+    return sendJson(response, 200, { user: sanitizeUser(user), transactions, totals });
+  }
+
   if (request.method === "GET" && urlPath === "/api/player/spin-status") {
     const sessionUser = await requirePlayer(request, response);
     if (!sessionUser) return;
@@ -2100,7 +2166,7 @@ async function handleApi(request, response, urlPath, url) {
 
     user.lastActiveAt = createdAt;
     data.slotPayout.paidOut = roundPoints(data.slotPayout.paidOut + win);
-    data.slotPayout.spins.unshift({
+    const spinRecord = {
       id: `slot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       userId: user.id,
       username: user.username,
@@ -2115,7 +2181,10 @@ async function handleApi(request, response, urlPath, url) {
       bonus,
       balanceAfter: user.points,
       createdAt,
-    });
+    };
+    data.slotPayout.spins.unshift(spinRecord);
+    data.gameHistory = Array.isArray(data.gameHistory) ? data.gameHistory : [];
+    data.gameHistory.unshift(spinRecord);
     data.slotPayout.spins = data.slotPayout.spins.slice(0, 500);
     addActivity(data, "slots-spin", `${user.username} spun ${slotGameNames[gameKey]} for ${bet} points${win ? ` and won ${win}` : ""}`, {
       userId: user.id,
@@ -2224,7 +2293,7 @@ async function handleApi(request, response, urlPath, url) {
 
     storedUser.lastActiveAt = createdAt;
     data.slotPayout.paidOut = roundPoints(data.slotPayout.paidOut + win);
-    data.slotPayout.spins.unshift({
+    const spinRecord = {
       id: `slot-arcade-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       userId: storedUser.id,
       username: storedUser.username,
@@ -2234,8 +2303,12 @@ async function handleApi(request, response, urlPath, url) {
       bet,
       win,
       requestedWin,
+      balanceAfter: storedUser.points,
       createdAt,
-    });
+    };
+    data.slotPayout.spins.unshift(spinRecord);
+    data.gameHistory = Array.isArray(data.gameHistory) ? data.gameHistory : [];
+    data.gameHistory.unshift(spinRecord);
     data.slotPayout.spins = data.slotPayout.spins.slice(0, 500);
     addActivity(
       data,

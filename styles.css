@@ -5976,6 +5976,75 @@ body.is-player-logged-in [data-guest-only] {
   color: #fff8df;
 }
 
+.admin-modal-game-history {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 16px;
+  border: 1px solid rgba(255, 214, 64, 0.18);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.admin-modal-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-modal-section-title strong {
+  color: #fff8df;
+}
+
+.admin-modal-section-title span {
+  color: #9d927e;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.admin-game-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-game-summary article {
+  padding: 10px;
+  border: 1px solid rgba(255, 214, 64, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.admin-game-summary span {
+  display: block;
+  color: #9d927e;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-game-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: #fff8df;
+}
+
+.admin-game-summary strong.positive {
+  color: #52ef9f;
+}
+
+.admin-game-summary strong.negative {
+  color: #ff8b8b;
+}
+
+.admin-game-history-list {
+  display: grid;
+  gap: 10px;
+  max-height: 280px;
+  overflow: auto;
+}
+
 .admin-modal-points {
   display: grid;
   gap: 2px;
@@ -6191,6 +6260,7 @@ body.is-player-logged-in [data-guest-only] {
   }
 
   .admin-player-summary,
+  .admin-game-summary,
   .admin-modal-form-row,
   .admin-modal-form-row.compact {
     grid-template-columns: 1fr;
