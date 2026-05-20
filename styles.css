@@ -6510,9 +6510,6 @@ body.is-player-logged-in [data-guest-only] {
 }
 
 .admin-messages-page .admin-dashboard.messenger-chat .chat-inbox::before {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   margin: -18px -22px 12px;
   padding: 24px 22px 16px;
   background: #151006;

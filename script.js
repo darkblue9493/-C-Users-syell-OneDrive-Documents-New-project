@@ -2,7 +2,7 @@ const header = document.querySelector("[data-header]");
 const nav = document.querySelector("[data-nav]");
 const navToggle = document.querySelector("[data-nav-toggle]");
 const canUseApi = location.protocol === "http:" || location.protocol === "https:";
-const isAdminPage = Boolean(document.querySelector("[data-admin-inbox]"));
+const isAdminPage = Boolean(document.querySelector("[data-admin-title]"));
 const winnerList = document.querySelector("[data-winner-list]");
 const winnerHighlight = document.querySelector("[data-winner-highlight]");
 const promoTracks = document.querySelectorAll(".promo-track");
@@ -2831,7 +2831,7 @@ async function handleAdminPlayerListClick(event) {
   }
 }
 
-if (adminInbox && adminForm) {
+if (isAdminPage) {
   setupAdminIdleLogout();
   requireAdminSession().then(renderAdmin);
 

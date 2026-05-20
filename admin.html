@@ -200,51 +200,6 @@
                   <small data-slots-admin-date>Daily controls reset at UTC midnight</small>
                 </div>
 
-                <!-- Master controls -->
-                <div class="slots-admin-master">
-                  <div class="slots-master-card">
-                    <div class="slots-master-row">
-                      <label class="slots-toggle">
-                        <input type="checkbox" data-slots-global-enabled checked />
-                        <span class="toggle-slider"></span>
-                        <strong>Slots Arcade Online</strong>
-                      </label>
-                      <span data-slots-status-pill class="slots-status-pill online">LIVE</span>
-                    </div>
-                    <div class="slots-summary-grid" data-slots-summary>
-                      <article><span>Today's spins</span><strong data-summary-spins>0</strong></article>
-                      <article><span>Total wagered</span><strong data-summary-wagered>0.00</strong></article>
-                      <article><span>Total paid out</span><strong data-summary-won>0.00</strong></article>
-                      <article><span>House RTP today</span><strong data-summary-rtp>--%</strong></article>
-                    </div>
-                    <div class="sga-control">
-                      <label>
-                        <span>Default Bet</span>
-                        <input type="number" min="0.01" step="0.05" value="0.25" data-slots-default-bet />
-                        <small>Starting bet shown when players open an arcade slot game.</small>
-                      </label>
-                    </div>
-                    <div class="sga-control sga-grid-2">
-                      <label>
-                        <span>Total Daily Payout Limit</span>
-                        <input type="number" min="0" step="1" value="25" data-slots-daily-payout-limit />
-                        <small>Maximum points all slot games can pay today.</small>
-                      </label>
-                      <label>
-                        <span>Per Player Daily Win Limit</span>
-                        <input type="number" min="0" step="1" value="8" data-slots-player-payout-limit />
-                        <small>Maximum slot winnings one player can receive today.</small>
-                      </label>
-                    </div>
-                    <div class="slots-master-actions">
-                      <button type="button" class="button primary" data-slots-save-all>Save All Changes</button>
-                      <button type="button" class="button secondary" data-slots-reset-stats>Reset Today's Stats</button>
-                      <button type="button" class="button secondary" data-slots-export-config>Export Config</button>
-                    </div>
-                    <p class="slots-save-status" data-slots-save-status></p>
-                  </div>
-                </div>
-
                 <!-- Per-game control grid -->
                 <h3 class="slots-admin-section-title">Per-Game Controls</h3>
                 <p class="slots-admin-section-tip">Click any game card to expand full details. Changes save live as soon as you update them.</p>
