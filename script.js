@@ -2571,6 +2571,40 @@ function latestChatTime(chat) {
   return lastMessage?.createdAt ? new Date(lastMessage.createdAt).getTime() : 0;
 }
 
+function isAdminPointTransactionClient(transaction) {
+  if (!transaction) return false;
+  if (transaction.source === "admin") return true;
+  if (transaction.source && transaction.source !== "admin") return false;
+  const note = String(transaction.note || "").toLowerCase();
+  return !["south diamond slots", "south diamond slots arcade", "daily spin", "signup bonus", "referral bonus"].some((marker) => note.includes(marker));
+}
+
+function dashboardStatsFromLoadedData({ users = [], chats = [], transactions = [] } = {}) {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const activeSince = Date.now() - 24 * 60 * 60 * 1000;
+  const messages = chats.flatMap((chat) => chat.messages || []);
+  const adminTransactions = transactions.filter(isAdminPointTransactionClient);
+  return {
+    totalUsers: users.length,
+    usersToday: users.filter((user) => user.createdAt && new Date(user.createdAt).getTime() >= startOfToday.getTime()).length,
+    activePlayers: users.filter((user) => {
+      const activeAt = user.lastActiveAt || user.lastLoginAt;
+      return activeAt && new Date(activeAt).getTime() >= activeSince;
+    }).length,
+    openChats: chats.length,
+    unreadChats: chats.reduce((total, chat) => total + (Number(chat.unreadForAdmin) || 0), 0),
+    totalMessages: messages.length,
+    imageUploads: messages.filter((message) => message.imageUrl).length,
+    adminAddedPoints: adminTransactions
+      .filter((transaction) => transaction.type === "add")
+      .reduce((total, transaction) => total + (Number(transaction.points) || 0), 0),
+    adminRedeemedPoints: adminTransactions
+      .filter((transaction) => transaction.type === "redeem")
+      .reduce((total, transaction) => total + (Number(transaction.points) || 0), 0),
+  };
+}
+
 function renderAdminData(data = {}) {
   const hasChatUi = Boolean(adminInbox && adminMessages);
   const hasAdminUi = Boolean(
@@ -2612,7 +2646,14 @@ function renderAdminData(data = {}) {
     adminUserCount.textContent = `${users.length} player${users.length === 1 ? "" : "s"}`;
   }
   renderVipUsers(users);
-  renderDashboard(dashboardData.stats || {});
+  renderDashboard({
+    ...(dashboardData.stats || {}),
+    ...dashboardStatsFromLoadedData({
+      users,
+      chats,
+      transactions: pointsData.transactions || [],
+    }),
+  });
   renderPointTransactions(pointsData.transactions || []);
   renderActivity(activityData.activity || []);
   renderBroadcastUsers(users);

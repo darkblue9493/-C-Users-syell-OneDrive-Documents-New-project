@@ -6522,6 +6522,19 @@ body.is-player-logged-in [data-guest-only] {
   min-height: 78px;
 }
 
+.admin-messages-page .admin-dashboard.messenger-chat .inbox-player-name {
+  grid-template-columns: 54px 12px minmax(0, 1fr) auto;
+}
+
+.admin-messages-page .admin-dashboard.messenger-chat .inbox-avatar {
+  width: 54px;
+  height: 54px;
+}
+
+.admin-messages-page .admin-dashboard.messenger-chat .inbox-player small {
+  display: none;
+}
+
 .admin-messages-page .admin-dashboard.messenger-chat .chat-window {
   min-width: 0;
 }
