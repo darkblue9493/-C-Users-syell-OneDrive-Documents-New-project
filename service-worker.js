@@ -1,4 +1,4 @@
-const CACHE_NAME = "south-diamond-app-v35";
+const CACHE_NAME = "south-diamond-app-v37";
 const CORE_ASSETS = [
   "/",
   "/index.html",

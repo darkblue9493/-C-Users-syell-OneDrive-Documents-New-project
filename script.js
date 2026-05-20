@@ -2210,7 +2210,7 @@ function renderAdminPlayerPointsHistory(transactions = [], totals = {}) {
   if (!modalPointsHistory) return;
   modalPointsHistory.innerHTML = "";
   if (!transactions.length) {
-    modalPointsHistory.innerHTML = `<article class="points-transaction empty">No point history yet.</article>`;
+    modalPointsHistory.innerHTML = `<article class="points-transaction empty">No admin add or redeem history yet.</article>`;
     return;
   }
   transactions.forEach((transaction) => {

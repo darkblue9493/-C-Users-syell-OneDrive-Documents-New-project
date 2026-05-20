@@ -1300,11 +1300,27 @@ function sanitizePointTransaction(transaction) {
     userId: transaction.userId,
     username: transaction.username,
     type: transaction.type,
+    source: transaction.source || "",
     points: roundPoints(transaction.points),
     balanceAfter: roundPoints(transaction.balanceAfter),
     note: transaction.note || "",
     createdAt: transaction.createdAt,
   };
+}
+
+function isAdminPointTransaction(transaction) {
+  if (!transaction || transaction.userId == null) return false;
+  if (transaction.source === "admin") return true;
+  if (transaction.source && transaction.source !== "admin") return false;
+  const note = String(transaction.note || "").toLowerCase();
+  const automaticMarkers = [
+    "south diamond slots",
+    "south diamond slots arcade",
+    "daily spin",
+    "signup bonus",
+    "referral bonus",
+  ];
+  return !automaticMarkers.some((marker) => note.includes(marker));
 }
 
 function sanitizeGameHistorySpin(spin) {
@@ -1837,6 +1853,7 @@ async function handleApi(request, response, urlPath, url) {
       userId: user.id,
       username: user.username,
       type: action,
+      source: "admin",
       points: amount,
       balanceAfter: user.points,
       note,
@@ -1894,7 +1911,7 @@ async function handleApi(request, response, urlPath, url) {
     const users = data.users || [];
     const chats = data.chats || [];
     const messages = chats.flatMap((chat) => chat.messages || []);
-    const pointTransactions = data.pointTransactions || [];
+    const adminPointTransactions = (data.pointTransactions || []).filter(isAdminPointTransaction);
     return sendJson(response, 200, {
       stats: {
         totalUsers: users.length,
@@ -1907,10 +1924,12 @@ async function handleApi(request, response, urlPath, url) {
         unreadChats: chats.reduce((total, chat) => total + (Number(chat.unreadForAdmin) || 0), 0),
         totalMessages: messages.length,
         imageUploads: messages.filter((message) => message.imageUrl).length,
-        totalPoints: users.reduce((total, user) => total + (Number(user.points) || 0), 0),
-        redeemedPoints: pointTransactions
+        adminAddedPoints: adminPointTransactions
+          .filter((transaction) => transaction.type === "add")
+          .reduce((total, transaction) => roundPoints(total + (Number(transaction.points) || 0)), 0),
+        adminRedeemedPoints: adminPointTransactions
           .filter((transaction) => transaction.type === "redeem")
-          .reduce((total, transaction) => total + (Number(transaction.points) || 0), 0),
+          .reduce((total, transaction) => roundPoints(total + (Number(transaction.points) || 0)), 0),
       },
     });
   }
@@ -2000,6 +2019,7 @@ async function handleApi(request, response, urlPath, url) {
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
     const transactions = (data.pointTransactions || [])
       .filter((transaction) => transaction.userId === user.id)
+      .filter(isAdminPointTransaction)
       .map(sanitizePointTransaction)
       .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     const totals = transactions.reduce(
