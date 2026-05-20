@@ -70,14 +70,27 @@
 
   <!-- Lobby view: grid of game tiles -->
   <main class="lobby-view" data-lobby-view>
+    <aside class="lobby-rail" aria-label="Game categories">
+      <button class="is-active" type="button">ALL</button>
+      <button type="button">HOT</button>
+      <button type="button">NEW</button>
+      <button type="button">SLOT</button>
+    </aside>
     <div class="lobby-intro">
       <h1>SOUTH DIAMOND SLOTS</h1>
       <p>24 premium games · Live jackpots · Real spin action</p>
+    </div>
+    <div class="lobby-news" aria-live="polite">
+      <span>More games • Linked jackpots • New prizes • South Diamond arcade</span>
     </div>
     <div class="lobby-grid" data-lobby-grid>
       <!-- Tiles injected by JS -->
     </div>
     <p class="lobby-tip">Tip: Tap a game to start. Tap the fullscreen button (⛶) for the best experience on mobile.</p>
+    <div class="lobby-bottom-jackpot" aria-hidden="true">
+      <strong>JACKPOT</strong>
+      <span>MINI <b data-jp-mini>$21.87</b></span>
+    </div>
   </main>
 
   <!-- Game view: full slot machine -->
@@ -154,7 +167,7 @@
           <span data-bet>0.25</span>
           <button type="button" data-bet-up aria-label="Increase bet">+</button>
         </div>
-        <div class="bet-meta"><b data-lines>9</b> LINES</div>
+        <div class="bet-meta">ROW MATCH</div>
       </div>
 
       <div class="win-control">
@@ -203,7 +216,7 @@
       <div class="ptm-rules">
         <h3>How wins work</h3>
         <ul>
-          <li><b>Match 3, 4, or 5</b> of the same symbol left-to-right on a payline.</li>
+          <li><b>Match 3, 4, or 5</b> of the same symbol left-to-right on any row.</li>
           <li><b>WILD</b> substitutes for any symbol (except SCATTER) to complete winning lines.</li>
           <li><b>SCATTER / BONUS</b> pays anywhere on the reels - 3+ trigger bonus rounds.</li>
           <li>Higher bets unlock proportionally higher payouts.</li>

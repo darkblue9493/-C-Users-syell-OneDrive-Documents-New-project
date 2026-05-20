@@ -927,6 +927,46 @@ const GAMES = {
   },
 };
 
+const MUSIC_PROFILES = {
+  wildBuffalo:     { volume: 0.12, bassVolume: 0.11, harmonyVolume: 0.05, wave: "sawtooth", bassWave: "square",   pattern: [0,2,4,2,5,4,2,0], bassPattern: [0,0,3,0], harmonyEvery: 4 },
+  kingKong:        { volume: 0.13, bassVolume: 0.13, harmonyVolume: 0.04, wave: "square",   bassWave: "sawtooth", pattern: [0,0,2,1,3,2,5,3], bassPattern: [0,0,0,2], harmonyEvery: 6 },
+  triple777:       { volume: 0.14, bassVolume: 0.09, harmonyVolume: 0.06, wave: "square",   bassWave: "triangle", pattern: [4,2,4,5,4,2,1,0], bassPattern: [0,2,0,4], harmonyEvery: 2 },
+  blackjack:       { volume: 0.11, bassVolume: 0.10, harmonyVolume: 0.05, wave: "triangle", bassWave: "sine",     pattern: [0,1,2,4,3,2,1,3], bassPattern: [0,0,2,1], harmonyEvery: 3 },
+  gorillaGold:     { volume: 0.13, bassVolume: 0.14, harmonyVolume: 0.04, wave: "sawtooth", bassWave: "square",   pattern: [0,3,0,4,2,5,3,1], bassPattern: [0,3,0,2], harmonyEvery: 4 },
+  goldWolf:        { volume: 0.12, bassVolume: 0.10, harmonyVolume: 0.07, wave: "triangle", bassWave: "sawtooth", pattern: [5,3,2,0,1,2,4,2], bassPattern: [0,0,4,0], harmonyEvery: 5 },
+  wildBull:        { volume: 0.14, bassVolume: 0.12, harmonyVolume: 0.04, wave: "square",   bassWave: "square",   pattern: [0,2,4,5,4,2,0,3], bassPattern: [0,3,0,3], harmonyEvery: 3 },
+  dragonEmpress:   { volume: 0.12, bassVolume: 0.11, harmonyVolume: 0.06, wave: "sine",     bassWave: "triangle", pattern: [0,2,3,5,4,3,1,2], bassPattern: [0,2,0,4], harmonyEvery: 4 },
+  mammothRush:     { volume: 0.13, bassVolume: 0.15, harmonyVolume: 0.04, wave: "sawtooth", bassWave: "square",   pattern: [0,0,1,3,0,4,3,1], bassPattern: [0,0,0,3], harmonyEvery: 6 },
+  pharaoh:         { volume: 0.12, bassVolume: 0.10, harmonyVolume: 0.06, wave: "triangle", bassWave: "sawtooth", pattern: [0,1,4,3,2,5,4,1], bassPattern: [0,4,0,1], harmonyEvery: 4 },
+  oceanTreasure:   { volume: 0.11, bassVolume: 0.10, harmonyVolume: 0.07, wave: "sine",     bassWave: "triangle", pattern: [0,2,5,4,2,3,5,1], bassPattern: [0,2,0,5], harmonyEvery: 3 },
+  vegas7s:         { volume: 0.15, bassVolume: 0.12, harmonyVolume: 0.06, wave: "square",   bassWave: "sawtooth", pattern: [4,5,4,2,5,4,2,0], bassPattern: [0,2,4,2], harmonyEvery: 2 },
+  luckyPanda:      { volume: 0.12, bassVolume: 0.10, harmonyVolume: 0.06, wave: "triangle", bassWave: "sine",     pattern: [0,2,4,5,3,4,2,1], bassPattern: [0,0,3,4], harmonyEvery: 4 },
+  lionsPride:      { volume: 0.13, bassVolume: 0.14, harmonyVolume: 0.04, wave: "sawtooth", bassWave: "square",   pattern: [0,3,5,3,2,4,5,1], bassPattern: [0,0,4,3], harmonyEvery: 5 },
+  piratesTreasure: { volume: 0.13, bassVolume: 0.12, harmonyVolume: 0.05, wave: "square",   bassWave: "triangle", pattern: [0,2,3,5,3,2,4,1], bassPattern: [0,3,0,5], harmonyEvery: 4 },
+  zeusThunder:     { volume: 0.15, bassVolume: 0.14, harmonyVolume: 0.05, wave: "sawtooth", bassWave: "square",   pattern: [5,4,2,5,3,1,4,0], bassPattern: [0,5,0,4], harmonyEvery: 2 },
+  cleopatra:       { volume: 0.12, bassVolume: 0.10, harmonyVolume: 0.07, wave: "triangle", bassWave: "sine",     pattern: [0,2,1,4,3,5,4,2], bassPattern: [0,4,0,2], harmonyEvery: 4 },
+  frozenRiches:    { volume: 0.11, bassVolume: 0.09, harmonyVolume: 0.08, wave: "sine",     bassWave: "triangle", pattern: [5,4,3,1,2,0,2,4], bassPattern: [0,0,5,0], harmonyEvery: 3 },
+  galaxyStars:     { volume: 0.13, bassVolume: 0.11, harmonyVolume: 0.08, wave: "sawtooth", bassWave: "sine",     pattern: [0,4,2,5,1,3,5,4], bassPattern: [0,5,2,4], harmonyEvery: 3 },
+  fruitMania:      { volume: 0.15, bassVolume: 0.10, harmonyVolume: 0.06, wave: "square",   bassWave: "triangle", pattern: [4,2,0,2,5,4,2,1], bassPattern: [0,2,0,5], harmonyEvery: 2 },
+  vikingGlory:     { volume: 0.13, bassVolume: 0.15, harmonyVolume: 0.04, wave: "sawtooth", bassWave: "square",   pattern: [0,0,3,5,3,2,0,4], bassPattern: [0,3,0,5], harmonyEvery: 5 },
+  aztecEmpire:     { volume: 0.13, bassVolume: 0.12, harmonyVolume: 0.05, wave: "triangle", bassWave: "sawtooth", pattern: [0,3,1,4,2,5,3,0], bassPattern: [0,1,0,4], harmonyEvery: 4 },
+  halloweenHunt:   { volume: 0.12, bassVolume: 0.13, harmonyVolume: 0.06, wave: "square",   bassWave: "sawtooth", pattern: [5,4,2,1,0,2,4,3], bassPattern: [0,5,0,2], harmonyEvery: 3 },
+  luckyCharms:     { volume: 0.14, bassVolume: 0.11, harmonyVolume: 0.06, wave: "triangle", bassWave: "square",   pattern: [0,2,4,5,4,3,1,2], bassPattern: [0,4,0,5], harmonyEvery: 2 },
+};
+
+Object.entries(MUSIC_PROFILES).forEach(([key, profile]) => {
+  if (GAMES[key]) GAMES[key].music = { ...(GAMES[key].music || {}), ...profile };
+});
+
+function simpleRowPaylines(reels, rows) {
+  return Array.from({ length: rows }, (_, row) => Array.from({ length: reels }, () => row));
+}
+
+Object.values(GAMES).forEach((game) => {
+  game.paylines = simpleRowPaylines(game.reels, game.rows);
+  game.matchStyle = "Row Match";
+});
+
 // Order in which to show games in the lobby
 const GAME_ORDER = [
   "wildBuffalo","kingKong","triple777","blackjack","gorillaGold","goldWolf",
@@ -1163,7 +1203,8 @@ async function applyLiveArcadeControls() {
   State.controlRefreshInFlight = true;
   try {
   await refreshArcadeControls();
-  if ($("[data-lobby-grid]")) renderLobby();
+  const lobbyView = $("[data-lobby-view]");
+  if ($("[data-lobby-grid]") && lobbyView && !lobbyView.classList.contains("hidden")) renderLobby();
   if (!State.activeGame) return;
   applyAdminGameControls(State.activeGame);
   if (!isAdminGameEnabled(State.activeGame)) {
@@ -1182,7 +1223,7 @@ function startArcadeControlsWatcher() {
   setInterval(() => {
     if (State.isSpinning) return;
     applyLiveArcadeControls();
-  }, 750);
+  }, 5000);
 }
 
 function startArcadeLiveUpdates() {
@@ -1355,16 +1396,16 @@ const Audio = {
     if (!AC) return null;
     this.ctx = new AC();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.5;
+    this.master.gain.value = 0.9;
     this.master.connect(this.ctx.destination);
     return this.ctx;
   },
   resume() {
     if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
   },
-  tone(freq, dur = 0.12, vol = 0.08, type = "triangle") {
+  tone(freq, dur = 0.12, vol = 0.08, type = "triangle", options = {}) {
     const ctx = this.ensure();
-    if (!ctx || !State.soundOn) return;
+    if (!ctx || (!State.soundOn && !options.music)) return;
     try {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -1376,6 +1417,9 @@ const Audio = {
       osc.connect(gain); gain.connect(this.master);
       osc.start(); osc.stop(ctx.currentTime + dur + 0.02);
     } catch (err) {}
+  },
+  musicTone(freq, dur, vol, type) {
+    this.tone(freq, dur, vol, type, { music: true });
   },
   click() { this.tone(440, 0.05, 0.06, "square"); },
   reelStop() { this.tone(220 + Math.random() * 80, 0.08, 0.05, "triangle"); },
@@ -1398,14 +1442,26 @@ const Audio = {
     if (!ctx) return;
     const tempo = game.music?.tempo || 100;
     const scale = game.music?.scale || [220, 277, 330, 392, 440];
+    const pattern = game.music?.pattern || [0,2,4,2,5,4,2,3,1,3,5,4];
+    const bassPattern = game.music?.bassPattern || [0,0,3,0];
+    const wave = game.music?.wave || "sine";
+    const bassWave = game.music?.bassWave || "triangle";
+    const volume = game.music?.volume || 0.11;
+    const bassVolume = game.music?.bassVolume || 0.1;
+    const harmonyVolume = game.music?.harmonyVolume || 0.05;
+    const harmonyEvery = Math.max(1, game.music?.harmonyEvery || 4);
     const interval = 60000 / tempo / 2;
     let beat = 0;
-    const pattern = [0,2,4,2,5,4,2,3,1,3,5,4];
     this.music.timer = setInterval(() => {
       if (!State.musicOn) return;
       const note = scale[pattern[beat % pattern.length] % scale.length];
-      this.tone(note, 0.2, 0.03, "sine");
-      if (beat % 4 === 0) this.tone(scale[0] / 2, 0.3, 0.04, "triangle");
+      const bassNote = scale[bassPattern[beat % bassPattern.length] % scale.length] / 2;
+      this.musicTone(note, 0.24, volume, wave);
+      if (beat % 2 === 0) this.musicTone(bassNote, 0.34, bassVolume, bassWave);
+      if (beat % harmonyEvery === 0) {
+        const harmony = scale[(pattern[beat % pattern.length] + 2) % scale.length];
+        this.musicTone(harmony, 0.18, harmonyVolume, "triangle");
+      }
       beat++;
     }, interval);
   },
@@ -1430,6 +1486,14 @@ function $$(sel, root = document) { return Array.from(root.querySelectorAll(sel)
 const FEATURED_GAMES = new Set(["wildBuffalo", "kingKong", "dragonEmpress"]);
 const NEW_GAMES = new Set(["gorillaGold", "mammothRush", "oceanTreasure"]);
 const HOT_GAMES = new Set(["triple777", "vegas7s", "pharaoh"]);
+const GAME_CATEGORIES = {
+  wildBuffalo: "HOT", kingKong: "HOT", triple777: "CLASSIC", blackjack: "TABLE",
+  gorillaGold: "NEW", goldWolf: "WILD", wildBull: "CLASSIC", dragonEmpress: "HOT",
+  mammothRush: "NEW", pharaoh: "TREASURE", oceanTreasure: "NEW", vegas7s: "HOT",
+  luckyPanda: "LUCKY", lionsPride: "WILD", piratesTreasure: "TREASURE", zeusThunder: "MYTH",
+  cleopatra: "TREASURE", frozenRiches: "COOL", galaxyStars: "SPACE", fruitMania: "CLASSIC",
+  vikingGlory: "MYTH", aztecEmpire: "TREASURE", halloweenHunt: "BONUS", luckyCharms: "LUCKY",
+};
 
 function renderLobby() {
   const lobby = $("[data-lobby-grid]");
@@ -1451,7 +1515,7 @@ function renderLobby() {
         <div class="tile-info">
           <strong>${game.title}</strong>
           <span>${game.tagline}</span>
-          <small>${game.reels}×${game.rows} · ${game.paylines.length} ${game.paylines.length === 1 ? "line" : "lines"} · RTP ${Math.round((game.rtpScale || 0.92) * 100 / (game.rtpScale > 1 ? game.rtpScale : 1)) || 92}%</small>
+          <small>${GAME_CATEGORIES[key] || "SLOT"} - ${game.matchStyle || "Row Match"}</small>
         </div>
         <div class="tile-play">
           <span class="play-icon">▶</span>
@@ -1480,7 +1544,6 @@ function renderSymbolHtml(symKey, game, opts = {}) {
 async function renderGameView(gameKey) {
   const game = GAMES[gameKey];
   if (!game) return;
-  await refreshArcadeControls();
   if (!isAdminGameEnabled(gameKey)) {
     State.activeGame = gameKey;
     $("[data-lobby-view]").classList.add("hidden");
@@ -1583,6 +1646,14 @@ async function renderGameView(gameKey) {
   applyGameArt(gameKey, root);
   // Start music
   if (State.musicOn) Audio.startMusic(game);
+  refreshArcadeControls().then(() => {
+    if (State.activeGame !== gameKey || State.isSpinning) return;
+    applyAdminGameControls(gameKey);
+    if (!isAdminGameEnabled(gameKey)) {
+      showMaintenanceOverlay();
+      setWinMessage("This game is currently turned off by admin.");
+    }
+  });
 }
 
 function renderCharacterPaytable(game, root) {
@@ -1630,10 +1701,10 @@ function renderPaytable(game) {
 function updateDisplays() {
   $("[data-credits]").textContent = fmt(State.credits);
   $("[data-bet]").textContent = fmt(State.bet);
-  $("[data-jp-grand]").textContent = "$" + fmt(State.jackpots.grand);
-  $("[data-jp-major]").textContent = "$" + fmt(State.jackpots.major);
-  $("[data-jp-minor]").textContent = "$" + fmt(State.jackpots.minor);
-  $("[data-jp-mini]").textContent = "$" + fmt(State.jackpots.mini);
+  $$("[data-jp-grand]").forEach((el) => { el.textContent = "$" + fmt(State.jackpots.grand); });
+  $$("[data-jp-major]").forEach((el) => { el.textContent = "$" + fmt(State.jackpots.major); });
+  $$("[data-jp-minor]").forEach((el) => { el.textContent = "$" + fmt(State.jackpots.minor); });
+  $$("[data-jp-mini]").forEach((el) => { el.textContent = "$" + fmt(State.jackpots.mini); });
   const linesEl = $("[data-lines]");
   if (linesEl && State.activeGame) linesEl.textContent = GAMES[State.activeGame].paylines.length;
 }
@@ -2013,7 +2084,7 @@ function openPaytableModal() {
   if (!modal || !State.activeGame) return;
   const game = GAMES[State.activeGame];
   $("[data-ptm-title]").textContent = game.title + " - Paytable";
-  $("[data-ptm-info]").innerHTML = `${game.reels}x${game.rows} reels &middot; ${game.paylines.length} ${game.paylines.length === 1 ? "line" : "lines"} &middot; ${game.tagline}`;
+  $("[data-ptm-info]").textContent = `${game.tagline} - wins are simple left-to-right row matches.`;
   const grid = $("[data-ptm-symbols]");
   const allSymbols = Object.keys(game.symbols).sort((a, b) => Math.max(...game.symbols[b].pay) - Math.max(...game.symbols[a].pay));
   grid.innerHTML = allSymbols.map((symKey) => {

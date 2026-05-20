@@ -753,8 +753,8 @@ function normalizeArcadeGameConfig(config) {
     targetRtp: Math.max(0.7, Math.min(Number(source.targetRtp ?? defaults.targetRtp) || defaults.targetRtp, 0.99)),
     dailyMaxPayout: Math.max(0, roundPoints(source.dailyMaxPayout ?? defaults.dailyMaxPayout)),
     dailyMinPayout: Math.max(0, roundPoints(source.dailyMinPayout ?? defaults.dailyMinPayout)),
-    minBet: Math.max(0.01, Math.min(minBet, 500)),
-    maxBet: Math.max(0.01, Math.min(Math.max(maxBet, minBet), 500)),
+    minBet: Math.max(0.01, Math.min(minBet, 1000)),
+    maxBet: Math.max(0.01, Math.min(Math.max(maxBet, minBet), 1000)),
     jackpotPool: {
       grand: Math.max(0, roundPoints(jackpotSource.grand ?? defaults.jackpotPool.grand)),
       major: Math.max(0, roundPoints(jackpotSource.major ?? defaults.jackpotPool.major)),
@@ -777,7 +777,7 @@ function normalizeArcadeSlotsConfig(config) {
   return {
     version: 1,
     globalEnabled: source.globalEnabled !== false,
-    defaultBet: Math.max(0.01, Math.min(roundPoints(source.defaultBet ?? defaults.defaultBet), 500)),
+    defaultBet: Math.max(0.01, Math.min(roundPoints(source.defaultBet ?? defaults.defaultBet), 1000)),
     dailyResetUtcHour: Math.max(0, Math.min(Number(source.dailyResetUtcHour ?? 0) || 0, 23)),
     lastModified: Number(source.lastModified) || Date.now(),
     games,
@@ -856,8 +856,10 @@ function arcadeGameStatsFromPayout(slotPayout, gameKey) {
 function arcadePayoutMultiplier(gameConfig, gameStats) {
   const cfg = normalizeArcadeGameConfig(gameConfig);
   const stats = gameStats || { wagered: 0, won: 0, spins: 0 };
-  if (stats.won >= cfg.dailyMaxPayout) return 0;
   let multiplier = 1;
+  if (cfg.dailyMaxPayout > 0 && stats.won >= cfg.dailyMaxPayout) {
+    multiplier *= 0.35;
+  }
   if (stats.spins > 50 && stats.won < cfg.dailyMinPayout && stats.wagered > 0) {
     multiplier *= 1.25;
   }
@@ -2197,12 +2199,8 @@ async function handleApi(request, response, urlPath, url) {
     const createdAt = new Date().toISOString();
     const theme = slotGameThemes[gameKey] || slotGameThemes.diamond777;
     const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, arcadeGameKey);
-    const arcadeTotalStats = arcadeSlotsStatsFromPayout(data.slotPayout);
-    const remainingPayout = Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(data.arcadeSlotsConfig) - arcadeTotalStats.totalWon));
-    const remainingPlayerPayout = remainingPayout;
     const gamePaidToday = arcadeGameStats.won;
     const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
-    const availablePayout = Math.min(remainingPayout, remainingPlayerPayout, remainingGamePayout);
     const payoutMultiplier = arcadePayoutMultiplier(arcadeGameConfig, arcadeGameStats);
     let grid = [];
     let result = [];
@@ -2218,13 +2216,7 @@ async function handleApi(request, response, urlPath, url) {
       win = roundPoints((evaluation.totalWin + bonusWin) * payoutMultiplier);
       if (win <= 0) wins = [];
       if (!win) bonus = null;
-      if (win <= availablePayout) break;
-    }
-    if (win > availablePayout) {
-      grid = createLosingSlotGrid(theme, bet);
-      wins = [];
-      bonus = null;
-      win = 0;
+      break;
     }
     result = grid.map((reel) => reel[1] || reel[0] || "SD");
     const transactions = [];
@@ -2305,7 +2297,7 @@ async function handleApi(request, response, urlPath, url) {
     if (!gameKey) {
       return sendJson(response, 400, { error: "Arcade game was not recognized." });
     }
-    if (!Number.isFinite(bet) || bet < 0.05 || bet > 500) {
+    if (!Number.isFinite(bet) || bet < 0.05 || bet > 1000) {
       return sendJson(response, 400, { error: "Choose a valid slot bet." });
     }
     if (!Number.isFinite(requestedWin) || requestedWin < 0 || requestedWin > 100000) {
@@ -2333,14 +2325,11 @@ async function handleApi(request, response, urlPath, url) {
 
     ensureSlotPayoutToday(data);
     const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey);
-    const arcadeTotalStats = arcadeSlotsStatsFromPayout(data.slotPayout);
-    const remainingPayout = Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(data.arcadeSlotsConfig) - arcadeTotalStats.totalWon));
-    const remainingPlayerPayout = remainingPayout;
     const gamePaidToday = arcadeGameStats.won;
     const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
     const payoutMultiplier = arcadePayoutMultiplier(arcadeGameConfig, arcadeGameStats);
     const adjustedWin = roundPoints(requestedWin * payoutMultiplier);
-    const win = roundPoints(Math.min(adjustedWin, remainingPayout, remainingPlayerPayout, remainingGamePayout));
+    const win = adjustedWin;
     const createdAt = new Date().toISOString();
     const transactions = [];
 

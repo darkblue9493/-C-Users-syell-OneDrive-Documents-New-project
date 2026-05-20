@@ -231,12 +231,12 @@
 
             <div class="sga-control sga-grid-2">
               <label>
-                <span>Daily Max Payout</span>
+                <span>Daily Max Target</span>
                 <input type="number" min="0" step="1" value="${cfg.dailyMaxPayout}" data-game-max />
-                <small>Once total wins reach this today, win amounts auto-reduce.</small>
+                <small>Once wins reach this today, RTP softens but valid matches can still pay.</small>
               </label>
               <label>
-                <span>Daily Min Payout</span>
+                <span>Daily Min Target</span>
                 <input type="number" min="0" step="1" value="${cfg.dailyMinPayout}" data-game-min />
                 <small>If below this after many spins, wins auto-boost.</small>
               </label>

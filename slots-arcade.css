@@ -2585,6 +2585,244 @@ body.is-pseudo-fullscreen .game-view {
   min-height: calc(100dvh - 72px);
 }
 
+/* Arcade lobby refresh inspired by casino app game boards */
+.lobby-view {
+  position: relative;
+  min-height: calc(100vh - 150px);
+  padding: 18px 18px 116px 104px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(70, 198, 255, .25), transparent 34%),
+    radial-gradient(circle at 15% 85%, rgba(255, 215, 107, .22), transparent 24%),
+    linear-gradient(180deg, rgba(7, 36, 62, .82), rgba(1, 13, 27, .96)),
+    url("assets/hero-gaming.png");
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+.lobby-view::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(20, 220, 255, .9), transparent 16%, transparent 84%, rgba(20, 220, 255, .8)),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 2px, transparent 2px 8px);
+  border-top: 2px solid rgba(44, 219, 255, .95);
+  border-bottom: 2px solid rgba(44, 219, 255, .95);
+}
+.lobby-rail {
+  position: fixed;
+  left: 8px;
+  top: 168px;
+  z-index: 30;
+  display: grid;
+  gap: 8px;
+  width: 76px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(0, 46, 84, .95), rgba(0, 16, 37, .95));
+  border: 2px solid #25d8ff;
+  box-shadow: 0 0 18px rgba(37, 216, 255, .55), inset 0 0 18px rgba(0,0,0,.7);
+}
+.lobby-rail button {
+  min-height: 58px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #083f79, #041b3a);
+  color: #c9f6ff;
+  font-family: Impact, "Arial Black", sans-serif;
+  font-size: .82rem;
+  letter-spacing: .08em;
+  text-shadow: 0 2px 0 #00131f;
+}
+.lobby-rail button.is-active {
+  background: linear-gradient(180deg, #ffe75d, #f0a800);
+  color: #07294b;
+}
+.lobby-news {
+  position: relative;
+  z-index: 4;
+  width: min(850px, calc(100vw - 136px));
+  margin: -8px auto 18px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.35);
+  background: rgba(0,0,0,.58);
+  box-shadow: 0 0 18px rgba(37, 216, 255, .28);
+}
+.lobby-news span {
+  display: block;
+  width: max-content;
+  padding: 7px 20px;
+  color: #fff;
+  font-size: clamp(.9rem, 1.8vw, 1.35rem);
+  font-weight: 900;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 5px #000;
+  animation: news-scroll 18s linear infinite;
+}
+@keyframes news-scroll {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+.lobby-view .lobby-grid {
+  position: relative;
+  z-index: 3;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 24px 28px;
+  max-width: 1480px;
+}
+.lobby-view .lobby-tile {
+  height: 250px !important;
+  border-radius: 8px !important;
+  border: 4px solid #f6b52d !important;
+  box-shadow:
+    0 0 0 2px rgba(25, 119, 255, .9),
+    0 12px 26px rgba(0,0,0,.7),
+    inset 0 0 0 2px rgba(255,255,255,.22);
+}
+.lobby-view .tile-badge {
+  left: 0;
+  top: 0;
+  border-radius: 0 0 8px 0;
+  border-left: 0;
+  border-top: 0;
+  font-size: .9rem;
+  padding: 8px 16px;
+}
+.lobby-view .lobby-tile .tile-play {
+  width: 42px;
+  height: 42px;
+  top: 10px !important;
+  right: 10px !important;
+  justify-content: center;
+  padding: 0 !important;
+  border: 3px solid #ffd85b;
+  background: linear-gradient(180deg, #3f61d9, #17306f);
+  color: #fff !important;
+  border-radius: 999px;
+}
+.lobby-view .lobby-tile .tile-play .play-text { display: none; }
+.lobby-view .lobby-tile .tile-play .play-icon { font-size: 1.05rem; color: #fff; }
+.lobby-view .lobby-tile .tile-info {
+  padding: 58px 10px 12px !important;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.2) 18%, rgba(0,0,0,.82) 74%, rgba(0,0,0,.95) 100%);
+}
+.lobby-view .lobby-tile .tile-info strong {
+  font-size: clamp(1.45rem, 2.2vw, 2.15rem) !important;
+  line-height: .92;
+  -webkit-text-stroke: 1px rgba(82, 20, 0, .85);
+}
+.lobby-view .lobby-tile .tile-info small {
+  background: rgba(0, 207, 255, .18) !important;
+  border-color: rgba(55, 232, 255, .5);
+  color: #e7fbff;
+}
+.lobby-tip { display: none; }
+.lobby-bottom-jackpot {
+  position: fixed;
+  z-index: 35;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 18px;
+  min-width: min(440px, 72vw);
+  padding: 10px 22px 12px;
+  border-radius: 22px 22px 8px 8px;
+  border: 3px solid #ffd76b;
+  background: linear-gradient(180deg, rgba(2, 85, 88, .96), rgba(0, 34, 42, .98));
+  box-shadow: 0 0 22px rgba(37, 216, 255, .75), inset 0 0 18px rgba(0,0,0,.75);
+}
+.lobby-bottom-jackpot strong {
+  grid-column: 1 / -1;
+  margin-top: -36px;
+  text-align: center;
+  font-family: Impact, "Arial Black", sans-serif;
+  font-size: 1.7rem;
+  color: #ffcd38;
+  -webkit-text-stroke: 1px #a61700;
+  text-shadow: 0 3px 0 #4e1300, 0 0 12px rgba(255,215,107,.8);
+}
+.lobby-bottom-jackpot span {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: "Courier New", monospace;
+  font-size: 1.4rem;
+  color: #ff5fe5;
+  font-weight: 900;
+}
+
+/* Make row matching obvious and keep all symbols visible */
+.reels-frame {
+  --cell-base: 118px;
+}
+.reel .reel-cell::after {
+  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.04));
+  border-color: rgba(255, 255, 255, .16);
+}
+.reel .reel-cell:nth-child(odd)::after {
+  box-shadow: inset 0 0 0 2px rgba(255, 215, 107, .08);
+}
+.sym-cell.is-winning::after {
+  content: "MATCH";
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #ff2540;
+  color: #fff;
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  z-index: 4;
+  box-shadow: 0 0 10px rgba(255, 37, 64, .8);
+}
+.game-view.layout-table-felt .play-area {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 860px;
+}
+.game-view.layout-table-felt .paytable {
+  display: none;
+}
+.game-view.layout-table-felt .character-paytable {
+  display: none;
+}
+.game-view.layout-table-felt .reels-frame {
+  --cell-base: 124px;
+  padding: 14px;
+  background: radial-gradient(ellipse 70% 80% at 50% 50%, #176d33, #062313 82%) !important;
+}
+.game-view.layout-table-felt .reel {
+  background: linear-gradient(180deg, #09351b, #020d07 52%, #0c3e21) !important;
+}
+.game-view.layout-table-felt .sym-cell.sym-svg .sym-inner svg {
+  max-height: 94%;
+}
+@media (max-width: 900px) {
+  .lobby-view { padding-left: 92px; }
+  .lobby-view .lobby-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .lobby-view .lobby-tile { height: 220px !important; }
+  .reels-frame { --cell-base: 92px; }
+  .game-view.layout-table-felt .reels-frame { --cell-base: 96px; }
+}
+@media (max-width: 620px) {
+  .lobby-view { padding: 14px 10px 108px; }
+  .lobby-rail { display: none; }
+  .lobby-news { width: calc(100vw - 20px); }
+  .lobby-view .lobby-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .lobby-view .lobby-tile { height: 178px !important; }
+  .lobby-view .lobby-tile .tile-info strong { font-size: 1.08rem !important; }
+  .lobby-view .tile-badge { font-size: .62rem; padding: 5px 9px; }
+  .lobby-bottom-jackpot { min-width: calc(100vw - 76px); }
+  .reels-frame { --cell-base: 72px; }
+  .game-view.layout-table-felt .reels-frame { --cell-base: 76px; }
+}
+
 @media (max-width: 768px) {
   body.slots-arcade-body {
     min-height: 100dvh;
