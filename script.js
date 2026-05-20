@@ -1925,6 +1925,7 @@ let adminHasRenderedOnce = false;
 let adminRenderInFlight = false;
 let adminRenderQueued = false;
 let adminSearchRenderTimer = null;
+let adminDataCache = null;
 const adminBroadcastExcludedUserIds = new Set();
 try {
   if (location.pathname === "/messages9493") {
@@ -1941,8 +1942,7 @@ const adminPanelTitles = {
   activity: "Live Activity",
   players: "All Players",
   vip: "VIP Players",
-  add: "Add Points",
-  redeem: "Redeem Points",
+  points: "Points",
   spin: "Spin Wheel",
   slots: "Slots Control",
   transactions: "Transactions",
@@ -1957,6 +1957,7 @@ adminPanelButtons.forEach((button) => {
     adminPanelButtons.forEach((item) => item.classList.toggle("is-active", item === button));
     adminPanels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.adminPanel === panelName));
     if (adminTitle) adminTitle.textContent = adminPanelTitles[panelName] || "Admin Portal";
+    renderAdmin({ preferCache: true });
   });
 });
 
@@ -1977,7 +1978,7 @@ document.querySelectorAll("[data-admin-search]").forEach((input) => {
   input.addEventListener("input", () => {
     adminSearchState[input.dataset.adminSearch] = input.value;
     clearTimeout(adminSearchRenderTimer);
-    adminSearchRenderTimer = setTimeout(renderAdmin, 160);
+    adminSearchRenderTimer = setTimeout(() => renderAdmin({ preferCache: true }), 80);
   });
 });
 
@@ -1985,7 +1986,7 @@ playerFilterButtons.forEach((button) => {
   button.addEventListener("click", () => {
     adminPlayerFilter = button.dataset.playerFilter || "all";
     playerFilterButtons.forEach((item) => item.classList.toggle("is-active", item === button));
-    renderAdmin();
+    renderAdmin({ preferCache: true });
   });
 });
 
@@ -2570,7 +2571,7 @@ function latestChatTime(chat) {
   return lastMessage?.createdAt ? new Date(lastMessage.createdAt).getTime() : 0;
 }
 
-async function renderAdmin() {
+function renderAdminData(data = {}) {
   const hasChatUi = Boolean(adminInbox && adminMessages);
   const hasAdminUi = Boolean(
     hasChatUi ||
@@ -2584,22 +2585,13 @@ async function renderAdmin() {
     slotsAdminStats
   );
   if (!hasAdminUi) return;
-  if (adminRenderInFlight) {
-    adminRenderQueued = true;
-    return;
-  }
-
-  adminRenderInFlight = true;
-  try {
-  const [chatData, userData, dashboardData, pointsData, activityData, spinData, slotsData] = await Promise.all([
-    api("/api/chats").catch(() => ({ chats: [] })),
-    api("/api/admin/users").catch(() => ({ users: [] })),
-    api("/api/admin/dashboard").catch(() => ({ stats: {} })),
-    api("/api/admin/points").catch(() => ({ transactions: [] })),
-    api("/api/admin/activity").catch(() => ({ activity: [] })),
-    api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
-    api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
-  ]);
+  const chatData = data.chatData || { chats: [] };
+  const userData = data.userData || { users: [] };
+  const dashboardData = data.dashboardData || { stats: {} };
+  const pointsData = data.pointsData || { transactions: [] };
+  const activityData = data.activityData || { activity: [] };
+  const spinData = data.spinData || { settings: { limits: {} }, counts: {}, awards: [] };
+  const slotsData = data.slotsData || { settings: {}, payout: {}, spins: [] };
   const chats = (chatData.chats || [])
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
     .sort((a, b) => latestChatTime(b) - latestChatTime(a));
@@ -2683,6 +2675,47 @@ async function renderAdmin() {
   adminName.classList.toggle("is-vip-name", Boolean(selectedUser?.isVip));
   adminMessages.dataset.messageScope = selected.id;
   renderMessages(adminMessages, selected.messages);
+}
+
+async function renderAdmin({ preferCache = false, background = false } = {}) {
+  const hasAdminUi = Boolean(
+    adminInbox ||
+    adminUsers ||
+    adminVipUsers ||
+    dashboardStats ||
+    pointsTransactions ||
+    adminActivityList ||
+    broadcastUsers ||
+    spinAdminStats ||
+    slotsAdminStats
+  );
+  if (!hasAdminUi) return;
+  if (preferCache && adminDataCache) {
+    renderAdminData(adminDataCache);
+    if (adminRenderInFlight || background) return;
+  }
+  if (adminRenderInFlight) {
+    adminRenderQueued = true;
+    return;
+  }
+
+  adminRenderInFlight = true;
+  try {
+  const [chatData, userData, dashboardData] = await Promise.all([
+    api("/api/chats").catch(() => ({ chats: [] })),
+    api("/api/admin/users").catch(() => ({ users: [] })),
+    api("/api/admin/dashboard").catch(() => ({ stats: {} })),
+  ]);
+  adminDataCache = { ...(adminDataCache || {}), chatData, userData, dashboardData };
+  renderAdminData(adminDataCache);
+  const [pointsData, activityData, spinData, slotsData] = await Promise.all([
+    api("/api/admin/points").catch(() => ({ transactions: [] })),
+    api("/api/admin/activity").catch(() => ({ activity: [] })),
+    api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
+    api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
+  ]);
+  adminDataCache = { chatData, userData, dashboardData, pointsData, activityData, spinData, slotsData };
+  renderAdminData(adminDataCache);
   } finally {
     adminRenderInFlight = false;
     if (adminRenderQueued) {
