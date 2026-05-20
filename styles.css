@@ -197,7 +197,8 @@ body {
 
 .admin-body .admin-nav button:hover,
 .admin-body .admin-nav button.is-active,
-.admin-body .admin-nav a:hover {
+.admin-body .admin-nav a:hover,
+.admin-body .admin-nav a.is-active {
   color: #ffe600;
   background: rgba(255, 214, 64, 0.11);
 }
@@ -4422,7 +4423,7 @@ body.is-player-logged-in [data-guest-only] {
 
 .admin-points-form {
   grid-column: 1 / -1;
-  grid-template-columns: 110px minmax(160px, 1fr) auto auto;
+  grid-template-columns: minmax(120px, 180px) auto auto;
   padding: 12px;
   border: 1px solid rgba(255, 226, 142, 0.16);
   border-radius: 8px;

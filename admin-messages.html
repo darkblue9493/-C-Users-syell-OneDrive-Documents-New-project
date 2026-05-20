@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>South Diamond Messages</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="admin.webmanifest" />
+  </head>
+  <body class="admin-body">
+    <header class="site-header admin-side-nav" data-header>
+      <a class="brand admin-brand" href="/admin9493" aria-label="South Diamond admin home">
+        <span>South Diamond</span>
+        <small>Admin Portal</small>
+      </a>
+      <nav class="site-nav admin-nav">
+        <span class="admin-nav-label">Dashboard</span>
+        <a href="/admin9493"><span>OV</span>Overview</a>
+        <a class="is-active" href="/messages9493" data-admin-chat-jump><span>MS</span>Messages <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b></a>
+      </nav>
+    </header>
+
+    <main class="admin-main">
+      <section class="section">
+        <div class="section-inner admin-shell">
+          <div class="admin-topbar">
+            <h1 data-admin-title>Messages</h1>
+            <div class="admin-topbar-actions">
+              <a class="game-link" href="/admin9493">Back to Dashboard</a>
+              <button class="game-link" type="button" data-admin-refresh>Refresh</button>
+              <button class="logout-button" type="button" data-logout>Log Out</button>
+            </div>
+          </div>
+
+          <div class="admin-workspace">
+            <div class="chat-section-heading">
+              <div>
+                <p class="section-kicker">Support</p>
+                <h2>Messages</h2>
+              </div>
+              <button class="button secondary admin-clear" type="button" data-delete-chat>Delete Selected Chat</button>
+            </div>
+            <div class="chat-dashboard admin-dashboard messenger-chat" aria-label="South Diamond admin inbox">
+              <aside class="chat-inbox" aria-label="Player conversations" data-admin-inbox></aside>
+              <div class="chat-window" aria-label="Selected player conversation">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot" data-admin-chat-status></span>
+                    <strong data-admin-name>No player selected</strong>
+                  </div>
+                  <small data-admin-count>0 chats</small>
+                </div>
+                <div class="chat-messages" data-admin-messages aria-live="polite"></div>
+                <form class="chat-form" data-admin-form>
+                  <label class="sr-only" for="admin-reply">Reply</label>
+                  <input id="admin-reply" data-admin-input type="text" placeholder="Type your reply..." autocomplete="off" />
+                  <button class="button primary" type="submit">Send</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -11,6 +11,7 @@ const uploadDir = path.join(dataDir, "uploads");
 const adminUsername = process.env.ADMIN_USERNAME || "admin";
 const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
 const adminPath = "/admin9493";
+const adminMessagesPath = "/messages9493";
 const adminLoginPath = "/login9493";
 const adminExportToken = process.env.ADMIN_EXPORT_TOKEN || "";
 const tierlockMerchantId = process.env.TIERLOCK_MERCHANT_ID || "e5474f4227";
@@ -1428,6 +1429,7 @@ function publicFilePath(urlPath) {
     "/": "index.html",
     "/index.html": "index.html",
     [adminPath]: "admin.html",
+    [adminMessagesPath]: "admin-messages.html",
     [adminLoginPath]: "login.html",
     "/maintenance": "maintenance.html",
     "/maintenance.html": "maintenance.html",
@@ -1440,6 +1442,7 @@ function publicFilePath(urlPath) {
     "/slots-arcade.js",
     "/slots-config.js",
     "/slots-admin.js",
+    "/admin-messages.html",
     "/service-worker.js",
     "/manifest.webmanifest",
     "/admin.webmanifest",
@@ -2811,7 +2814,7 @@ async function handleRequest(request, response) {
       url.pathname === "/service-worker.js" ||
       url.pathname === "/manifest.webmanifest" ||
       url.pathname === "/admin.webmanifest";
-    const isAdminRoute = url.pathname === adminPath || url.pathname === adminLoginPath;
+    const isAdminRoute = url.pathname === adminPath || url.pathname === adminMessagesPath || url.pathname === adminLoginPath;
     if (maintenanceMode && !isAdminRoute && !isPublicAsset && !url.pathname.startsWith("/uploads/")) {
       const maintenancePath = publicFilePath("/maintenance.html");
       if (maintenancePath && fs.existsSync(maintenancePath)) {
@@ -2837,13 +2840,13 @@ async function handleRequest(request, response) {
       return;
     }
 
-    if (["/admin", "/admin.html", "/login.html"].includes(url.pathname)) {
+    if (["/admin", "/admin.html", "/admin-messages.html", "/login.html"].includes(url.pathname)) {
       response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
       response.end("Not found");
       return;
     }
 
-    if (url.pathname === adminPath && !isAdminRequest(request)) {
+    if ((url.pathname === adminPath || url.pathname === adminMessagesPath) && !isAdminRequest(request)) {
       response.writeHead(302, { Location: adminLoginPath });
       response.end();
       return;

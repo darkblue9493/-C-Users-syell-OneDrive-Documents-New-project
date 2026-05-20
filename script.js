@@ -393,8 +393,7 @@ const adminSearchState = {
   players: "",
   vip: "",
   transactions: "",
-  add: "",
-  redeem: "",
+  points: "",
   activity: "",
   broadcast: "",
   spin: "",
@@ -1861,8 +1860,7 @@ const adminVipCount = document.querySelector("[data-vip-count]");
 const dashboardStats = document.querySelector("[data-dashboard-stats]");
 const pointsTransactions = document.querySelector("[data-points-transactions]");
 const pointsCount = document.querySelector("[data-points-count]");
-const pointsAddList = document.querySelector("[data-points-add-list]");
-const pointsRedeemList = document.querySelector("[data-points-redeem-list]");
+const pointsManagerList = document.querySelector("[data-points-manager-list]");
 const adminActivityList = document.querySelector("[data-admin-activity]");
 const broadcastUsers = document.querySelector("[data-broadcast-users]");
 const broadcastForm = document.querySelector("[data-broadcast-form]");
@@ -1928,6 +1926,11 @@ let adminRenderInFlight = false;
 let adminRenderQueued = false;
 let adminSearchRenderTimer = null;
 const adminBroadcastExcludedUserIds = new Set();
+try {
+  if (location.pathname === "/messages9493") {
+    activeAdminThread = new URLSearchParams(location.search).get("thread") || null;
+  }
+} catch {}
 const adminIdleLimitMs = 2 * 60 * 60 * 1000;
 const adminKeepAliveMs = 5 * 60 * 1000;
 let adminLastActivityAt = Date.now();
@@ -1958,7 +1961,8 @@ adminPanelButtons.forEach((button) => {
 });
 
 adminChatJumps.forEach((jump) => {
-  jump.addEventListener("click", () => {
+  jump.addEventListener("click", (event) => {
+    if (jump.tagName === "A") return;
     adminPanelButtons.forEach((item) => item.classList.remove("is-active"));
     adminChatJumps.forEach((item) => item.classList.toggle("is-active", item === jump));
     if (adminTitle) adminTitle.textContent = "Messages";
@@ -2336,8 +2340,7 @@ function filterItems(items, query, fields) {
   );
 }
 
-function pointsActionCard(user, action) {
-  const isRedeem = action === "redeem";
+function pointsActionCard(user) {
   return `
     <article class="points-action-card">
       <div>
@@ -2345,30 +2348,22 @@ function pointsActionCard(user, action) {
         <span>${user.email}</span>
         <small>${formatPoints(user.points)} available points</small>
       </div>
-      <form class="admin-points-form" data-points-user data-points-action="${action}">
+      <form class="admin-points-form" data-points-user>
         <input name="points" type="number" min="1" step="1" placeholder="Points" required />
-        <input name="note" type="text" placeholder="Note" />
-        <button class="game-link${isRedeem ? " redeem" : ""}" type="submit">${isRedeem ? "Redeem" : "Add"}</button>
+        <button class="game-link" type="submit" name="action" value="add">Add</button>
+        <button class="game-link redeem" type="submit" name="action" value="redeem">Redeem</button>
       </form>
     </article>
   `;
 }
 
 function renderPointsActionLists(users) {
-  const addUsers = filterItems(users, adminSearchState.add, (user) => [user.username, user.email, user.phone, user.points]);
-  const redeemUsers = filterItems(users, adminSearchState.redeem, (user) => [user.username, user.email, user.phone, user.points]);
-  if (pointsAddList) {
-    pointsAddList.innerHTML = addUsers.length ? addUsers.map((user) => pointsActionCard(user, "add")).join("") : `<article class="points-action-card">No matching players.</article>`;
-    addUsers.forEach((user, index) => {
-      pointsAddList.querySelectorAll("[data-points-user]")[index].dataset.userId = user.id;
-    });
-  }
-  if (pointsRedeemList) {
-    pointsRedeemList.innerHTML = redeemUsers.length ? redeemUsers.map((user) => pointsActionCard(user, "redeem")).join("") : `<article class="points-action-card">No matching players.</article>`;
-    redeemUsers.forEach((user, index) => {
-      pointsRedeemList.querySelectorAll("[data-points-user]")[index].dataset.userId = user.id;
-    });
-  }
+  if (!pointsManagerList) return;
+  const visibleUsers = filterItems(users, adminSearchState.points, (user) => [user.username, user.email, user.phone, user.points]);
+  pointsManagerList.innerHTML = visibleUsers.length ? visibleUsers.map((user) => pointsActionCard(user)).join("") : `<article class="points-action-card">No matching players.</article>`;
+  visibleUsers.forEach((user, index) => {
+    pointsManagerList.querySelectorAll("[data-points-user]")[index].dataset.userId = user.id;
+  });
 }
 
 function getBroadcastVisibleUsers(users) {
@@ -2576,7 +2571,19 @@ function latestChatTime(chat) {
 }
 
 async function renderAdmin() {
-  if (!adminInbox || !adminMessages) return;
+  const hasChatUi = Boolean(adminInbox && adminMessages);
+  const hasAdminUi = Boolean(
+    hasChatUi ||
+    adminUsers ||
+    adminVipUsers ||
+    dashboardStats ||
+    pointsTransactions ||
+    adminActivityList ||
+    broadcastUsers ||
+    spinAdminStats ||
+    slotsAdminStats
+  );
+  if (!hasAdminUi) return;
   if (adminRenderInFlight) {
     adminRenderQueued = true;
     return;
@@ -2625,10 +2632,13 @@ async function renderAdmin() {
     badge.textContent = unreadTotal;
     badge.classList.toggle("is-hidden", unreadTotal <= 0);
   });
-  document.title = unreadTotal > 0 ? `(${unreadTotal}) South Diamond Admin` : "South Diamond Admin";
+  const isMessagesPage = location.pathname === "/messages9493";
+  document.title = unreadTotal > 0 ? `(${unreadTotal}) ${isMessagesPage ? "South Diamond Messages" : "South Diamond Admin"}` : (isMessagesPage ? "South Diamond Messages" : "South Diamond Admin");
   if (adminHasRenderedOnce && unreadTotal > lastAdminUnreadTotal) playAdminAlert();
   lastAdminUnreadTotal = unreadTotal;
   adminHasRenderedOnce = true;
+
+  if (!hasChatUi) return;
 
   if (!activeAdminThread && chats.length) activeAdminThread = chats[0].id;
   if (activeAdminThread && !chats.some((chat) => chat.id === activeAdminThread)) activeAdminThread = chats[0]?.id || null;
@@ -2688,6 +2698,10 @@ async function openAdminChatForUser(userId) {
     body: JSON.stringify({ userId }),
   });
   activeAdminThread = data.chat.id;
+  if (!adminInbox || !adminMessages) {
+    location.href = `/messages9493?thread=${encodeURIComponent(activeAdminThread)}`;
+    return;
+  }
   await renderAdmin();
   document.querySelector(".admin-dashboard")?.scrollIntoView({ behavior: "smooth", block: "start" });
   adminInput?.focus();
@@ -2805,36 +2819,36 @@ if (adminInbox && adminForm) {
 
   }
 
-  [pointsAddList, pointsRedeemList].forEach((list) => {
-    if (!list) return;
-    list.addEventListener("submit", async (event) => {
-      const form = event.target.closest("[data-points-user]");
-      if (!form) return;
-      event.preventDefault();
-      const action = form.dataset.pointsAction;
-      const submitter = event.submitter;
-      const buttonText = submitter.textContent;
+  pointsManagerList?.addEventListener("submit", async (event) => {
+    const form = event.target.closest("[data-points-user]");
+    if (!form) return;
+    event.preventDefault();
+    const submitter = event.submitter;
+    const action = submitter?.value || "add";
+    const buttonText = submitter?.textContent || "Save";
+    if (submitter) {
       submitter.disabled = true;
       submitter.textContent = action === "add" ? "Adding" : "Redeeming";
-      try {
-        await api("/api/admin/points", {
-          method: "POST",
-          body: JSON.stringify({
-            userId: form.dataset.userId,
-            action,
-            points: Number(form.points.value),
-            note: form.note.value.trim(),
-          }),
-        });
-        form.reset();
-        await renderAdmin();
-      } catch (error) {
-        alert(error.message);
-      } finally {
+    }
+    try {
+      await api("/api/admin/points", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: form.dataset.userId,
+          action,
+          points: Number(form.points.value),
+        }),
+      });
+      form.reset();
+      await renderAdmin();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      if (submitter) {
         submitter.disabled = false;
         submitter.textContent = buttonText;
       }
-    });
+    }
   });
 
   broadcastUsers?.addEventListener("change", (event) => {
@@ -2939,7 +2953,7 @@ if (adminInbox && adminForm) {
     }
   });
 
-  adminInbox.addEventListener("click", async (event) => {
+  adminInbox?.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-thread-id]");
     if (!button) return;
     activeAdminThread = button.dataset.threadId;
@@ -2951,7 +2965,7 @@ if (adminInbox && adminForm) {
     adminInput.focus();
   });
 
-  adminMessages.addEventListener("click", async (event) => {
+  adminMessages?.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-payment-status]");
     if (!button || !activeAdminThread) return;
     button.disabled = true;
@@ -2972,7 +2986,7 @@ if (adminInbox && adminForm) {
     }
   });
 
-  adminForm.addEventListener("submit", async (event) => {
+  adminForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const text = adminInput.value.trim();
     if (!text || !activeAdminThread) return;
@@ -2987,7 +3001,7 @@ if (adminInbox && adminForm) {
     adminInput.focus();
   });
 
-  deleteChat.addEventListener("click", async () => {
+  deleteChat?.addEventListener("click", async () => {
     if (!activeAdminThread) return;
     const confirmed = confirm("Delete this selected player's chat history? This only deletes the chat, not the registered player account.");
     if (!confirmed) return;
@@ -3040,7 +3054,6 @@ modalPointsForm?.addEventListener("submit", async (event) => {
         userId: activeModalUserId,
         action,
         points: Number(modalPointsForm.points.value),
-        note: modalPointsForm.note.value.trim(),
       }),
     });
     modalPointsForm.reset();

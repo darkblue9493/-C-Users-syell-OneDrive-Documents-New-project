@@ -27,13 +27,12 @@
         <span class="admin-nav-label">Players</span>
         <button type="button" data-admin-panel-button="players"><span>AP</span>All Players</button>
         <button type="button" data-admin-panel-button="vip"><span>VIP</span>VIP Players</button>
-        <button type="button" data-admin-panel-button="add"><span>AD</span>Add Points</button>
-        <button type="button" data-admin-panel-button="redeem"><span>RD</span>Redeem Points</button>
+        <button type="button" data-admin-panel-button="points"><span>PT</span>Points</button>
         <button type="button" data-admin-panel-button="spin"><span>SW</span>Spin Wheel</button>
         <button type="button" data-admin-panel-button="slots"><span>SL</span>Slots Control</button>
         <span class="admin-nav-label">Payments</span>
         <button type="button" data-admin-panel-button="transactions"><span>TR</span>Transactions</button>
-        <button type="button" data-admin-chat-jump><span>MS</span>Messages <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b></button>
+        <a href="/messages9493" data-admin-chat-jump><span>MS</span>Messages <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b></a>
         <span class="admin-nav-label">Content</span>
         <button type="button" data-admin-panel-button="broadcast"><span>BC</span>Broadcast</button>
         <button type="button" data-admin-panel-button="agents"><span>AL</span>Agent Links</button>
@@ -137,34 +136,19 @@
                 <div class="points-transaction-list" data-points-transactions></div>
               </section>
 
-              <section class="admin-control-panel" data-admin-panel="add">
+              <section class="admin-control-panel" data-admin-panel="points">
                 <div class="chat-topbar">
                   <div>
                     <span class="status-dot"></span>
-                    <strong>Add Points</strong>
+                    <strong>Add or Redeem Points</strong>
                   </div>
-                  <small>Credit player balance</small>
+                  <small>Search one player and choose an action</small>
                 </div>
                 <div class="admin-search-row">
-                  <label class="sr-only" for="add-search">Search players to add points</label>
-                  <input id="add-search" type="search" placeholder="Search players to add points..." data-admin-search="add" />
+                  <label class="sr-only" for="points-search">Search players to add or redeem points</label>
+                  <input id="points-search" type="search" placeholder="Search players to add or redeem points..." data-admin-search="points" />
                 </div>
-                <div class="points-action-list" data-points-add-list></div>
-              </section>
-
-              <section class="admin-control-panel" data-admin-panel="redeem">
-                <div class="chat-topbar">
-                  <div>
-                    <span class="status-dot"></span>
-                    <strong>Redeem Points</strong>
-                  </div>
-                  <small>Remove points from player balance</small>
-                </div>
-                <div class="admin-search-row">
-                  <label class="sr-only" for="redeem-search">Search players to redeem points</label>
-                  <input id="redeem-search" type="search" placeholder="Search players to redeem points..." data-admin-search="redeem" />
-                </div>
-                <div class="points-action-list" data-points-redeem-list></div>
+                <div class="points-action-list" data-points-manager-list></div>
               </section>
 
               <section class="admin-control-panel" data-admin-panel="spin">
@@ -337,35 +321,6 @@
             </div>
           </section>
 
-          <div class="admin-layout">
-          <div class="admin-workspace">
-            <div class="chat-section-heading">
-              <div>
-                <p class="section-kicker">Support</p>
-                <h2>Messages</h2>
-              </div>
-              <button class="button secondary admin-clear" type="button" data-delete-chat>Delete Selected Chat</button>
-            </div>
-            <div class="chat-dashboard admin-dashboard messenger-chat" aria-label="South Diamond admin inbox">
-              <aside class="chat-inbox" aria-label="Player conversations" data-admin-inbox></aside>
-              <div class="chat-window" aria-label="Selected player conversation">
-                <div class="chat-topbar">
-                  <div>
-                    <span class="status-dot" data-admin-chat-status></span>
-                    <strong data-admin-name>No player selected</strong>
-                  </div>
-                  <small data-admin-count>0 chats</small>
-                </div>
-                <div class="chat-messages" data-admin-messages aria-live="polite"></div>
-                <form class="chat-form" data-admin-form>
-                  <label class="sr-only" for="admin-reply">Reply</label>
-                  <input id="admin-reply" data-admin-input type="text" placeholder="Type your reply..." autocomplete="off" />
-                  <button class="button primary" type="submit">Send</button>
-                </form>
-              </div>
-            </div>
-          </div>
-          </div>
         </div>
       </section>
     </main>
@@ -412,7 +367,6 @@
             <label>Add or redeem points</label>
             <div class="admin-modal-form-row">
               <input name="points" type="number" min="1" step="1" placeholder="Points" required />
-              <input name="note" type="text" placeholder="Note" />
             </div>
             <div class="admin-modal-form-row compact">
               <button class="admin-action-button green" type="submit" name="action" value="add">Add Points</button>
