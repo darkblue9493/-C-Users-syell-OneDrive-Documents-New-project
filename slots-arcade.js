@@ -2136,6 +2136,7 @@ function bindEvents() {
       renderGameView(tile.dataset.game);
       return;
     }
+    if (e.target.closest("[data-arcade-home]")) { backToLobby(); return; }
     if (e.target.closest("[data-back-button]")) { backToLobby(); return; }
     if (e.target.closest("[data-spin-btn]")) { Audio.resume(); spinGame(); return; }
     if (e.target.closest("[data-bet-up]")) { changeBet(+1); return; }
