@@ -51,6 +51,8 @@
     pendingConfig.version = savedConfig.version;
     pendingConfig.globalEnabled = savedConfig.globalEnabled !== false;
     pendingConfig.defaultBet = savedConfig.defaultBet;
+    pendingConfig.jackpotPool = pendingConfig.jackpotPool || {};
+    Object.assign(pendingConfig.jackpotPool, savedConfig.jackpotPool || {});
     pendingConfig.dailyResetUtcHour = savedConfig.dailyResetUtcHour;
     pendingConfig.lastModified = savedConfig.lastModified;
     pendingConfig.games = pendingConfig.games || {};
@@ -144,6 +146,16 @@
         queueLiveSave("Default bet updated live.");
       });
     }
+    pendingConfig.jackpotPool = pendingConfig.jackpotPool || { grand: 1500, major: 500, minor: 100, mini: 20 };
+    ["grand", "major", "minor", "mini"].forEach((level) => {
+      const input = $(`[data-slots-jp-${level}]`);
+      if (!input) return;
+      input.value = pendingConfig.jackpotPool[level] ?? 0;
+      input.addEventListener("input", () => {
+        pendingConfig.jackpotPool[level] = Math.max(0, Number(input.value) || 0);
+        queueLiveSave("Lobby jackpot display updated live.");
+      });
+    });
     const dailyPayout = $("[data-slots-daily-payout-limit]");
     const playerPayout = $("[data-slots-player-payout-limit]");
     if (dailyPayout) {

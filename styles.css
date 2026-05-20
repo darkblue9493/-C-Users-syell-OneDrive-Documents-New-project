@@ -7864,6 +7864,24 @@ body.is-player-logged-in [data-guest-only] {
 }
 
 .slots-master-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.slots-master-actions > label {
+  min-width: 160px;
+}
+.slots-master-jackpots {
+  flex: 1 1 360px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.slots-master-jackpots legend {
+  grid-column: 1 / -1;
+}
+.slots-master-jackpots label {
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin: 0;
+}
 .slots-master-actions button {
   flex: 1;
   min-width: 140px;

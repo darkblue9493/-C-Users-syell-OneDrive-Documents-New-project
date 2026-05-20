@@ -1104,13 +1104,28 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
 
 async function refreshArcadeControls({ admin = false } = {}) {
   if (typeof SlotsConfig === "undefined" || typeof SlotsConfig.refreshFromServer !== "function") {
-    return typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
+    const config = typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
+    applyGlobalJackpotsFromConfig(config);
+    return config;
   }
   try {
-    return await SlotsConfig.refreshFromServer({ admin });
+    const config = await SlotsConfig.refreshFromServer({ admin });
+    applyGlobalJackpotsFromConfig(config);
+    return config;
   } catch (error) {
-    return SlotsConfig.load();
+    const config = SlotsConfig.load();
+    applyGlobalJackpotsFromConfig(config);
+    return config;
   }
+}
+
+function applyGlobalJackpotsFromConfig(config) {
+  const pool = config?.jackpotPool || null;
+  if (!pool) return;
+  ["grand", "major", "minor", "mini"].forEach((level) => {
+    const fallback = State.jackpots[level] || 0;
+    State.jackpots[level] = Math.max(0, numberSetting(pool[level], fallback));
+  });
 }
 
 function adminGameConfig(gameKey) {
@@ -1161,11 +1176,7 @@ function applyAdminGameControls(gameKey, { force = false } = {}) {
   const minBet = Math.max(0.01, numberSetting(cfg.minBet, 0.05));
   const maxBet = Math.max(minBet, numberSetting(cfg.maxBet, 10));
   const defaultBet = Math.max(minBet, Math.min(numberSetting(rootCfg?.defaultBet, 0.25), maxBet));
-  const pool = cfg.jackpotPool || {};
-  ["grand", "major", "minor", "mini"].forEach((level) => {
-    const fallback = State.jackpots[level] || 0;
-    State.jackpots[level] = Math.max(0, numberSetting(pool[level], fallback));
-  });
+  applyGlobalJackpotsFromConfig(rootCfg);
   State.appliedControlGame = gameKey;
   State.appliedControlSignature = signature;
   if (
@@ -1370,8 +1381,9 @@ function evaluateSpin(game, grid, bet) {
   else if (r < State.jackpotChance.grand + State.jackpotChance.major + State.jackpotChance.minor) { jpHit = "minor"; totalPay += State.jackpots.minor; }
   else if (r < State.jackpotChance.grand + State.jackpotChance.major + State.jackpotChance.minor + State.jackpotChance.mini) { jpHit = "mini"; totalPay += State.jackpots.mini; }
   if (jpHit) {
+    const rootCfg = typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
     const cfg = adminGameConfig(State.activeGame);
-    const pool = cfg?.jackpotPool || {};
+    const pool = rootCfg?.jackpotPool || cfg?.jackpotPool || {};
     State.jackpots[jpHit] = Math.max(0, numberSetting(pool[jpHit], jpHit === "grand" ? 1500 : jpHit === "major" ? 500 : jpHit === "minor" ? 100 : 20));
     State.appliedControlSignature = gameControlSignature(State.activeGame);
   }

@@ -162,6 +162,7 @@ function defaultArcadeSlotsConfig() {
     version: 1,
     globalEnabled: true,
     defaultBet: 0.25,
+    jackpotPool: { grand: 1500, major: 500, minor: 100, mini: 20 },
     dailyResetUtcHour: 0,
     lastModified: Date.now(),
     games: Object.fromEntries(Object.keys(arcadeSlotGameNames).map((key) => [key, defaultArcadeGameConfigForKey(key)])),
@@ -767,6 +768,7 @@ function normalizeArcadeGameConfig(config) {
 function normalizeArcadeSlotsConfig(config) {
   const source = config && typeof config === "object" ? config : {};
   const defaults = defaultArcadeSlotsConfig();
+  const jackpotSource = source.jackpotPool && typeof source.jackpotPool === "object" ? source.jackpotPool : {};
   const games = {};
   for (const key of Object.keys(arcadeSlotGameNames)) {
     games[key] = normalizeArcadeGameConfig({
@@ -778,6 +780,12 @@ function normalizeArcadeSlotsConfig(config) {
     version: 1,
     globalEnabled: source.globalEnabled !== false,
     defaultBet: Math.max(0.01, Math.min(roundPoints(source.defaultBet ?? defaults.defaultBet), 1000)),
+    jackpotPool: {
+      grand: Math.max(0, roundPoints(jackpotSource.grand ?? defaults.jackpotPool.grand)),
+      major: Math.max(0, roundPoints(jackpotSource.major ?? defaults.jackpotPool.major)),
+      minor: Math.max(0, roundPoints(jackpotSource.minor ?? defaults.jackpotPool.minor)),
+      mini: Math.max(0, roundPoints(jackpotSource.mini ?? defaults.jackpotPool.mini)),
+    },
     dailyResetUtcHour: Math.max(0, Math.min(Number(source.dailyResetUtcHour ?? 0) || 0, 23)),
     lastModified: Number(source.lastModified) || Date.now(),
     games,

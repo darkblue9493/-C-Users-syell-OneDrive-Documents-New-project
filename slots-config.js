@@ -85,6 +85,7 @@
       version: 1,
       globalEnabled: true,
       defaultBet: 0.25,
+      jackpotPool: { grand: 1500, major: 500, minor: 100, mini: 20 },
       dailyResetUtcHour: 0,
       lastModified: Date.now(),
       games: {},
@@ -130,6 +131,10 @@
   function mergeConfig(config) {
     const parsed = config && typeof config === "object" ? config : {};
     const def = defaultConfig();
+    parsed.jackpotPool = {
+      ...def.jackpotPool,
+      ...(parsed.jackpotPool || {}),
+    };
     parsed.games = parsed.games || {};
     for (const g of GAME_LIST) {
       parsed.games[g.key] = { ...def.games[g.key], ...(parsed.games[g.key] || {}) };
