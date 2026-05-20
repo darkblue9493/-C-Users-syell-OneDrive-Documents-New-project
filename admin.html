@@ -223,18 +223,14 @@
                       <article><span>Min Bet</span><strong data-summary-min-bet>0.00</strong></article>
                       <article><span>Max Bet</span><strong data-summary-max-bet>0.00</strong></article>
                     </div>
+                    <fieldset class="sga-jackpots slots-master-jackpots">
+                      <legend>Lobby Jackpot Display</legend>
+                      <label><span>Grand</span><input type="number" min="0" step="10" value="1500" data-slots-jp-grand /></label>
+                      <label><span>Major</span><input type="number" min="0" step="10" value="500" data-slots-jp-major /></label>
+                      <label><span>Minor</span><input type="number" min="0" step="5" value="100" data-slots-jp-minor /></label>
+                      <label><span>Mini</span><input type="number" min="0" step="1" value="20" data-slots-jp-mini /></label>
+                    </fieldset>
                     <div class="slots-master-actions">
-                      <label>
-                        <span>Default Bet</span>
-                        <input type="number" min="0.01" step="0.05" value="0.25" data-slots-default-bet />
-                      </label>
-                      <fieldset class="sga-jackpots slots-master-jackpots">
-                        <legend>Lobby Jackpot Display</legend>
-                        <label><span>Grand</span><input type="number" min="0" step="10" value="1500" data-slots-jp-grand /></label>
-                        <label><span>Major</span><input type="number" min="0" step="10" value="500" data-slots-jp-major /></label>
-                        <label><span>Minor</span><input type="number" min="0" step="5" value="100" data-slots-jp-minor /></label>
-                        <label><span>Mini</span><input type="number" min="0" step="1" value="20" data-slots-jp-mini /></label>
-                      </fieldset>
                       <button class="button primary" type="button" data-slots-save-all>Save All</button>
                       <button class="game-link" type="button" data-slots-reset-stats>Reset Stats</button>
                       <button class="game-link" type="button" data-slots-export-config>Export Config</button>

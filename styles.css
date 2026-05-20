@@ -7863,16 +7863,13 @@ body.is-player-logged-in [data-guest-only] {
   .slots-summary-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-.slots-master-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.slots-master-actions > label {
-  min-width: 160px;
-}
+.slots-master-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 .slots-master-jackpots {
-  flex: 1 1 360px;
   display: grid;
   grid-template-columns: repeat(4, minmax(120px, 1fr));
-  gap: 8px;
-  margin: 0;
+  gap: 10px;
+  margin: 16px 0 0;
+  width: 100%;
 }
 .slots-master-jackpots legend {
   grid-column: 1 / -1;
@@ -7882,9 +7879,17 @@ body.is-player-logged-in [data-guest-only] {
   gap: 4px;
   margin: 0;
 }
+.slots-master-jackpots input {
+  min-height: 38px;
+  font-size: 1rem;
+  font-weight: 800;
+}
 .slots-master-actions button {
   flex: 1;
   min-width: 140px;
+}
+@media (max-width: 768px) {
+  .slots-master-jackpots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .slots-save-status {
   margin-top: 10px;

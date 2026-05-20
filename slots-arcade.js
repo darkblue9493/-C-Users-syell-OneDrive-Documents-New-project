@@ -1064,7 +1064,6 @@ const State = {
   pointsSyncedAt: 0,
   appliedControlGame: null,
   appliedControlSignature: "",
-  appliedDefaultBet: null,
   controlRefreshInFlight: false,
 };
 
@@ -1144,14 +1143,13 @@ function gameControlSignature(gameKey) {
   const cfg = adminGameConfig(gameKey);
   if (!cfg) return "";
   return JSON.stringify({
-    defaultBet: numberSetting(rootCfg?.defaultBet, 0.25),
+    jackpotPool: rootCfg?.jackpotPool || {},
     enabled: cfg.enabled !== false,
     minBet: numberSetting(cfg.minBet, 0.05),
     maxBet: numberSetting(cfg.maxBet, 10),
     targetRtp: numberSetting(cfg.targetRtp, 0.92),
     dailyMaxPayout: numberSetting(cfg.dailyMaxPayout, 1000),
     dailyMinPayout: numberSetting(cfg.dailyMinPayout, 50),
-    jackpotPool: cfg.jackpotPool || {},
   });
 }
 
@@ -1172,23 +1170,12 @@ function applyAdminGameControls(gameKey, { force = false } = {}) {
   const signature = gameControlSignature(gameKey);
   const changed = force || State.appliedControlGame !== gameKey || State.appliedControlSignature !== signature;
   if (!changed) return false;
-  const previousDefaultBet = State.appliedDefaultBet;
   const minBet = Math.max(0.01, numberSetting(cfg.minBet, 0.05));
   const maxBet = Math.max(minBet, numberSetting(cfg.maxBet, 10));
-  const defaultBet = Math.max(minBet, Math.min(numberSetting(rootCfg?.defaultBet, 0.25), maxBet));
   applyGlobalJackpotsFromConfig(rootCfg);
   State.appliedControlGame = gameKey;
   State.appliedControlSignature = signature;
-  if (
-    force ||
-    State.bet < minBet ||
-    State.bet > maxBet ||
-    previousDefaultBet === null ||
-    Math.abs(State.bet - previousDefaultBet) < 0.001
-  ) {
-    State.bet = defaultBet;
-  }
-  State.appliedDefaultBet = defaultBet;
+  State.bet = Math.max(minBet, Math.min(State.bet, maxBet));
   clampBetToAdmin(gameKey);
   updateDisplays();
   return true;
@@ -1215,6 +1202,7 @@ async function applyLiveArcadeControls() {
   State.controlRefreshInFlight = true;
   try {
   await refreshArcadeControls();
+  updateDisplays();
   const lobbyView = $("[data-lobby-view]");
   if ($("[data-lobby-grid]") && lobbyView && !lobbyView.classList.contains("hidden")) renderLobby();
   if (!State.activeGame) return;
