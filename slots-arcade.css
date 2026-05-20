@@ -429,6 +429,87 @@ button { font-family: inherit; cursor: pointer; }
     radial-gradient(ellipse 200px 80px at 20% 60%, #8a3a18 0%, transparent 70%),
     radial-gradient(ellipse 300px 100px at 75% 70%, #8a3a18 0%, transparent 70%);
 }
+.game-view.theme-buffalo.scene-prairie {
+  background:
+    radial-gradient(circle at 72% 12%, rgba(255, 240, 160, .95), transparent 8%),
+    linear-gradient(180deg, #77cff8 0%, #f7cf8c 35%, #b95725 68%, #3a1a0b 100%);
+}
+.game-view.theme-buffalo.scene-prairie::before {
+  background:
+    linear-gradient(180deg, transparent 0 42%, rgba(30, 12, 4, .4) 100%),
+    radial-gradient(ellipse 330px 100px at 17% 61%, #8f431f 0%, transparent 70%),
+    radial-gradient(ellipse 410px 130px at 78% 67%, #a55225 0%, transparent 72%),
+    repeating-linear-gradient(90deg, transparent 0 110px, rgba(255, 218, 110, .16) 110px 114px);
+}
+.game-view.theme-buffalo .game-logo-bar {
+  max-width: 760px;
+  padding: 8px 18px;
+  border: 3px solid #d58a21;
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, rgba(72, 30, 9, .9), rgba(139, 68, 18, .96), rgba(72, 30, 9, .9)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 2px, transparent 2px 38px);
+  box-shadow: inset 0 0 0 2px rgba(255, 221, 111, .35), 0 8px 24px rgba(0,0,0,.45);
+}
+.game-view.theme-buffalo .game-mascot {
+  width: 74px;
+  height: 74px;
+  font-size: 0;
+}
+.game-view.theme-buffalo .game-mascot svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 5px 0 rgba(35, 10, 3, .72));
+}
+.game-view.theme-buffalo .game-titles strong {
+  color: #ffef8b;
+  font-size: 2.35rem;
+  text-shadow:
+    0 3px 0 #6d1806,
+    0 0 12px rgba(255, 132, 34, .95),
+    0 0 26px rgba(255, 209, 94, .55);
+}
+.game-view.theme-buffalo .game-titles span {
+  color: #fff3bf;
+}
+.game-view.theme-buffalo .reels-frame {
+  padding: 12px;
+  border-color: #f7c246;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, #7b3d13 0 10%, #f7c246 10% 13%, #151b1d 13% 87%, #f7c246 87% 90%, #6d3511 90% 100%);
+  box-shadow:
+    inset 0 0 0 3px #4a1f08,
+    inset 0 0 36px rgba(0,0,0,.85),
+    0 0 34px rgba(247, 194, 70, .55);
+}
+.game-view.theme-buffalo .reel {
+  padding: 4px;
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, #b16a20 0 4px, #f7c246 4px 7px, #11191b 7px calc(100% - 7px), #f7c246 calc(100% - 7px) calc(100% - 4px), #b16a20 calc(100% - 4px));
+}
+.game-view.theme-buffalo .reel-cell {
+  border-radius: 3px;
+  border-color: rgba(247, 194, 70, .5);
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255,255,255,.07), transparent 42%),
+    linear-gradient(180deg, #263032, #101719);
+}
+.game-view.theme-buffalo .sym-cell[data-sym="BUFFALO"] .sym-inner,
+.game-view.theme-buffalo .sym-cell[data-sym="COUGAR"] .sym-inner,
+.game-view.theme-buffalo .sym-cell[data-sym="EAGLE"] .sym-inner,
+.game-view.theme-buffalo .sym-cell[data-sym="WOLF"] .sym-inner {
+  width: 112%;
+  height: 112%;
+}
+.game-view.theme-buffalo .sym-cell[data-sym="BUFFALO"] .sym-inner {
+  width: 126%;
+  height: 126%;
+}
+.game-view.theme-buffalo .sym-cell.sym-svg .sym-inner svg {
+  filter: drop-shadow(0 5px 1px rgba(0,0,0,.7));
+}
 .game-view.scene-skyscraper {
   background:
     linear-gradient(180deg, #050828 0%, #1a1a4a 40%, #3d2860 70%, #7b1818 100%);

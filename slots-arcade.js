@@ -53,6 +53,19 @@ function svgSym(key, label) {
   return { type: "svg", icon: SVG[key], label: label || "" };
 }
 
+Object.assign(SVG, {
+  BUFFALO_HEAD: `<svg viewBox="0 0 120 120"><defs><radialGradient id="bfFur" cx=".45" cy=".28"><stop offset="0" stop-color="#fff1b8"/><stop offset=".28" stop-color="#e98222"/><stop offset=".7" stop-color="#7a3514"/><stop offset="1" stop-color="#2a1007"/></radialGradient><linearGradient id="bfHorn" x1="0" x2="1"><stop offset="0" stop-color="#fff7d8"/><stop offset="1" stop-color="#7f6750"/></linearGradient></defs><path d="M21 52 C5 35 9 20 27 20 C31 35 39 42 48 45 L43 58 C33 58 27 56 21 52Z" fill="url(#bfHorn)" stroke="#2a1007" stroke-width="3"/><path d="M99 52 C115 35 111 20 93 20 C89 35 81 42 72 45 L77 58 C87 58 93 56 99 52Z" fill="url(#bfHorn)" stroke="#2a1007" stroke-width="3"/><path d="M25 55 C28 25 45 12 60 15 C75 12 92 25 95 55 C101 69 96 93 75 101 C70 111 50 111 45 101 C24 93 19 69 25 55Z" fill="url(#bfFur)" stroke="#180904" stroke-width="4"/><circle cx="45" cy="61" r="6" fill="#120703"/><circle cx="75" cy="61" r="6" fill="#120703"/><circle cx="47" cy="58" r="2" fill="#fff8d8"/><circle cx="77" cy="58" r="2" fill="#fff8d8"/><ellipse cx="60" cy="83" rx="23" ry="17" fill="#2b1209" stroke="#160704" stroke-width="2"/><ellipse cx="52" cy="81" rx="3" ry="5" fill="#080302"/><ellipse cx="68" cy="81" rx="3" ry="5" fill="#080302"/><path d="M31 35 C38 25 47 21 60 21 C73 21 82 25 89 35" fill="none" stroke="#ffd078" stroke-width="5" stroke-linecap="round" opacity=".45"/></svg>`,
+  BUFFALO_EAGLE: `<svg viewBox="0 0 120 120"><defs><linearGradient id="egWing" x1="0" x2="1"><stop offset="0" stop-color="#f5f0ff"/><stop offset="1" stop-color="#8f7cff"/></linearGradient><linearGradient id="egGold" x1="0" x2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset="1" stop-color="#d57916"/></linearGradient></defs><rect x="10" y="11" width="100" height="98" rx="8" fill="#5534b8" stroke="#f7c246" stroke-width="5"/><path d="M28 70 C36 37 60 17 92 23 C76 29 67 42 66 57 C65 74 52 88 30 91 C39 83 34 76 28 70Z" fill="url(#egWing)" stroke="#38236d" stroke-width="3"/><path d="M66 43 C82 35 97 39 106 48 C93 47 82 52 72 62Z" fill="url(#egGold)" stroke="#6d3506" stroke-width="3"/><circle cx="75" cy="45" r="5" fill="#fff"/><circle cx="77" cy="45" r="2.3" fill="#110705"/></svg>`,
+  BUFFALO_COUGAR: `<svg viewBox="0 0 120 120"><defs><linearGradient id="cgFur" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffd29a"/><stop offset=".55" stop-color="#c9652b"/><stop offset="1" stop-color="#5a2412"/></linearGradient></defs><rect x="10" y="11" width="100" height="98" rx="8" fill="#bc4a23" stroke="#f7c246" stroke-width="5"/><path d="M30 51 L26 24 L48 39 C55 36 66 36 73 39 L94 24 L90 51 C96 62 94 82 80 93 C68 103 49 103 38 93 C24 82 24 62 30 51Z" fill="url(#cgFur)" stroke="#2b0f08" stroke-width="3"/><circle cx="45" cy="60" r="5" fill="#111"/><circle cx="75" cy="60" r="5" fill="#111"/><circle cx="47" cy="57" r="1.8" fill="#fff7d8"/><circle cx="77" cy="57" r="1.8" fill="#fff7d8"/><path d="M55 75 L65 75 L60 82Z" fill="#321007"/><path d="M60 82 C55 89 49 90 44 86 M60 82 C65 89 71 90 76 86" fill="none" stroke="#321007" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  BUFFALO_WOLF: `<svg viewBox="0 0 120 120"><defs><linearGradient id="bwFur" y1="0" y2="1"><stop offset="0" stop-color="#6fe2ff"/><stop offset=".45" stop-color="#1577d5"/><stop offset="1" stop-color="#09295c"/></linearGradient></defs><rect x="10" y="11" width="100" height="98" rx="8" fill="#1f5fb3" stroke="#f7c246" stroke-width="5"/><path d="M60 18 L45 48 L27 41 L40 64 L33 94 L60 80 L87 94 L80 64 L93 41 L75 48Z" fill="url(#bwFur)" stroke="#061633" stroke-width="3"/><path d="M44 56 L55 61 L48 65Z M76 56 L65 61 L72 65Z" fill="#fff"/><circle cx="49" cy="59" r="2.5" fill="#071022"/><circle cx="71" cy="59" r="2.5" fill="#071022"/><path d="M55 72 L65 72 L60 79Z" fill="#061022"/></svg>`,
+  BUFFALO_WILD: `<svg viewBox="0 0 120 120"><defs><linearGradient id="bwldSky" y1="0" y2="1"><stop offset="0" stop-color="#7fdcff"/><stop offset=".5" stop-color="#ffc46a"/><stop offset="1" stop-color="#8f3513"/></linearGradient><linearGradient id="bwldGold" y1="0" y2="1"><stop offset="0" stop-color="#fff7b0"/><stop offset=".45" stop-color="#f7b729"/><stop offset="1" stop-color="#90460b"/></linearGradient></defs><rect x="9" y="10" width="102" height="100" rx="8" fill="url(#bwldSky)" stroke="#f7c246" stroke-width="5"/><path d="M17 72 L39 46 L51 61 L69 34 L101 72Z" fill="#9b4a1c" opacity=".75"/><path d="M15 78 H105 V103 H15Z" fill="#3a1b0b" opacity=".5"/><text x="60" y="84" text-anchor="middle" font-family="Impact,Arial Black" font-size="31" fill="url(#bwldGold)" stroke="#3b1206" stroke-width="2.6">WILD</text></svg>`,
+  BUFFALO_BONUS: `<svg viewBox="0 0 120 120"><defs><linearGradient id="bbGold" y1="0" y2="1"><stop offset="0" stop-color="#fff9c8"/><stop offset=".5" stop-color="#ffca21"/><stop offset="1" stop-color="#9a4b09"/></linearGradient></defs><circle cx="60" cy="52" r="37" fill="url(#bbGold)" stroke="#5a2008" stroke-width="4"/><path d="M28 52 C9 34 15 19 34 18 C39 33 47 39 56 42 L51 55 C42 56 34 55 28 52Z" fill="#f0f1ee" stroke="#5a2008" stroke-width="3"/><path d="M92 52 C111 34 105 19 86 18 C81 33 73 39 64 42 L69 55 C78 56 86 55 92 52Z" fill="#f0f1ee" stroke="#5a2008" stroke-width="3"/><polygon points="60,30 68,49 89,50 72,62 78,84 60,71 42,84 48,62 31,50 52,49" fill="#fff" stroke="#d71920" stroke-width="3"/><text x="60" y="106" text-anchor="middle" font-family="Impact,Arial Black" font-size="23" fill="#e32613" stroke="#ffd96a" stroke-width="1.8">BONUS</text></svg>`,
+  BUFFALO_A: `<svg viewBox="0 0 120 120"><text x="60" y="82" text-anchor="middle" font-family="Impact,Arial Black" font-size="70" fill="#d81919" stroke="#f7c246" stroke-width="5">A</text></svg>`,
+  BUFFALO_K: `<svg viewBox="0 0 120 120"><text x="60" y="82" text-anchor="middle" font-family="Impact,Arial Black" font-size="70" fill="#2fa83a" stroke="#f7c246" stroke-width="5">K</text></svg>`,
+  BUFFALO_Q: `<svg viewBox="0 0 120 120"><text x="60" y="82" text-anchor="middle" font-family="Impact,Arial Black" font-size="70" fill="#8e28ba" stroke="#f7c246" stroke-width="5">Q</text></svg>`,
+  BUFFALO_10: `<svg viewBox="0 0 120 120"><text x="60" y="80" text-anchor="middle" font-family="Impact,Arial Black" font-size="62" fill="#244de0" stroke="#f7c246" stroke-width="5">10</text></svg>`,
+});
+
 
 // ============================================================
 // MASCOT ART LIBRARY - Large illustrated mascots per game
@@ -196,12 +209,12 @@ const GAMES = {
   wildBuffalo: {
     rtpScale: 4.92,
     layout: "mascot-watermark",
-    title: "Wild Buffalo",
+    title: "5 Wild Buffalo",
     tagline: "Stampede Across the Plains",
     theme: "buffalo",
     accent: "#ff8533",
     accent2: "#ffd76b",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    rows: 4, reels: 5, paylines: PAYLINES_5x4,
     mascot: "&#129708;", // 🦬
     sceneClass: "scene-prairie",
     bgEmoji: ["&#127956;","&#127797;","&#127765;","&#9728;&#65039;"], // mountain, cactus, sun-elements
@@ -926,6 +939,26 @@ const GAMES = {
     paytableOrder: ["WILD","LEPRECHAUN","POT","CLOVER","HORSE","A","K"],
   },
 };
+
+MASCOT_ART.wildBuffalo = SVG.BUFFALO_HEAD;
+
+Object.assign(GAMES.wildBuffalo, {
+  mascot: SVG.BUFFALO_HEAD,
+  symbols: {
+    WILD:    { ...svgSym("BUFFALO_WILD","WILD"), weight: 3, pay: [0,0,0,50,100,500], wild: true },
+    SCATTER: { ...svgSym("BUFFALO_BONUS","BONUS"), weight: 2, pay: [0,0,0,5,20,100], scatter: true },
+    BUFFALO: { ...svgSym("BUFFALO_HEAD","BUFFALO"), weight: 6, pay: [0,0,0,30,80,300] },
+    COUGAR:  { ...svgSym("BUFFALO_COUGAR","COUGAR"), weight: 7, pay: [0,0,0,24,60,240] },
+    EAGLE:   { ...svgSym("BUFFALO_EAGLE","EAGLE"), weight: 8, pay: [0,0,0,20,50,200] },
+    WOLF:    { ...svgSym("BUFFALO_WOLF","WOLF"), weight: 10, pay: [0,0,0,15,40,150] },
+    MONEY:   { ...svgSym("GOLD_COIN","GOLD"), weight: 10, pay: [0,0,0,10,30,100] },
+    A:       { ...svgSym("BUFFALO_A","A"), weight: 14, pay: [0,0,0,5,15,50] },
+    K:       { ...svgSym("BUFFALO_K","K"), weight: 14, pay: [0,0,0,4,12,40] },
+    Q:       { ...svgSym("BUFFALO_Q","Q"), weight: 16, pay: [0,0,0,3,10,30] },
+    TEN:     { ...svgSym("BUFFALO_10","10"), weight: 16, pay: [0,0,0,2,8,25] },
+  },
+  paytableOrder: ["WILD","BUFFALO","COUGAR","EAGLE","WOLF","SCATTER","A","K"],
+});
 
 const MUSIC_PROFILES = {
   wildBuffalo:     { volume: 0.12, bassVolume: 0.11, harmonyVolume: 0.05, wave: "sawtooth", bassWave: "square",   pattern: [0,2,4,2,5,4,2,0], bassPattern: [0,0,3,0], harmonyEvery: 4 },
