@@ -212,7 +212,7 @@ const GAMES = {
   wildBuffalo: {
     rtpScale: 4.92,
     layout: "mascot-watermark",
-    title: "5 Wild Buffalo",
+    title: "Wild Buffalos",
     tagline: "Stampede Across the Plains",
     theme: "buffalo",
     accent: "#ff8533",
