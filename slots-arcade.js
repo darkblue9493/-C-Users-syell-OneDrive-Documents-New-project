@@ -52,6 +52,9 @@ function emojiSym(emoji, label) {
 function svgSym(key, label) {
   return { type: "svg", icon: SVG[key], label: label || "" };
 }
+function imageSym(src, label) {
+  return { type: "image", src, label: label || "" };
+}
 
 Object.assign(SVG, {
   BUFFALO_HEAD: `<svg viewBox="0 0 120 120"><defs><radialGradient id="bfFur" cx=".45" cy=".28"><stop offset="0" stop-color="#fff1b8"/><stop offset=".28" stop-color="#e98222"/><stop offset=".7" stop-color="#7a3514"/><stop offset="1" stop-color="#2a1007"/></radialGradient><linearGradient id="bfHorn" x1="0" x2="1"><stop offset="0" stop-color="#fff7d8"/><stop offset="1" stop-color="#7f6750"/></linearGradient></defs><path d="M21 52 C5 35 9 20 27 20 C31 35 39 42 48 45 L43 58 C33 58 27 56 21 52Z" fill="url(#bfHorn)" stroke="#2a1007" stroke-width="3"/><path d="M99 52 C115 35 111 20 93 20 C89 35 81 42 72 45 L77 58 C87 58 93 56 99 52Z" fill="url(#bfHorn)" stroke="#2a1007" stroke-width="3"/><path d="M25 55 C28 25 45 12 60 15 C75 12 92 25 95 55 C101 69 96 93 75 101 C70 111 50 111 45 101 C24 93 19 69 25 55Z" fill="url(#bfFur)" stroke="#180904" stroke-width="4"/><circle cx="45" cy="61" r="6" fill="#120703"/><circle cx="75" cy="61" r="6" fill="#120703"/><circle cx="47" cy="58" r="2" fill="#fff8d8"/><circle cx="77" cy="58" r="2" fill="#fff8d8"/><ellipse cx="60" cy="83" rx="23" ry="17" fill="#2b1209" stroke="#160704" stroke-width="2"/><ellipse cx="52" cy="81" rx="3" ry="5" fill="#080302"/><ellipse cx="68" cy="81" rx="3" ry="5" fill="#080302"/><path d="M31 35 C38 25 47 21 60 21 C73 21 82 25 89 35" fill="none" stroke="#ffd078" stroke-width="5" stroke-linecap="round" opacity=".45"/></svg>`,
@@ -945,19 +948,18 @@ MASCOT_ART.wildBuffalo = SVG.BUFFALO_HEAD;
 Object.assign(GAMES.wildBuffalo, {
   mascot: SVG.BUFFALO_HEAD,
   symbols: {
-    WILD:    { ...svgSym("BUFFALO_WILD","WILD"), weight: 3, pay: [0,0,0,50,100,500], wild: true },
-    SCATTER: { ...svgSym("BUFFALO_BONUS","BONUS"), weight: 2, pay: [0,0,0,5,20,100], scatter: true },
-    BUFFALO: { ...svgSym("BUFFALO_HEAD","BUFFALO"), weight: 6, pay: [0,0,0,30,80,300] },
-    COUGAR:  { ...svgSym("BUFFALO_COUGAR","COUGAR"), weight: 7, pay: [0,0,0,24,60,240] },
-    EAGLE:   { ...svgSym("BUFFALO_EAGLE","EAGLE"), weight: 8, pay: [0,0,0,20,50,200] },
-    WOLF:    { ...svgSym("BUFFALO_WOLF","WOLF"), weight: 10, pay: [0,0,0,15,40,150] },
-    MONEY:   { ...svgSym("GOLD_COIN","GOLD"), weight: 10, pay: [0,0,0,10,30,100] },
-    A:       { ...svgSym("BUFFALO_A","A"), weight: 14, pay: [0,0,0,5,15,50] },
-    K:       { ...svgSym("BUFFALO_K","K"), weight: 14, pay: [0,0,0,4,12,40] },
+    WILD:    { ...imageSym("assets/slots/buffalo/wild.png","WILD"), weight: 3, pay: [0,0,0,50,100,500], wild: true },
+    SCATTER: { ...imageSym("assets/slots/buffalo/bonus.png","BONUS"), weight: 2, pay: [0,0,0,5,20,100], scatter: true },
+    BUFFALO: { ...imageSym("assets/slots/buffalo/buffalo.png","BUFFALO"), weight: 6, pay: [0,0,0,30,80,300] },
+    EAGLE:   { ...imageSym("assets/slots/buffalo/eagle.png","EAGLE"), weight: 8, pay: [0,0,0,20,50,200] },
+    WOLF:    { ...imageSym("assets/slots/buffalo/wolf.png","WOLF"), weight: 10, pay: [0,0,0,15,40,150] },
+    MESA:    { ...imageSym("assets/slots/buffalo/mesa.png","MESA"), weight: 11, pay: [0,0,0,10,30,100] },
+    A:       { ...imageSym("assets/slots/buffalo/a.png","A"), weight: 14, pay: [0,0,0,5,15,50] },
+    K:       { ...imageSym("assets/slots/buffalo/k.png","K"), weight: 14, pay: [0,0,0,4,12,40] },
     Q:       { ...svgSym("BUFFALO_Q","Q"), weight: 16, pay: [0,0,0,3,10,30] },
     TEN:     { ...svgSym("BUFFALO_10","10"), weight: 16, pay: [0,0,0,2,8,25] },
   },
-  paytableOrder: ["WILD","BUFFALO","COUGAR","EAGLE","WOLF","SCATTER","A","K"],
+  paytableOrder: ["WILD","BUFFALO","EAGLE","WOLF","MESA","SCATTER","A","K"],
 });
 
 const MUSIC_PROFILES = {
@@ -1588,6 +1590,9 @@ function renderSymbolHtml(symKey, game, opts = {}) {
   if (sym.type === "svg") {
     return `<span class="sym-cell sym-svg${winClass}" data-sym="${symKey}"><span class="sym-inner">${sym.icon}</span></span>`;
   }
+  if (sym.type === "image") {
+    return `<span class="sym-cell sym-image${winClass}" data-sym="${symKey}"><span class="sym-inner"><img src="${sym.src}" alt="${sym.label || symKey}" draggable="false" /></span></span>`;
+  }
   return `<span class="sym-cell sym-emoji${winClass}" data-sym="${symKey}"><span class="sym-inner">${sym.icon}</span></span>`;
 }
 
@@ -1714,7 +1719,7 @@ function renderCharacterPaytable(game, root) {
     const sym = game.symbols[symKey];
     if (!sym) return "";
     const pay = sym.pay[topIdx] || 0;
-    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
+    const iconHtml = paytableIconHtml(sym, symKey);
     return `<div class="char-pt"><div class="char-pt-icon">${iconHtml}</div><div class="char-pt-value">${pay}</div></div>`;
   }).join("");
   const bar = document.createElement("div");
@@ -1723,6 +1728,12 @@ function renderCharacterPaytable(game, root) {
   // Insert before play-area
   const playArea = $(".play-area", root);
   if (playArea) playArea.parentNode.insertBefore(bar, playArea);
+}
+
+function paytableIconHtml(sym, symKey) {
+  if (sym.type === "svg") return sym.icon;
+  if (sym.type === "image") return `<img src="${sym.src}" alt="${sym.label || symKey}" draggable="false" />`;
+  return `<span class="pt-emoji">${sym.icon}</span>`;
 }
 
 function renderPaytable(game) {
@@ -1737,7 +1748,7 @@ function renderPaytable(game) {
     // Top payout (5 of a kind or 3 for 3-reel)
     const topIdx = game.reels === 3 ? 2 : 4;
     const pay = sym.pay[topIdx] || 0;
-    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
+    const iconHtml = paytableIconHtml(sym, symKey);
     return `
       <div class="pt-row">
         <div class="pt-icon">${iconHtml}</div>
@@ -2141,7 +2152,7 @@ function openPaytableModal() {
   const allSymbols = Object.keys(game.symbols).sort((a, b) => Math.max(...game.symbols[b].pay) - Math.max(...game.symbols[a].pay));
   grid.innerHTML = allSymbols.map((symKey) => {
     const sym = game.symbols[symKey];
-    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
+    const iconHtml = paytableIconHtml(sym, symKey);
     const pays = sym.pay || [];
     const tier = sym.wild ? "WILD" : sym.scatter ? "BONUS" : "";
     return `

@@ -510,6 +510,26 @@ button { font-family: inherit; cursor: pointer; }
 .game-view.theme-buffalo .sym-cell.sym-svg .sym-inner svg {
   filter: drop-shadow(0 5px 1px rgba(0,0,0,.7));
 }
+.game-view.theme-buffalo .sym-cell.sym-image .sym-inner {
+  width: 116%;
+  height: 116%;
+  filter: drop-shadow(0 6px 2px rgba(0,0,0,.75));
+}
+.game-view.theme-buffalo .sym-cell[data-sym="BUFFALO"] .sym-inner,
+.game-view.theme-buffalo .sym-cell[data-sym="WOLF"] .sym-inner {
+  width: 134%;
+  height: 134%;
+}
+.game-view.theme-buffalo .sym-cell[data-sym="A"] .sym-inner,
+.game-view.theme-buffalo .sym-cell[data-sym="K"] .sym-inner {
+  width: 108%;
+  height: 108%;
+}
+.game-view.theme-buffalo .pt-icon img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
 .game-view.scene-skyscraper {
   background:
     linear-gradient(180deg, #050828 0%, #1a1a4a 40%, #3d2860 70%, #7b1818 100%);
@@ -797,6 +817,14 @@ button { font-family: inherit; cursor: pointer; }
   filter: drop-shadow(0 2px 0 rgba(0,0,0,.6));
 }
 .sym-cell.sym-svg .sym-inner svg { display: block; width: 100%; height: auto; max-height: 100%; }
+.sym-cell.sym-image .sym-inner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
 .sym-cell.sym-emoji .sym-inner {
   font-size: 2.6rem;
   line-height: 1;
