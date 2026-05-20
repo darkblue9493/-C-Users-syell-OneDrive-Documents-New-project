@@ -1046,6 +1046,7 @@ const STORAGE_PREFIX = "sd_slots_v1_";
 const State = {
   credits: 0,
   bet: 0.25,
+  lobbyJackpots: { grand: 1519.23, major: 524.95, minor: 107.97, mini: 21.87 },
   betLevels: [0.05, 0.10, 0.25, 0.50, 1.00, 2.50, 5.00, 10.00],
   jackpots: { grand: 1519.23, major: 524.95, minor: 107.97, mini: 21.87 },
   jackpotsIncrement: { grand: 0.0035, major: 0.0018, minor: 0.0009, mini: 0.0004 },
@@ -1122,8 +1123,8 @@ function applyGlobalJackpotsFromConfig(config) {
   const pool = config?.jackpotPool || null;
   if (!pool) return;
   ["grand", "major", "minor", "mini"].forEach((level) => {
-    const fallback = State.jackpots[level] || 0;
-    State.jackpots[level] = Math.max(0, numberSetting(pool[level], fallback));
+    const fallback = State.lobbyJackpots[level] || 0;
+    State.lobbyJackpots[level] = Math.max(0, numberSetting(pool[level], fallback));
   });
 }
 
@@ -1172,6 +1173,11 @@ function applyAdminGameControls(gameKey, { force = false } = {}) {
   if (!changed) return false;
   const minBet = Math.max(0.01, numberSetting(cfg.minBet, 0.05));
   const maxBet = Math.max(minBet, numberSetting(cfg.maxBet, 10));
+  const pool = cfg.jackpotPool || {};
+  ["grand", "major", "minor", "mini"].forEach((level) => {
+    const fallback = State.jackpots[level] || 0;
+    State.jackpots[level] = Math.max(0, numberSetting(pool[level], fallback));
+  });
   applyGlobalJackpotsFromConfig(rootCfg);
   State.appliedControlGame = gameKey;
   State.appliedControlSignature = signature;
@@ -1369,9 +1375,8 @@ function evaluateSpin(game, grid, bet) {
   else if (r < State.jackpotChance.grand + State.jackpotChance.major + State.jackpotChance.minor) { jpHit = "minor"; totalPay += State.jackpots.minor; }
   else if (r < State.jackpotChance.grand + State.jackpotChance.major + State.jackpotChance.minor + State.jackpotChance.mini) { jpHit = "mini"; totalPay += State.jackpots.mini; }
   if (jpHit) {
-    const rootCfg = typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
     const cfg = adminGameConfig(State.activeGame);
-    const pool = rootCfg?.jackpotPool || cfg?.jackpotPool || {};
+    const pool = cfg?.jackpotPool || {};
     State.jackpots[jpHit] = Math.max(0, numberSetting(pool[jpHit], jpHit === "grand" ? 1500 : jpHit === "major" ? 500 : jpHit === "minor" ? 100 : 20));
     State.appliedControlSignature = gameControlSignature(State.activeGame);
   }
@@ -1714,10 +1719,11 @@ function renderPaytable(game) {
 function updateDisplays() {
   $("[data-credits]").textContent = fmt(State.credits);
   $("[data-bet]").textContent = fmt(State.bet);
-  $$("[data-jp-grand]").forEach((el) => { el.textContent = "$" + fmt(State.jackpots.grand); });
-  $$("[data-jp-major]").forEach((el) => { el.textContent = "$" + fmt(State.jackpots.major); });
-  $$("[data-jp-minor]").forEach((el) => { el.textContent = "$" + fmt(State.jackpots.minor); });
-  $$("[data-jp-mini]").forEach((el) => { el.textContent = "$" + fmt(State.jackpots.mini); });
+  const visibleJackpots = State.activeGame ? State.jackpots : State.lobbyJackpots;
+  $$("[data-jp-grand]").forEach((el) => { el.textContent = "$" + fmt(visibleJackpots.grand); });
+  $$("[data-jp-major]").forEach((el) => { el.textContent = "$" + fmt(visibleJackpots.major); });
+  $$("[data-jp-minor]").forEach((el) => { el.textContent = "$" + fmt(visibleJackpots.minor); });
+  $$("[data-jp-mini]").forEach((el) => { el.textContent = "$" + fmt(visibleJackpots.mini); });
   const linesEl = $("[data-lines]");
   if (linesEl && State.activeGame) linesEl.textContent = GAMES[State.activeGame].paylines.length;
 }
