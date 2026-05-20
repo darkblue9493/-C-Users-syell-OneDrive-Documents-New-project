@@ -196,7 +196,7 @@
     const grid = $("[data-slots-admin-games]");
     if (!grid) return;
     grid.innerHTML = SC.GAME_LIST.map((g) => {
-      const cfg = pendingConfig.games[g.key] || SC.defaultGameConfig();
+      const cfg = pendingConfig.games[g.key] || SC.defaultGameConfig(g.key);
       const accent = THEME_ACCENT[g.theme] || "#ffd76b";
       const emoji = THEME_EMOJI[g.theme] || "\u{1F3B0}";
       return `
@@ -373,11 +373,24 @@
 
   function refreshSummary() {
     const stats = SC.loadStats();
-    $("[data-summary-spins]").textContent = stats.totalSpins;
-    $("[data-summary-wagered]").textContent = fmt(stats.totalWagered);
-    $("[data-summary-won]").textContent = fmt(stats.totalWon);
+    const games = Object.values(pendingConfig?.games || {}).filter((game) => game && game.enabled !== false);
+    const dailyMin = games.reduce((total, game) => total + Math.max(0, Number(game.dailyMinPayout) || 0), 0);
+    const dailyMax = games.reduce((total, game) => total + Math.max(0, Number(game.dailyMaxPayout) || 0), 0);
+    const minBets = games.map((game) => Number(game.minBet)).filter(Number.isFinite);
+    const maxBets = games.map((game) => Number(game.maxBet)).filter(Number.isFinite);
+    const setText = (selector, value) => {
+      const el = $(selector);
+      if (el) el.textContent = value;
+    };
+    setText("[data-summary-spins]", stats.totalSpins);
+    setText("[data-summary-wagered]", fmt(stats.totalWagered));
+    setText("[data-summary-won]", fmt(stats.totalWon));
     const rtp = stats.totalWagered > 0 ? stats.totalWon / stats.totalWagered : 0;
-    $("[data-summary-rtp]").textContent = stats.totalWagered > 0 ? pct(rtp) : "--%";
+    setText("[data-summary-rtp]", stats.totalWagered > 0 ? pct(rtp) : "--%");
+    setText("[data-summary-daily-min]", fmt(dailyMin));
+    setText("[data-summary-daily-max]", fmt(dailyMax));
+    setText("[data-summary-min-bet]", minBets.length ? fmt(Math.min(...minBets)) : "--");
+    setText("[data-summary-max-bet]", maxBets.length ? fmt(Math.max(...maxBets)) : "--");
   }
 
   function renderRecentWins() {
@@ -409,7 +422,7 @@
     $$("[data-game-card]").forEach((card) => {
       const key = card.dataset.gameCard;
       if (!key) return;
-      const cfg = pendingConfig.games[key] || (pendingConfig.games[key] = SC.defaultGameConfig());
+      const cfg = pendingConfig.games[key] || (pendingConfig.games[key] = SC.defaultGameConfig(key));
       const enabled = $("[data-game-enabled]", card);
       const rtp = $("[data-game-rtp]", card);
       const max = $("[data-game-max]", card);
@@ -435,6 +448,7 @@
   }
 
   function queueLiveSave(message) {
+    refreshSummary();
     showSaveStatus("Saving live changes...", true, 1200);
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => saveLive(message), 450);

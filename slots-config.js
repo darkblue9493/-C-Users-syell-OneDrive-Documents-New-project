@@ -40,7 +40,34 @@
     { key: "luckyCharms",     title: "Lucky Charms",       theme: "irish"     },
   ];
 
-  function defaultGameConfig() {
+  const GAME_DEFAULT_OVERRIDES = {
+    wildBuffalo:     { targetRtp: 0.91, dailyMaxPayout: 850,  dailyMinPayout: 35, minBet: 0.05, maxBet: 8 },
+    kingKong:        { targetRtp: 0.92, dailyMaxPayout: 1200, dailyMinPayout: 50, minBet: 0.1,  maxBet: 12 },
+    triple777:       { targetRtp: 0.9,  dailyMaxPayout: 700,  dailyMinPayout: 25, minBet: 0.05, maxBet: 5 },
+    blackjack:       { targetRtp: 0.93, dailyMaxPayout: 1500, dailyMinPayout: 75, minBet: 0.25, maxBet: 15 },
+    gorillaGold:     { targetRtp: 0.92, dailyMaxPayout: 1100, dailyMinPayout: 50, minBet: 0.1,  maxBet: 10 },
+    goldWolf:        { targetRtp: 0.91, dailyMaxPayout: 900,  dailyMinPayout: 40, minBet: 0.05, maxBet: 8 },
+    wildBull:        { targetRtp: 0.9,  dailyMaxPayout: 650,  dailyMinPayout: 25, minBet: 0.05, maxBet: 5 },
+    dragonEmpress:   { targetRtp: 0.94, dailyMaxPayout: 1800, dailyMinPayout: 90, minBet: 0.25, maxBet: 20 },
+    mammothRush:     { targetRtp: 0.93, dailyMaxPayout: 1600, dailyMinPayout: 80, minBet: 0.2,  maxBet: 18 },
+    pharaoh:         { targetRtp: 0.92, dailyMaxPayout: 1250, dailyMinPayout: 60, minBet: 0.1,  maxBet: 12 },
+    oceanTreasure:   { targetRtp: 0.91, dailyMaxPayout: 950,  dailyMinPayout: 45, minBet: 0.05, maxBet: 9 },
+    vegas7s:         { targetRtp: 0.9,  dailyMaxPayout: 750,  dailyMinPayout: 30, minBet: 0.05, maxBet: 6 },
+    luckyPanda:      { targetRtp: 0.92, dailyMaxPayout: 1000, dailyMinPayout: 50, minBet: 0.1,  maxBet: 10 },
+    lionsPride:      { targetRtp: 0.93, dailyMaxPayout: 1400, dailyMinPayout: 70, minBet: 0.2,  maxBet: 14 },
+    piratesTreasure: { targetRtp: 0.91, dailyMaxPayout: 1050, dailyMinPayout: 50, minBet: 0.1,  maxBet: 10 },
+    zeusThunder:     { targetRtp: 0.94, dailyMaxPayout: 2000, dailyMinPayout: 100, minBet: 0.25, maxBet: 20 },
+    cleopatra:       { targetRtp: 0.93, dailyMaxPayout: 1550, dailyMinPayout: 75, minBet: 0.2,  maxBet: 16 },
+    frozenRiches:    { targetRtp: 0.91, dailyMaxPayout: 900,  dailyMinPayout: 40, minBet: 0.05, maxBet: 8 },
+    galaxyStars:     { targetRtp: 0.92, dailyMaxPayout: 1300, dailyMinPayout: 65, minBet: 0.1,  maxBet: 12 },
+    fruitMania:      { targetRtp: 0.9,  dailyMaxPayout: 600,  dailyMinPayout: 20, minBet: 0.05, maxBet: 5 },
+    vikingGlory:     { targetRtp: 0.92, dailyMaxPayout: 1150, dailyMinPayout: 55, minBet: 0.1,  maxBet: 11 },
+    aztecEmpire:     { targetRtp: 0.93, dailyMaxPayout: 1450, dailyMinPayout: 70, minBet: 0.2,  maxBet: 15 },
+    halloweenHunt:   { targetRtp: 0.91, dailyMaxPayout: 800,  dailyMinPayout: 35, minBet: 0.05, maxBet: 7 },
+    luckyCharms:     { targetRtp: 0.92, dailyMaxPayout: 1000, dailyMinPayout: 50, minBet: 0.1,  maxBet: 10 },
+  };
+
+  function defaultGameConfig(gameKey) {
     return {
       enabled: true,
       targetRtp: 0.92,
@@ -49,6 +76,7 @@
       maxBet: 10,
       minBet: 0.05,
       jackpotPool: { grand: 1500, major: 500, minor: 100, mini: 20 },
+      ...(GAME_DEFAULT_OVERRIDES[gameKey] || {}),
     };
   }
 
@@ -62,7 +90,7 @@
       games: {},
     };
     for (const g of GAME_LIST) {
-      cfg.games[g.key] = defaultGameConfig();
+      cfg.games[g.key] = defaultGameConfig(g.key);
     }
     return cfg;
   }

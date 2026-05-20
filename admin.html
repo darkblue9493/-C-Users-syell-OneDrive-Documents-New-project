@@ -200,6 +200,41 @@
                   <small data-slots-admin-date>Daily controls reset at UTC midnight</small>
                 </div>
 
+                <div class="slots-admin-master">
+                  <section class="slots-master-card" aria-label="All slot games summary">
+                    <div class="slots-master-row">
+                      <div>
+                        <strong>All Games Total</strong>
+                        <small data-slots-save-status></small>
+                      </div>
+                      <label class="slots-toggle">
+                        <input type="checkbox" data-slots-global-enabled checked />
+                        <span class="toggle-slider"></span>
+                        <b class="slots-status-pill online" data-slots-status-pill>LIVE</b>
+                      </label>
+                    </div>
+                    <div class="slots-summary-grid">
+                      <article><span>Spins</span><strong data-summary-spins>0</strong></article>
+                      <article><span>Wagered</span><strong data-summary-wagered>0.00</strong></article>
+                      <article><span>Paid Out</span><strong data-summary-won>0.00</strong></article>
+                      <article><span>Total RTP</span><strong data-summary-rtp>--%</strong></article>
+                      <article><span>Daily Min</span><strong data-summary-daily-min>0.00</strong></article>
+                      <article><span>Daily Max</span><strong data-summary-daily-max>0.00</strong></article>
+                      <article><span>Min Bet</span><strong data-summary-min-bet>0.00</strong></article>
+                      <article><span>Max Bet</span><strong data-summary-max-bet>0.00</strong></article>
+                    </div>
+                    <div class="slots-master-actions">
+                      <label>
+                        <span>Default Bet</span>
+                        <input type="number" min="0.01" step="0.05" value="0.25" data-slots-default-bet />
+                      </label>
+                      <button class="button primary" type="button" data-slots-save-all>Save All</button>
+                      <button class="game-link" type="button" data-slots-reset-stats>Reset Stats</button>
+                      <button class="game-link" type="button" data-slots-export-config>Export Config</button>
+                    </div>
+                  </section>
+                </div>
+
                 <!-- Per-game control grid -->
                 <h3 class="slots-admin-section-title">Per-Game Controls</h3>
                 <p class="slots-admin-section-tip">Click any game card to expand full details. Changes save live as soon as you update them.</p>
