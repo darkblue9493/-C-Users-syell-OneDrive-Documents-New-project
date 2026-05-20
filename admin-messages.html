@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="manifest" href="admin.webmanifest" />
   </head>
-  <body class="admin-body">
+  <body class="admin-body admin-messages-page">
     <header class="site-header admin-side-nav" data-header>
       <a class="brand admin-brand" href="/admin9493" aria-label="South Diamond admin home">
         <span>South Diamond</span>
@@ -28,18 +28,12 @@
             <div class="admin-topbar-actions">
               <a class="game-link" href="/admin9493">Back to Dashboard</a>
               <button class="game-link" type="button" data-admin-refresh>Refresh</button>
+              <button class="game-link" type="button" data-delete-chat>Delete Chat</button>
               <button class="logout-button" type="button" data-logout>Log Out</button>
             </div>
           </div>
 
           <div class="admin-workspace">
-            <div class="chat-section-heading">
-              <div>
-                <p class="section-kicker">Support</p>
-                <h2>Messages</h2>
-              </div>
-              <button class="button secondary admin-clear" type="button" data-delete-chat>Delete Selected Chat</button>
-            </div>
             <div class="chat-dashboard admin-dashboard messenger-chat" aria-label="South Diamond admin inbox">
               <aside class="chat-inbox" aria-label="Player conversations" data-admin-inbox></aside>
               <div class="chat-window" aria-label="Selected player conversation">
