@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>Gas Gushers Arcade</title>
-  <meta name="description" content="Gas Gushers Arcade - 24 themed slot games with live progressive jackpots." />
+  <meta name="description" content="Gas Gushers - convenience-store themed shelf picks, snack items, and daily rewards." />
   <meta name="theme-color" content="#0a0210" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -20,7 +20,7 @@
       <span class="brand-mark"></span>
       <span class="brand-text">South Diamond</span>
     </a>
-    <button class="arcade-home" type="button" data-arcade-home aria-label="Back to slots lobby">Home</button>
+    <button class="arcade-home" type="button" data-arcade-home aria-label="Back to Gas Gushers">Home</button>
     <div class="arcade-balance">
       <span class="balance-label">POINTS</span>
       <strong data-credits>0.00</strong>
@@ -32,12 +32,12 @@
     </div>
   </header>
 
-  <!-- Live progressive jackpot strip - always visible -->
+  <!-- Live rewards strip - always visible -->
   <section class="jackpot-strip">
     <div class="jp-panel jp-grand">
       <div class="jp-frame">
         <div class="jp-stars">★★★★★</div>
-        <div class="jp-label">GRAND</div>
+        <div class="jp-label">FAMILY PACK</div>
         <div class="jp-value" data-jp-grand>$1,519.23</div>
       </div>
       <div class="jp-bulbs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
@@ -45,7 +45,7 @@
     <div class="jp-panel jp-major">
       <div class="jp-frame">
         <div class="jp-stars">★★★★</div>
-        <div class="jp-label">MAJOR</div>
+        <div class="jp-label">SNACK RUN</div>
         <div class="jp-value" data-jp-major>$524.95</div>
       </div>
       <div class="jp-bulbs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -53,7 +53,7 @@
     <div class="jp-panel jp-minor">
       <div class="jp-frame">
         <div class="jp-stars">★★</div>
-        <div class="jp-label">MINOR</div>
+        <div class="jp-label">COOLER PICK</div>
         <div class="jp-value" data-jp-minor>$107.97</div>
       </div>
       <div class="jp-bulbs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -61,7 +61,7 @@
     <div class="jp-panel jp-mini">
       <div class="jp-frame">
         <div class="jp-stars">★</div>
-        <div class="jp-label">MINI</div>
+        <div class="jp-label">QUICK TREAT</div>
         <div class="jp-value" data-jp-mini>$21.87</div>
       </div>
       <div class="jp-bulbs" aria-hidden="true"><i></i><i></i></div>
@@ -74,30 +74,30 @@
       <button class="is-active" type="button" data-lobby-filter="all">ALL</button>
       <button type="button" data-lobby-filter="hot">HOT</button>
       <button type="button" data-lobby-filter="new">NEW</button>
-      <button type="button" data-lobby-filter="slot">SLOT</button>
+      <button type="button" data-lobby-filter="slot">SHELF</button>
     </aside>
     <div class="lobby-intro">
       <h1>GAS GUSHERS</h1>
-      <p>24 premium games · Live jackpots · Real spin action</p>
+      <p>24 shelf picks - snack rewards - convenience-store style</p>
     </div>
     <div class="lobby-news" aria-live="polite">
-      <span>More games • Linked jackpots • New prizes • Gas Gushers arcade</span>
+      <span>More snacks - cooler picks - new treats - Gas Gushers</span>
     </div>
     <div class="lobby-grid" data-lobby-grid>
       <!-- Tiles injected by JS -->
     </div>
-    <p class="lobby-tip">Tip: Tap a game to start. Tap the fullscreen button (⛶) for the best experience on mobile.</p>
+    <p class="lobby-tip">Tip: Tap an item shelf to open it. Tap the fullscreen button for the best experience on mobile.</p>
   </main>
 
-  <!-- Game view: full slot machine -->
+  <!-- Game view: full shelf picker -->
   <main class="game-view hidden" data-game-view>
     <!-- Decorative background emojis -->
     <!-- Maintenance overlay -->
     <div class="maintenance-overlay hidden" data-maintenance-overlay aria-hidden="true">
       <div class="maint-card">
         <div class="maint-icon">🔧</div>
-        <h2>Game Under Maintenance</h2>
-        <p>This game is temporarily unavailable. Pick another from the lobby.</p>
+        <h2>Shelf Under Maintenance</h2>
+        <p>This shelf is temporarily unavailable. Pick another from the lobby.</p>
         <button class="game-link" type="button" data-back-button>Back to Lobby</button>
       </div>
     </div>
@@ -108,32 +108,32 @@
       <button class="mobile-lobby-btn" type="button" data-back-button>LOBBY</button>
       <span class="game-mascot" data-game-mascot></span>
       <div class="game-titles">
-        <strong data-game-title>Game</strong>
-        <span data-game-tagline>Tagline</span>
+        <strong data-game-title>Shelf</strong>
+        <span data-game-tagline>Gas station picks</span>
       </div>
-      <button class="paytable-btn" type="button" data-open-paytable aria-label="View paytable">
-        <span>i</span>PAYTABLE
+      <button class="paytable-btn" type="button" data-open-paytable aria-label="View item guide">
+        <span>i</span>ITEM GUIDE
       </button>
     </div>
 
-    <!-- Main play area: paytable | reels | paytable -->
+    <!-- Main play area: item guide | shelf | item guide -->
     <div class="play-area">
-      <aside class="paytable paytable-left" aria-label="Pay table left">
+      <aside class="paytable paytable-left" aria-label="Item guide left">
         <div class="paytable-list" data-paytable-left></div>
       </aside>
 
       <div class="reels-shell">
         <div class="reels-frame">
           <div class="reel-strip" data-reel-strip></div>
-          <!-- Win burst overlay -->
+          <!-- Reward burst overlay -->
           <div class="win-burst hidden" data-win-burst>
             <div class="burst-amount" data-burst-amount>+0.00</div>
             <div class="coin-box" data-coin-box></div>
           </div>
-          <!-- Jackpot burst -->
+          <!-- Reward burst -->
           <div class="jackpot-burst hidden" data-jackpot-burst>
             <div class="jp-burst-stars">★ ★ ★ ★ ★</div>
-            <div class="jp-burst-level" data-jp-burst-level>JACKPOT</div>
+            <div class="jp-burst-level" data-jp-burst-level>REWARD</div>
             <div class="jp-burst-amount" data-jp-burst-amount>$0.00</div>
             <div class="jp-burst-confetti" aria-hidden="true">
               <span></span><span></span><span></span><span></span><span></span>
@@ -144,46 +144,46 @@
         </div>
       </div>
 
-      <aside class="paytable paytable-right" aria-label="Pay table right">
+      <aside class="paytable paytable-right" aria-label="Item guide right">
         <div class="paytable-list" data-paytable-right></div>
       </aside>
     </div>
 
-    <!-- Win message bar -->
+    <!-- Reward message bar -->
     <div class="win-msg-bar">
-      <span data-win-msg>Tap SPIN to play</span>
+      <span data-win-msg>Tap OPEN to reveal shelf picks</span>
     </div>
 
     <!-- Controls bar at bottom -->
     <div class="controls-bar">
       <div class="bet-control">
-        <div class="ctrl-label">TOTAL BET</div>
+        <div class="ctrl-label">TOTAL POINTS</div>
         <div class="bet-row">
-          <button type="button" data-bet-down aria-label="Decrease bet">−</button>
+          <button type="button" data-bet-down aria-label="Decrease points">−</button>
           <span data-bet>0.25</span>
-          <button type="button" data-bet-up aria-label="Increase bet">+</button>
+          <button type="button" data-bet-up aria-label="Increase points">+</button>
         </div>
-        <div class="bet-meta">ROW MATCH</div>
+        <div class="bet-meta">SHELF MATCH</div>
       </div>
 
       <div class="win-control">
-        <div class="ctrl-label">WIN</div>
+        <div class="ctrl-label">REWARD</div>
         <strong data-win-amount>0.00</strong>
       </div>
 
-      <button class="spin-btn" type="button" data-spin-btn aria-label="Spin reels">
+      <button class="spin-btn" type="button" data-spin-btn aria-label="Open shelf picks">
         <span class="spin-btn-glow" aria-hidden="true"></span>
-        <span class="spin-btn-text">SPIN</span>
+        <span class="spin-btn-text">OPEN</span>
       </button>
 
       <div class="aux-controls">
-        <button type="button" data-max-bet>MAX</button>
+        <button type="button" data-max-bet>MAX POINTS</button>
         <button type="button" data-auto-btn>AUTO</button>
       </div>
     </div>
   </main>
 
-  <!-- Anticipation overlay shown before jackpot/big-win prize reveal -->
+  <!-- Anticipation overlay shown before reward reveal -->
   <div class="anticipation-overlay hidden" data-anticipation aria-hidden="true">
     <div class="ant-vignette"></div>
     <div class="ant-rays"></div>
@@ -195,28 +195,28 @@
     </div>
     <div class="ant-content">
       <div class="ant-stars">★ ★ ★ ★ ★</div>
-      <div class="ant-text" data-anticipation-text>BIG WIN INCOMING!</div>
-      <div class="ant-subtext">Get Ready...</div>
+      <div class="ant-text" data-anticipation-text>BIG REWARD INCOMING!</div>
+      <div class="ant-subtext">Get ready...</div>
     </div>
   </div>
 
   
-  <!-- Full paytable modal (per-game) -->
+  <!-- Full item guide modal -->
   <div class="paytable-modal hidden" data-paytable-modal aria-hidden="true">
     <div class="ptm-backdrop" data-paytable-close></div>
     <div class="ptm-card">
       <button class="ptm-close" type="button" data-paytable-close aria-label="Close">x</button>
-      <h2 data-ptm-title>Paytable</h2>
+      <h2 data-ptm-title>Item Guide</h2>
       <p class="ptm-game-info" data-ptm-info></p>
       <div class="ptm-symbols-grid" data-ptm-symbols></div>
       <div class="ptm-rules">
-        <h3>How wins work</h3>
+        <h3>How rewards work</h3>
         <ul>
-          <li><b>Match 3, 4, or 5</b> of the same symbol left-to-right on any row.</li>
-          <li><b>WILD</b> substitutes for any symbol (except SCATTER) to complete winning lines.</li>
-          <li><b>SCATTER / BONUS</b> pays anywhere on the reels - 3+ trigger bonus rounds.</li>
-          <li>Higher bets unlock proportionally higher payouts.</li>
-          <li><b>Progressive Jackpots</b> (Grand, Major, Minor, Mini) can hit on any spin.</li>
+          <li><b>Match 3, 4, or 5</b> of the same item left-to-right on any shelf row.</li>
+          <li><b>SODA</b> is the featured item and helps complete shelf rows.</li>
+          <li><b>GRAB BAG</b> pays anywhere on the shelf.</li>
+          <li>Higher point choices unlock proportionally higher rewards.</li>
+          <li>Family Pack, Snack Run, Cooler Pick, and Quick Treat rewards can appear during play.</li>
         </ul>
       </div>
     </div>

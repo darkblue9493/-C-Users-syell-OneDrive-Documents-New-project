@@ -64,19 +64,19 @@ const winnerNames = [
 ];
 
 const winnerGames = [
-  "Golden Dragon bonus round",
-  "Orion Stars jackpot session",
-  "Ultra Panda slot run",
-  "Game Vault lucky spin",
-  "JUWA fish table streak",
-  "Fire Kirin hot room",
-  "Panda Master reel hit",
-  "Vblink diamond spin",
-  "Milky Way table win",
-  "Lucky 777 bonus room",
+  "Sports Drinks reward shelf",
+  "Trail Mix shelf reward",
+  "Breakfast Bars quick pick",
+  "Coffee Run reward",
+  "Fountain Soda streak",
+  "Hot Chips shelf",
+  "Gummy Bears reward",
+  "Bottled Water pick",
+  "Moon Pies counter treat",
+  "Candy Aisle grab bag",
 ];
 
-const playerChatWelcomeText = "Welcome to South Diamond. Please let us know which game you'd like to play, and our team will be happy to assist you.";
+const playerChatWelcomeText = "Welcome to South Diamond. Please let us know which shelf you'd like to open, and our team will be happy to assist you.";
 
 function randomWinnerAmount() {
   const amount = Math.floor((260 + Math.random() * 1740) / 10) * 10;
@@ -677,6 +677,14 @@ const SLOT_SYMBOL_LIBRARY = {
   "MILK":   { icon: '<svg viewBox="0 0 40 40"><path d="M14 6 h12 l3 7 v21 H11 V13Z" fill="#f8fafc" stroke="#60a5fa" stroke-width="1.7"/><path d="M14 6 l-3 7 h18 l-3-7" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.4"/><text x="20" y="26" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#2563eb">MILK</text></svg>', color:"#93c5fd", tier:"mid", label:"MILK" },
   "BREAD":  { icon: '<svg viewBox="0 0 40 40"><path d="M9 19 c0-8 5-13 11-13 s11 5 11 13 v13 H9Z" fill="#d97706" stroke="#fed7aa" stroke-width="1.8"/><path d="M14 15 c3 2 9 2 12 0" fill="none" stroke="#fef3c7" stroke-width="2" stroke-linecap="round"/></svg>', color:"#d97706", tier:"mid", label:"BREAD" },
   "BAG":    { icon: '<svg viewBox="0 0 40 40"><path d="M10 14 h20 l-2 22 H12Z" fill="#facc15" stroke="#92400e" stroke-width="1.8"/><path d="M15 14 c0-6 10-6 10 0" fill="none" stroke="#92400e" stroke-width="2"/><circle cx="16" cy="24" r="2" fill="#ef4444"/><circle cx="23" cy="27" r="2" fill="#22c55e"/></svg>', color:"#facc15", tier:"low", label:"BAG" },
+  "SODA":   { icon: '<svg viewBox="0 0 40 40"><path d="M14 5 h13 l-2 30 H12Z" fill="#ef4444" stroke="#fecaca" stroke-width="1.8"/><path d="M16 5 h12" stroke="#facc15" stroke-width="2"/><path d="M20 5 l4-3 h5" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/><text x="19" y="24" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#fff">POP</text></svg>', color:"#ef4444", tier:"wild", label:"SODA" },
+  "CHIPS":  { icon: '<svg viewBox="0 0 40 40"><path d="M10 7 h20 l-2 29 H12Z" fill="#f97316" stroke="#fed7aa" stroke-width="1.8"/><path d="M13 15 h14" stroke="#fff7ed" stroke-width="2"/><text x="20" y="27" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#fff">CHIP</text></svg>', color:"#f97316", tier:"premium", label:"CHIPS" },
+  "CANDY":  { icon: '<svg viewBox="0 0 40 40"><path d="M8 18 l7-5 h10 l7 5 l-7 5 H15Z" fill="#ec4899" stroke="#fbcfe8" stroke-width="1.8"/><path d="M8 18 l-5-4 v8Z M32 18 l5-4 v8Z" fill="#a855f7" stroke="#f5d0fe" stroke-width="1.5"/></svg>', color:"#ec4899", tier:"premium", label:"CANDY" },
+  "BEER":   { icon: '<svg viewBox="0 0 40 40"><rect x="10" y="9" width="17" height="25" rx="3" fill="#f59e0b" stroke="#fef3c7" stroke-width="1.8"/><path d="M27 15 h4 c4 0 4 10 0 10 h-4" fill="none" stroke="#fef3c7" stroke-width="2.2"/><path d="M10 11 c3-5 11-5 17 0" fill="#fff" stroke="#fff" stroke-width="2"/></svg>', color:"#f59e0b", tier:"high", label:"BEER" },
+  "COFFEE": { icon: '<svg viewBox="0 0 40 40"><path d="M12 13 h17 l-2 22 H14Z" fill="#7c2d12" stroke="#fed7aa" stroke-width="1.8"/><path d="M11 13 h19 l-2-5 H13Z" fill="#fef3c7" stroke="#fed7aa" stroke-width="1.5"/><text x="20" y="27" text-anchor="middle" font-family="Arial Black" font-size="6" fill="#fff">HOT</text></svg>', color:"#7c2d12", tier:"high", label:"COFFEE" },
+  "DONUT":  { icon: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="14" fill="#f9a8d4" stroke="#be185d" stroke-width="1.8"/><circle cx="20" cy="20" r="5" fill="#2a1207"/><circle cx="15" cy="14" r="1.5" fill="#fff"/><circle cx="25" cy="16" r="1.5" fill="#facc15"/><circle cx="24" cy="25" r="1.5" fill="#38bdf8"/></svg>', color:"#f9a8d4", tier:"mid", label:"DONUT" },
+  "JERKY":  { icon: '<svg viewBox="0 0 40 40"><path d="M14 5 h16 l-4 31 H10Z" fill="#991b1b" stroke="#fecaca" stroke-width="1.8"/><text x="20" y="23" text-anchor="middle" font-family="Arial Black" font-size="6" fill="#fff">JERKY</text></svg>', color:"#991b1b", tier:"mid", label:"JERKY" },
+  "WATER":  { icon: '<svg viewBox="0 0 40 40"><path d="M16 5 h8 l2 7 v21 c0 2-2 3-6 3 s-6-1-6-3 V12Z" fill="#dbeafe" stroke="#38bdf8" stroke-width="1.8"/><path d="M14 19 h12 v8 H14Z" fill="#60a5fa"/><text x="20" y="25" text-anchor="middle" font-family="Arial Black" font-size="5" fill="#fff">H2O</text></svg>', color:"#38bdf8", tier:"low", label:"WATER" },
 };
 
 function getSymbolMeta(symbol) {
@@ -685,42 +693,42 @@ function getSymbolMeta(symbol) {
 
 const slotGames = {
   buffalo: {
-    title: "Buffalo Rush",
+    title: "Fountain Soda",
     label: "Wild prairie reels",
     className: "buffalo",
     accent: "#ffb162",
     symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
   },
   diamond: {
-    title: "Diamond 777",
+    title: "Candy Aisle",
     label: "Classic jackpot reels",
     className: "diamond",
     accent: "#7be8ff",
     symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
   },
   dragon: {
-    title: "Dragon Conqueror",
+    title: "Energy Drinks",
     label: "Fire bonus reels",
     className: "dragon",
     accent: "#ff5630",
     symbols: ["DRG", "FIRE", "SWORD", "GOLD", "PALACE", "A", "K", "SD"],
   },
   ocean: {
-    title: "Ocean Monster",
+    title: "Bottled Water",
     label: "Deep sea wins",
     className: "ocean",
     accent: "#3bb8ff",
     symbols: ["OCEAN", "SHARK", "CRAB", "PEARL", "FISH", "A", "K", "SD"],
   },
   jungle: {
-    title: "Jungle Fortune",
+    title: "Nacho Tray",
     label: "Big wild wins",
     className: "jungle",
     accent: "#52ef9f",
     symbols: ["TIGER", "LEOP", "GOLD", "MASK", "LEAF", "A", "K", "SD"],
   },
   neon: {
-    title: "Neon Reels",
+    title: "Slushie Cups",
     label: "Fast city spins",
     className: "neon",
     accent: "#ff5fe5",
@@ -728,63 +736,63 @@ const slotGames = {
   },
   // Bonus mapped games (use generic mappings)
   milkyway: {
-    title: "Milky Way 777",
+    title: "Moon Pies",
     label: "Galaxy reels",
     className: "neon",
     accent: "#a78bff",
     symbols: ["777", "DIA", "BOLT", "BELL", "A", "K", "SD"],
   },
   lucky777: {
-    title: "Lucky 777",
+    title: "Gummy Bears",
     label: "Classic sevens",
     className: "diamond",
     accent: "#ff4d6d",
     symbols: ["777", "BAR", "CHERRY", "BELL", "DIA", "A", "K", "SD"],
   },
   diamond777: {
-    title: "Diamond 777",
+    title: "Candy Aisle",
     label: "Premium gem reels",
     className: "diamond",
     accent: "#7be8ff",
     symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
   },
   firekirin: {
-    title: "Fire Kirin",
+    title: "Hot Chips",
     label: "Flame wild reels",
     className: "dragon",
     accent: "#ff7a30",
     symbols: ["DRG", "FIRE", "GOLD", "PALACE", "A", "K", "Q", "SD"],
   },
   pandamaster: {
-    title: "Panda Master",
+    title: "Snack Cakes",
     label: "Panda bonus reels",
     className: "jungle",
     accent: "#7ad186",
     symbols: ["TIGER", "LEAF", "BELL", "GOLD", "A", "K", "Q", "SD"],
   },
   orion: {
-    title: "Orion Stars",
+    title: "Trail Mix",
     label: "Neon star wins",
     className: "neon",
     accent: "#a78bff",
     symbols: ["BOLT", "DICE", "ROUL", "DIA", "777", "A", "K", "SD"],
   },
   goldendragon: {
-    title: "Golden Dragon",
+    title: "Sports Drinks",
     label: "VIP dragon reels",
     className: "dragon",
     accent: "#ffd76b",
     symbols: ["DRG", "GOLD", "FIRE", "PALACE", "SWORD", "A", "K", "SD"],
   },
   gamevault: {
-    title: "Game Vault",
+    title: "Coffee Run",
     label: "Treasure reels",
     className: "buffalo",
     accent: "#f6c85f",
     symbols: ["GOLD", "BAR", "DIA", "BELL", "CHERRY", "A", "K", "SD"],
   },
   ultrapanda: {
-    title: "Ultra Panda",
+    title: "Breakfast Bars",
     label: "Lucky panda reels",
     className: "jungle",
     accent: "#69d27a",
@@ -792,10 +800,28 @@ const slotGames = {
   },
 };
 
-const TEMP_GAS_GROCERY_SYMBOLS = ["GAS", "PUMP", "OIL", "CAR", "CART", "MILK", "BREAD", "BAG"];
+const TEMP_GAS_GROCERY_SYMBOLS = ["SODA", "CHIPS", "CANDY", "BEER", "COFFEE", "DONUT", "JERKY", "WATER"];
+const TEMP_GAS_STATION_GAME_TITLES = {
+  buffalo: "Fountain Soda",
+  diamond: "Candy Aisle",
+  dragon: "Energy Drinks",
+  ocean: "Bottled Water",
+  jungle: "Nacho Tray",
+  neon: "Slushie Cups",
+  milkyway: "Moon Pies",
+  lucky777: "Gummy Bears",
+  diamond777: "Candy Aisle",
+  firekirin: "Hot Chips",
+  pandamaster: "Snack Cakes",
+  orion: "Trail Mix",
+  goldendragon: "Sports Drinks",
+  gamevault: "Coffee Run",
+  ultrapanda: "Breakfast Bars",
+};
 
-Object.values(slotGames).forEach((game) => {
-  game.label = "Gas and grocery reels";
+Object.entries(slotGames).forEach(([key, game]) => {
+  game.title = TEMP_GAS_STATION_GAME_TITLES[key] || game.title;
+  game.label = "Gas station picks";
   game.symbols = TEMP_GAS_GROCERY_SYMBOLS;
 });
 
@@ -872,7 +898,7 @@ function updateLegacySlotsLobbyControls() {
   if (!slotsLobby) return;
   const defaultBet = numberSetting(slotAdminConfig?.defaultBet, 0.25);
   const marquee = slotsLobby.querySelector(".slots-marquee");
-  if (marquee) marquee.textContent = `Welcome to Gas Gushers. Bets start at ${formatPoints(defaultBet)} points.`;
+  if (marquee) marquee.textContent = `Welcome to Gas Gushers. Picks start at ${formatPoints(defaultBet)} points.`;
   slotsLobby.querySelectorAll("[data-slot-game]").forEach((tile) => {
     const gameKey = tile.dataset.slotGame;
     const cfg = adminConfigForLegacySlot(gameKey);
@@ -1045,7 +1071,7 @@ async function openSlotsLobby() {
   slotsLobby?.classList.remove("is-hidden");
   slotMachine?.classList.add("is-hidden");
   slotsBack?.classList.add("is-hidden");
-  if (slotWinLabel) slotWinLabel.textContent = "Choose a Gas Gushers game.";
+  if (slotWinLabel) slotWinLabel.textContent = "Choose a Gas Gushers shelf.";
 }
 
 function closeSlotsLobby() {
@@ -1062,7 +1088,7 @@ async function openSlotGame(gameKey) {
   slotMachine?.classList.remove("is-hidden");
   slotsBack?.classList.remove("is-hidden");
   renderSlotReels(shuffleItems(game.symbols).slice(0, 5));
-  if (slotWinLabel) slotWinLabel.textContent = "Tap Spin to start.";
+  if (slotWinLabel) slotWinLabel.textContent = "Tap Open to start.";
   applySlotAdminControls({ forceDefault: true });
 }
 
@@ -1119,13 +1145,13 @@ async function spinSlotGame() {
   if (!applySlotAdminControls()) return;
   slotBalance = Number(currentPlayer.points) || 0;
   if (slotBalance < slotBet) {
-    if (slotWinLabel) slotWinLabel.textContent = "Not enough points. Lower your bet or ask admin to add points.";
+    if (slotWinLabel) slotWinLabel.textContent = "Not enough points. Lower your pick or ask admin to add points.";
     stopSlotAutoSpin();
     return;
   }
   slotIsSpinning = true;
   slotCurrentWin = 0;
-  if (slotWinLabel) slotWinLabel.textContent = "Reels rolling...";
+  if (slotWinLabel) slotWinLabel.textContent = "Opening shelf picks...";
   if (slotWinAmount) slotWinAmount.textContent = "0";
   slotBoard?.classList.remove("is-winning");
   if (slotSpinButton) {
@@ -1156,7 +1182,7 @@ async function spinSlotGame() {
           reel.classList.remove("is-spinning");
           reel.classList.add("just-stopped");
           // Render only this reel with final symbols
-          const reelSymbols = (grid[index] || ["SD","SD","SD"]).slice(0, 3);
+          const reelSymbols = (grid[index] || ["SODA","CHIPS","CANDY"]).slice(0, 3);
           reel.innerHTML = reelSymbols
             .map((symbol) => renderSymbolCell(symbol || "SD", false))
             .join("");
@@ -1173,7 +1199,7 @@ async function spinSlotGame() {
         slotCurrentWin = winAmt;
         if (slotWinLabel) {
           const bonusText = data.bonus?.amount ? ` (incl. ${formatPoints(data.bonus.amount)} bonus)` : "";
-          slotWinLabel.textContent = winAmt > 0 ? `WIN! ${formatPoints(winAmt)} points${bonusText}` : "No win. Spin again.";
+          slotWinLabel.textContent = winAmt > 0 ? `REWARD! ${formatPoints(winAmt)} points${bonusText}` : "Shelf reset. Try another pick.";
         }
         if (winAmt > 0) {
           animateCount(slotWinAmount, 0, winAmt, 1200);
@@ -1190,7 +1216,7 @@ async function spinSlotGame() {
           slotSpinButton.disabled = false;
           slotSpinButton.classList.remove("is-spinning");
           const txt = slotSpinButton.querySelector(".spin-button-text");
-          if (txt) txt.textContent = "SPIN";
+          if (txt) txt.textContent = "OPEN";
         }
         // Auto-spin continues
         if (slotAutoSpinning) {
@@ -1209,7 +1235,7 @@ async function spinSlotGame() {
       slotSpinButton.disabled = false;
       slotSpinButton.classList.remove("is-spinning");
       const txt = slotSpinButton.querySelector(".spin-button-text");
-      if (txt) txt.textContent = "SPIN";
+      if (txt) txt.textContent = "OPEN";
     }
     updateSlotUi();
   }
@@ -1255,7 +1281,7 @@ function openSpinModal(message = "") {
   if (spinResult) spinResult.textContent = message;
   if (spinButton) {
     spinButton.disabled = false;
-    spinButton.textContent = "Spin";
+    spinButton.textContent = "Reveal";
   }
   spinModal.classList.remove("is-hidden");
   spinModal.setAttribute("aria-hidden", "false");
@@ -1270,7 +1296,7 @@ function formatNextSpin(value) {
   if (!value) return "";
   const next = new Date(value);
   if (Number.isNaN(next.getTime())) return "";
-  return `Next spin opens ${next.toLocaleString()}.`;
+  return `Next reward opens ${next.toLocaleString()}.`;
 }
 
 async function maybeShowDailySpin() {
@@ -1278,7 +1304,7 @@ async function maybeShowDailySpin() {
   hasCheckedDailySpin = true;
   try {
     const data = await api("/api/player/spin-status");
-    if (data.eligible) openSpinModal("Your daily spin is ready.");
+    if (data.eligible) openSpinModal("Your daily reward is ready.");
   } catch {
     // Keep the page smooth if the spin status cannot load.
   }
@@ -1290,18 +1316,18 @@ async function openSpinForPlayer() {
     playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
-  openSpinModal("Checking your daily spin...");
+  openSpinModal("Checking your daily reward...");
   try {
     const data = await api("/api/player/spin-status");
     if (data.eligible) {
-      if (spinResult) spinResult.textContent = "Your daily spin is ready.";
+      if (spinResult) spinResult.textContent = "Your daily reward is ready.";
       return;
     }
     if (spinButton) {
       spinButton.disabled = true;
       spinButton.textContent = "Come Back Tomorrow";
     }
-    if (spinResult) spinResult.textContent = `Daily spin already used. ${formatNextSpin(data.nextSpinAt)}`;
+    if (spinResult) spinResult.textContent = `Daily reward already used. ${formatNextSpin(data.nextSpinAt)}`;
   } catch (error) {
     if (spinResult) spinResult.textContent = error.message;
   }
@@ -1329,8 +1355,8 @@ async function runSpinWheel() {
   }
   if (!spinButton || !spinWheel) return;
   spinButton.disabled = true;
-  spinButton.textContent = "Spinning...";
-  if (spinResult) spinResult.textContent = "Wheel is spinning. Good luck!";
+  spinButton.textContent = "Revealing...";
+  if (spinResult) spinResult.textContent = "Reward is revealing. Good luck!";
   try {
     const data = await api("/api/player/spin", { method: "POST", body: JSON.stringify({}) });
     spinWheel.classList.add("is-spinning");
@@ -1351,7 +1377,7 @@ async function runSpinWheel() {
   } catch (error) {
     if (spinResult) spinResult.textContent = `${error.message} ${formatNextSpin(error.nextSpinAt)}`.trim();
     spinButton.disabled = false;
-    spinButton.textContent = "Spin";
+    spinButton.textContent = "Reveal";
   }
 }
 

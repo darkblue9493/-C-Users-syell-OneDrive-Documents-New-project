@@ -212,7 +212,7 @@ const GAMES = {
   wildBuffalo: {
     rtpScale: 4.92,
     layout: "mascot-watermark",
-    title: "Wild Buffalos",
+    title: "Fountain Soda",
     tagline: "Stampede Across the Plains",
     theme: "buffalo",
     accent: "#ff8533",
@@ -243,7 +243,7 @@ const GAMES = {
   kingKong: {
     rtpScale: 3.43,
     layout: "mascot-top",
-    title: "King Kong",
+    title: "Hot Chips",
     tagline: "Roar on Top of the World",
     theme: "kingkong",
     accent: "#ff3030",
@@ -274,7 +274,7 @@ const GAMES = {
   triple777: {
     rtpScale: 0.361,
     layout: "classic-compact",
-    title: "Triple 777",
+    title: "Candy Aisle",
     tagline: "Classic Sevens, Classic Wins",
     theme: "triple777",
     accent: "#ff2540",
@@ -303,7 +303,7 @@ const GAMES = {
   blackjack: {
     rtpScale: 1.78,
     layout: "table-felt",
-    title: "Black Jack Slots",
+    title: "Cold Beer",
     tagline: "House Style, Slot Action",
     theme: "blackjack",
     accent: "#2dd55b",
@@ -334,7 +334,7 @@ const GAMES = {
   gorillaGold: {
     rtpScale: 2.78,
     layout: "mascot-watermark",
-    title: "Gorilla Gold",
+    title: "Coffee Run",
     tagline: "Find the Lost Temple Treasure",
     theme: "gorilla",
     accent: "#ffd200",
@@ -365,7 +365,7 @@ const GAMES = {
   goldWolf: {
     rtpScale: 3.12,
     layout: "mascot-watermark",
-    title: "Gold Wolf",
+    title: "Donut Box",
     tagline: "Howling Riches Under the Moon",
     theme: "wolf",
     accent: "#95e3ff",
@@ -396,7 +396,7 @@ const GAMES = {
   wildBull: {
     rtpScale: 0.385,
     layout: "classic-compact",
-    title: "Wild Bull",
+    title: "Beef Jerky",
     tagline: "Sheriff's 777 Showdown",
     theme: "bull",
     accent: "#ffd95e",
@@ -425,7 +425,7 @@ const GAMES = {
   dragonEmpress: {
     rtpScale: 2.93,
     layout: "mascot-watermark",
-    title: "Dragon Empress",
+    title: "Energy Drinks",
     tagline: "Lucky Lantern Fortune",
     theme: "dragon",
     accent: "#d4002a",
@@ -456,7 +456,7 @@ const GAMES = {
   mammothRush: {
     rtpScale: 2.63,
     layout: "mascot-watermark",
-    title: "Mammoth Rush",
+    title: "Ice Cream Cooler",
     tagline: "Stampede From the Ice Age",
     theme: "mammoth",
     accent: "#5dcef0",
@@ -487,7 +487,7 @@ const GAMES = {
   pharaoh: {
     rtpScale: 3.03,
     layout: "mascot-watermark",
-    title: "Pharaoh's Riches",
+    title: "Pretzel Rack",
     tagline: "Treasure of the Sand Kings",
     theme: "pharaoh",
     accent: "#f7c000",
@@ -518,7 +518,7 @@ const GAMES = {
   oceanTreasure: {
     rtpScale: 2.9,
     layout: "mascot-watermark",
-    title: "Ocean Treasure",
+    title: "Bottled Water",
     tagline: "Deep Sea Mega Wins",
     theme: "ocean",
     accent: "#00b4d8",
@@ -549,7 +549,7 @@ const GAMES = {
   vegas7s: {
     rtpScale: 0.439,
     layout: "classic-compact",
-    title: "Vegas 7s",
+    title: "Trail Mix",
     tagline: "Hot Neon Wins",
     theme: "vegas",
     accent: "#ff5fe5",
@@ -578,7 +578,7 @@ const GAMES = {
   luckyPanda: {
     rtpScale: 2.64,
     layout: "mascot-watermark",
-    title: "Lucky Panda 88",
+    title: "Gummy Bears",
     tagline: "Bamboo Fortune Awaits",
     theme: "panda88",
     accent: "#e8222e",
@@ -609,7 +609,7 @@ const GAMES = {
   lionsPride: {
     rtpScale: 2.65,
     layout: "mascot-watermark",
-    title: "Lion's Pride",
+    title: "Nacho Tray",
     tagline: "Roar of the Savanna",
     theme: "lion",
     accent: "#ff7530",
@@ -640,7 +640,7 @@ const GAMES = {
   piratesTreasure: {
     rtpScale: 2.63,
     layout: "mascot-top",
-    title: "Pirate's Treasure",
+    title: "Snack Cakes",
     tagline: "Plunder the Seas",
     theme: "pirate",
     accent: "#b88a3a",
@@ -671,7 +671,7 @@ const GAMES = {
   zeusThunder: {
     rtpScale: 2.61,
     layout: "mascot-watermark",
-    title: "Zeus Thunder",
+    title: "Sports Drinks",
     tagline: "Olympian Lightning",
     theme: "zeus",
     accent: "#2dd6f5",
@@ -702,7 +702,7 @@ const GAMES = {
   cleopatra: {
     rtpScale: 2.42,
     layout: "mascot-watermark",
-    title: "Cleopatra Diamonds",
+    title: "Chocolate Bars",
     tagline: "Queen of the Nile",
     theme: "cleopatra",
     accent: "#ffd200",
@@ -733,7 +733,7 @@ const GAMES = {
   frozenRiches: {
     rtpScale: 2.65,
     layout: "mascot-watermark",
-    title: "Frozen Riches",
+    title: "Slushie Cups",
     tagline: "Icy Cold Cash",
     theme: "arctic",
     accent: "#5dd0f5",
@@ -764,7 +764,7 @@ const GAMES = {
   galaxyStars: {
     rtpScale: 2.7,
     layout: "mascot-top",
-    title: "Galaxy Stars",
+    title: "Moon Pies",
     tagline: "Reach for the Cosmos",
     theme: "galaxy",
     accent: "#a78bff",
@@ -795,7 +795,7 @@ const GAMES = {
   fruitMania: {
     rtpScale: 0.363,
     layout: "classic-compact",
-    title: "Fruit Mania",
+    title: "Fruit Snacks",
     tagline: "Classic Fruit Frenzy",
     theme: "fruit",
     accent: "#ff5630",
@@ -824,7 +824,7 @@ const GAMES = {
   vikingGlory: {
     rtpScale: 2.77,
     layout: "mascot-top",
-    title: "Viking Glory",
+    title: "Corn Nuts",
     tagline: "Battle for Valhalla",
     theme: "viking",
     accent: "#4682b4",
@@ -855,7 +855,7 @@ const GAMES = {
   aztecEmpire: {
     rtpScale: 2.53,
     layout: "mascot-watermark",
-    title: "Aztec Empire",
+    title: "Taco Bites",
     tagline: "Lost City Riches",
     theme: "aztec",
     accent: "#2dd55b",
@@ -886,7 +886,7 @@ const GAMES = {
   halloweenHunt: {
     rtpScale: 2.77,
     layout: "mascot-watermark",
-    title: "Halloween Hunt",
+    title: "Sour Candy",
     tagline: "Trick or Treasure",
     theme: "halloween",
     accent: "#ff7530",
@@ -917,7 +917,7 @@ const GAMES = {
   luckyCharms: {
     rtpScale: 2.62,
     layout: "mascot-watermark",
-    title: "Lucky Charms",
+    title: "Breakfast Bars",
     tagline: "Find the Pot of Gold",
     theme: "irish",
     accent: "#2dd55b",
@@ -971,24 +971,60 @@ Object.assign(SVG, {
   MILK_JUG: '<svg viewBox="0 0 60 60"><path d="M21 7 h18 l5 11 v35 H16 V18Z" fill="#f8fafc" stroke="#60a5fa" stroke-width="2.5"/><path d="M21 7 l-5 11 h28 L39 7" fill="#dbeafe" stroke="#60a5fa" stroke-width="2"/><text x="30" y="39" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#2563eb">MILK</text></svg>',
   BREAD_LOAF: '<svg viewBox="0 0 60 60"><path d="M12 30 C12 17 20 8 30 8 s18 9 18 22 v20 H12Z" fill="#d97706" stroke="#fed7aa" stroke-width="2.5"/><path d="M21 24 c5 3 13 3 18 0" fill="none" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/></svg>',
   GROCERY_BAG: '<svg viewBox="0 0 60 60"><path d="M15 21 h30 l-3 34 H18Z" fill="#facc15" stroke="#92400e" stroke-width="2.5"/><path d="M23 21 c0-10 14-10 14 0" fill="none" stroke="#92400e" stroke-width="3"/><circle cx="24" cy="36" r="3" fill="#ef4444"/><circle cx="35" cy="40" r="3" fill="#22c55e"/></svg>',
+  SODA_CUP: '<svg viewBox="0 0 60 60"><path d="M21 7 h20 l-4 47 H17Z" fill="#ef4444" stroke="#fecaca" stroke-width="2.5"/><path d="M24 7 h20" stroke="#facc15" stroke-width="3"/><path d="M30 7 l7-5 h9" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/><text x="29" y="37" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#fff">POP</text></svg>',
+  CHIP_BAG: '<svg viewBox="0 0 60 60"><path d="M16 7 h30 l-4 47 H18Z" fill="#f97316" stroke="#fed7aa" stroke-width="2.5"/><path d="M20 22 h20" stroke="#fff7ed" stroke-width="3"/><text x="30" y="40" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#fff">CHIP</text></svg>',
+  CANDY_WRAP: '<svg viewBox="0 0 60 60"><path d="M12 28 l10-8 h16 l10 8 l-10 8 H22Z" fill="#ec4899" stroke="#fbcfe8" stroke-width="2.5"/><path d="M12 28 l-8-7 v14Z M48 28 l8-7 v14Z" fill="#a855f7" stroke="#f5d0fe" stroke-width="2"/></svg>',
+  BEER_CAN: '<svg viewBox="0 0 60 60"><rect x="18" y="10" width="25" height="42" rx="5" fill="#f59e0b" stroke="#fef3c7" stroke-width="2.5"/><path d="M43 20 h6 c6 0 6 15 0 15 h-6" fill="none" stroke="#fef3c7" stroke-width="3"/><path d="M18 12 c5-7 17-7 25 0" fill="#fff" stroke="#fff" stroke-width="3"/></svg>',
+  COFFEE_CUP: '<svg viewBox="0 0 60 60"><path d="M18 20 h26 l-3 34 H21Z" fill="#7c2d12" stroke="#fed7aa" stroke-width="2.5"/><path d="M17 20 h28 l-3-8 H20Z" fill="#fef3c7" stroke="#fed7aa" stroke-width="2"/><text x="31" y="39" text-anchor="middle" font-family="Arial Black" font-size="9" fill="#fff">HOT</text></svg>',
+  DONUT_RING: '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="21" fill="#f9a8d4" stroke="#be185d" stroke-width="2.5"/><circle cx="30" cy="30" r="8" fill="#2a1207"/><circle cx="23" cy="22" r="2" fill="#fff"/><circle cx="38" cy="24" r="2" fill="#facc15"/><circle cx="37" cy="39" r="2" fill="#38bdf8"/></svg>',
+  JERKY_BAG: '<svg viewBox="0 0 60 60"><path d="M21 7 h24 l-6 47 H15Z" fill="#991b1b" stroke="#fecaca" stroke-width="2.5"/><text x="30" y="35" text-anchor="middle" font-family="Arial Black" font-size="9" fill="#fff">JERKY</text></svg>',
+  WATER_BOTTLE: '<svg viewBox="0 0 60 60"><path d="M24 7 h12 l3 10 v31 c0 4-3 6-9 6 s-9-2-9-6 V17Z" fill="#dbeafe" stroke="#38bdf8" stroke-width="2.5"/><path d="M21 29 h18 v12 H21Z" fill="#60a5fa"/><text x="30" y="38" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#fff">H2O</text></svg>',
 });
 
 const TEMP_GAS_GROCERY_ARCADE_SYMBOLS = {
-  WILD:    { ...svgSym("GAS_GUSHER","WILD GAS"), weight: 3, pay: [0,0,0,80,180,750], wild: true },
-  SCATTER: { ...svgSym("GROCERY_BAG","BONUS BAG"), weight: 2, pay: [0,0,0,5,25,150], scatter: true },
-  PUMP:    { ...svgSym("GAS_PUMP","PUMP"), weight: 6, pay: [0,0,0,40,100,400] },
-  OIL:     { ...svgSym("OIL_DROP","OIL"), weight: 8, pay: [0,0,0,25,70,275] },
-  CAR:     { ...svgSym("CAR_FILL","FILL UP"), weight: 10, pay: [0,0,0,18,50,175] },
-  CART:    { ...svgSym("GROCERY_CART","CART"), weight: 11, pay: [0,0,0,12,35,125] },
-  MILK:    { ...svgSym("MILK_JUG","MILK"), weight: 14, pay: [0,0,0,8,20,75] },
-  BREAD:   { ...svgSym("BREAD_LOAF","BREAD"), weight: 14, pay: [0,0,0,6,18,65] },
-  BAG:     { ...svgSym("GROCERY_BAG","BAG"), weight: 16, pay: [0,0,0,4,12,45] },
+  SODA:    { ...svgSym("SODA_CUP","SODA"), weight: 3, pay: [0,0,0,80,180,750], wild: true },
+  GRAB:    { ...svgSym("GROCERY_BAG","GRAB BAG"), weight: 2, pay: [0,0,0,5,25,150], scatter: true },
+  CHIPS:   { ...svgSym("CHIP_BAG","CHIPS"), weight: 6, pay: [0,0,0,40,100,400] },
+  CANDY:   { ...svgSym("CANDY_WRAP","CANDY"), weight: 8, pay: [0,0,0,25,70,275] },
+  BEER:    { ...svgSym("BEER_CAN","BEER"), weight: 10, pay: [0,0,0,18,50,175] },
+  COFFEE:  { ...svgSym("COFFEE_CUP","COFFEE"), weight: 11, pay: [0,0,0,12,35,125] },
+  DONUT:   { ...svgSym("DONUT_RING","DONUT"), weight: 14, pay: [0,0,0,8,20,75] },
+  JERKY:   { ...svgSym("JERKY_BAG","JERKY"), weight: 14, pay: [0,0,0,6,18,65] },
+  WATER:   { ...svgSym("WATER_BOTTLE","WATER"), weight: 16, pay: [0,0,0,4,12,45] },
 };
 
-Object.values(GAMES).forEach((game) => {
+const TEMP_GAS_STATION_ARCADE_TITLES = {
+  wildBuffalo: "Fountain Soda",
+  kingKong: "Hot Chips",
+  triple777: "Candy Aisle",
+  blackjack: "Cold Beer",
+  gorillaGold: "Coffee Run",
+  goldWolf: "Donut Box",
+  wildBull: "Beef Jerky",
+  dragonEmpress: "Energy Drinks",
+  mammothRush: "Ice Cream Cooler",
+  pharaoh: "Pretzel Rack",
+  oceanTreasure: "Bottled Water",
+  vegas7s: "Trail Mix",
+  luckyPanda: "Gummy Bears",
+  lionsPride: "Nacho Tray",
+  piratesTreasure: "Snack Cakes",
+  zeusThunder: "Sports Drinks",
+  cleopatra: "Chocolate Bars",
+  frozenRiches: "Slushie Cups",
+  galaxyStars: "Moon Pies",
+  fruitMania: "Fruit Snacks",
+  vikingGlory: "Corn Nuts",
+  aztecEmpire: "Taco Bites",
+  halloweenHunt: "Sour Candy",
+  luckyCharms: "Breakfast Bars",
+};
+
+Object.entries(GAMES).forEach(([key, game]) => {
+  game.title = TEMP_GAS_STATION_ARCADE_TITLES[key] || game.title;
   game.symbols = TEMP_GAS_GROCERY_ARCADE_SYMBOLS;
-  game.paytableOrder = ["WILD","PUMP","OIL","CAR","CART","MILK","BREAD","SCATTER"];
-  game.tagline = "Gas pumps and grocery runs";
+  game.paytableOrder = ["SODA","CHIPS","CANDY","BEER","COFFEE","DONUT","JERKY","GRAB"];
+  game.tagline = "Gas station snacks and cooler picks";
 });
 
 const MUSIC_PROFILES = {
@@ -1028,7 +1064,7 @@ function simpleRowPaylines(reels, rows) {
 
 Object.values(GAMES).forEach((game) => {
   game.paylines = simpleRowPaylines(game.reels, game.rows);
-  game.matchStyle = "Row Match";
+  game.matchStyle = "Shelf Match";
 });
 
 // Order in which to show games in the lobby
@@ -1558,12 +1594,12 @@ const NEW_GAMES = new Set(["gorillaGold", "mammothRush", "oceanTreasure"]);
 const HOT_GAMES = new Set(["triple777", "vegas7s", "pharaoh"]);
 const TABLE_GAMES = new Set(["blackjack"]);
 const GAME_CATEGORIES = {
-  wildBuffalo: "HOT", kingKong: "HOT", triple777: "CLASSIC", blackjack: "TABLE",
-  gorillaGold: "NEW", goldWolf: "WILD", wildBull: "CLASSIC", dragonEmpress: "HOT",
-  mammothRush: "NEW", pharaoh: "TREASURE", oceanTreasure: "NEW", vegas7s: "HOT",
-  luckyPanda: "LUCKY", lionsPride: "WILD", piratesTreasure: "TREASURE", zeusThunder: "MYTH",
-  cleopatra: "TREASURE", frozenRiches: "COOL", galaxyStars: "SPACE", fruitMania: "CLASSIC",
-  vikingGlory: "MYTH", aztecEmpire: "TREASURE", halloweenHunt: "BONUS", luckyCharms: "LUCKY",
+  wildBuffalo: "DRINK", kingKong: "CHIPS", triple777: "CANDY", blackjack: "COOLER",
+  gorillaGold: "COFFEE", goldWolf: "BAKERY", wildBull: "JERKY", dragonEmpress: "DRINK",
+  mammothRush: "FROZEN", pharaoh: "SNACK", oceanTreasure: "WATER", vegas7s: "MIX",
+  luckyPanda: "CANDY", lionsPride: "HOT FOOD", piratesTreasure: "CAKES", zeusThunder: "DRINK",
+  cleopatra: "CANDY", frozenRiches: "SLUSHIE", galaxyStars: "CAKES", fruitMania: "FRUIT",
+  vikingGlory: "SNACK", aztecEmpire: "HOT FOOD", halloweenHunt: "SOUR", luckyCharms: "BREAKFAST",
 };
 
 function renderLobby() {
@@ -1596,15 +1632,15 @@ function renderLobby() {
         <div class="tile-info">
           <strong>${game.title}</strong>
           <span>${game.tagline}</span>
-          <small>${GAME_CATEGORIES[key] || "SLOT"} - ${game.matchStyle || "Row Match"}</small>
+          <small>${GAME_CATEGORIES[key] || "SHELF"} - ${game.matchStyle || "Shelf Match"}</small>
         </div>
         <div class="tile-play">
           <span class="play-icon">▶</span>
-          <span class="play-text">${enabled ? "PLAY NOW" : "OFFLINE"}</span>
+          <span class="play-text">${enabled ? "OPEN" : "OFFLINE"}</span>
         </div>
       </button>
     `;
-  }).join("") || '<p class="lobby-empty">No games in this section right now.</p>';
+  }).join("") || '<p class="lobby-empty">No shelves in this section right now.</p>';
   // Apply real images (PNG) if available - SVG is fallback
   visibleGames.forEach((key) => {
     const tile = lobby.querySelector(`[data-game="${key}"]`);
@@ -1635,7 +1671,7 @@ async function renderGameView(gameKey) {
     $("[data-game-view]").classList.remove("hidden");
     $("[data-back-button]").classList.remove("hidden");
     showMaintenanceOverlay();
-    setWinMessage("This game is currently turned off by admin.");
+    setWinMessage("This shelf is currently turned off by admin.");
     return;
   }
   State.activeGame = gameKey;
@@ -1736,7 +1772,7 @@ async function renderGameView(gameKey) {
     applyAdminGameControls(gameKey);
     if (!isAdminGameEnabled(gameKey)) {
       showMaintenanceOverlay();
-      setWinMessage("This game is currently turned off by admin.");
+      setWinMessage("This shelf is currently turned off by admin.");
     }
   });
 }
@@ -1906,7 +1942,7 @@ async function spinGame() {
   }
   clampBetToAdmin(State.activeGame);
   if (State.credits < State.bet) {
-    flashMessage("Not enough South Diamond points for this game's admin bet limit.");
+    flashMessage("Not enough South Diamond points for this shelf's admin point limit.");
     stopAutoSpin();
     return;
   }
@@ -1925,7 +1961,7 @@ async function spinGame() {
   State.spinCount++;
   incrementJackpots(State.bet);
   updateDisplays();
-  setWinMessage("Reels rolling...");
+  setWinMessage("Opening shelf picks...");
   $("[data-win-amount]").textContent = "0.00";
   $("[data-reel-strip]").classList.remove("is-winning");
   hideWinBurst();
@@ -1968,7 +2004,7 @@ async function spinGame() {
       spinButton.classList.remove("is-spinning");
       spinButton.disabled = false;
     }
-    flashMessage(error.message || "Spin could not be saved. Try again.");
+    flashMessage(error.message || "Shelf pick could not be saved. Try again.");
     stopAutoSpin();
     return;
   }
@@ -2008,25 +2044,25 @@ async function spinGame() {
       await showAnticipation(result.jpHit, 2500);
       showJackpotBurst(result.jpHit, result.totalPay);
       Audio.jackpot();
-      setWinMessage(`${result.jpHit.toUpperCase()} JACKPOT! +${fmt(result.totalPay)}`);
+      setWinMessage(`${rewardLevelName(result.jpHit).toUpperCase()} REWARD! +${fmt(result.totalPay)}`);
     } else if (isMega) {
       await showAnticipation("mega", 1500);
       showWinBurst(result.totalPay, true, true);
       Audio.win(true);
-      setWinMessage(`MEGA WIN! +${fmt(result.totalPay)}`);
+      setWinMessage(`MEGA REWARD! +${fmt(result.totalPay)}`);
     } else if (isBig) {
       await showAnticipation("big", 900);
       showWinBurst(result.totalPay, true, false);
       Audio.win(true);
-      setWinMessage(`BIG WIN! +${fmt(result.totalPay)}`);
+      setWinMessage(`BIG REWARD! +${fmt(result.totalPay)}`);
     } else {
       showWinBurst(result.totalPay, false, false);
       Audio.win(false);
-      setWinMessage(`Win! +${fmt(result.totalPay)}`);
+      setWinMessage(`Reward! +${fmt(result.totalPay)}`);
     }
     animateCounter($("[data-win-amount]"), 0, result.totalPay, 1200);
   } else {
-    setWinMessage("Good luck! Try again.");
+    setWinMessage("Shelf reset. Try another pick.");
   }
 
   updateDisplays();
@@ -2083,8 +2119,8 @@ function showWinBurst(amount, isBig, isMega) {
   if (!burst) return;
   burst.classList.remove("hidden", "mega");
   if (isMega) burst.classList.add("mega");
-  $("[data-burst-amount]").innerHTML = isMega ? `MEGA WIN<br><span>+${fmt(amount)}</span>` :
-                                          isBig ? `BIG WIN<br><span>+${fmt(amount)}</span>` :
+  $("[data-burst-amount]").innerHTML = isMega ? `MEGA REWARD<br><span>+${fmt(amount)}</span>` :
+                                          isBig ? `BIG REWARD<br><span>+${fmt(amount)}</span>` :
                                                   `+${fmt(amount)}`;
   const coinBox = $("[data-coin-box]");
   if (coinBox) {
@@ -2108,9 +2144,13 @@ function showJackpotBurst(level, amount) {
   if (!burst) return;
   burst.classList.remove("hidden");
   burst.dataset.level = level;
-  $("[data-jp-burst-level]").textContent = level.toUpperCase() + " JACKPOT";
+  $("[data-jp-burst-level]").textContent = rewardLevelName(level).toUpperCase() + " REWARD";
   $("[data-jp-burst-amount]").textContent = "$" + fmt(amount);
   setTimeout(() => burst.classList.add("hidden"), 4000);
+}
+
+function rewardLevelName(level) {
+  return ({ grand: "Family Pack", major: "Snack Run", minor: "Cooler Pick", mini: "Quick Treat" })[level] || String(level || "Shelf");
 }
 
 function hideWinBurst() {
@@ -2130,12 +2170,12 @@ function showAnticipation(level, durationMs) {
     overlay.dataset.level = level;
     const txt = $("[data-anticipation-text]");
     if (txt) {
-      if (level === "grand")      txt.textContent = "GRAND JACKPOT INCOMING!";
-      else if (level === "major") txt.textContent = "MAJOR PRIZE INCOMING!";
-      else if (level === "minor") txt.textContent = "MINOR PRIZE INCOMING!";
-      else if (level === "mini")  txt.textContent = "MINI PRIZE INCOMING!";
-      else if (level === "mega")  txt.textContent = "MEGA WIN INCOMING!";
-      else                         txt.textContent = "BIG WIN INCOMING!";
+      if (level === "grand")      txt.textContent = "FAMILY PACK REWARD INCOMING!";
+      else if (level === "major") txt.textContent = "SNACK RUN REWARD INCOMING!";
+      else if (level === "minor") txt.textContent = "COOLER PICK REWARD INCOMING!";
+      else if (level === "mini")  txt.textContent = "QUICK TREAT REWARD INCOMING!";
+      else if (level === "mega")  txt.textContent = "MEGA REWARD INCOMING!";
+      else                         txt.textContent = "BIG REWARD INCOMING!";
     }
     // Drumroll: rising tone build-up
     if (Audio.ensure()) {
@@ -2175,15 +2215,15 @@ function openPaytableModal() {
   const modal = $("[data-paytable-modal]");
   if (!modal || !State.activeGame) return;
   const game = GAMES[State.activeGame];
-  $("[data-ptm-title]").textContent = game.title + " - Paytable";
-  $("[data-ptm-info]").textContent = `${game.tagline} - wins are simple left-to-right row matches.`;
+  $("[data-ptm-title]").textContent = game.title + " - Item Guide";
+  $("[data-ptm-info]").textContent = `${game.tagline} - rewards are simple left-to-right shelf matches.`;
   const grid = $("[data-ptm-symbols]");
   const allSymbols = Object.keys(game.symbols).sort((a, b) => Math.max(...game.symbols[b].pay) - Math.max(...game.symbols[a].pay));
   grid.innerHTML = allSymbols.map((symKey) => {
     const sym = game.symbols[symKey];
     const iconHtml = paytableIconHtml(sym, symKey);
     const pays = sym.pay || [];
-    const tier = sym.wild ? "WILD" : sym.scatter ? "BONUS" : "";
+    const tier = sym.wild ? "FEATURED" : sym.scatter ? "GRAB BAG" : "";
     return `
       <div class="ptm-symbol-row ${sym.wild ? "is-wild" : ""} ${sym.scatter ? "is-scatter" : ""}">
         <div class="ptm-sym-icon">${iconHtml}</div>
