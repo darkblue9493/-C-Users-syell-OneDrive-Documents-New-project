@@ -1,5 +1,5 @@
 /* ============================================================
- * SOUTH DIAMOND SLOTS ARCADE - Engine + 24 Games
+ * GAS GUSHERS ARCADE - Engine + 24 Games
  * ============================================================
  * Self-contained slot engine with:
  *   - 24 distinct themed games
@@ -962,6 +962,35 @@ Object.assign(GAMES.wildBuffalo, {
   paytableOrder: ["WILD","BUFFALO","EAGLE","WOLF","MESA","SCATTER","A","K"],
 });
 
+Object.assign(SVG, {
+  GAS_GUSHER: '<svg viewBox="0 0 60 60"><rect x="14" y="7" width="24" height="46" rx="5" fill="#ef4444" stroke="#fff7ed" stroke-width="2.5"/><rect x="18" y="12" width="16" height="12" rx="2" fill="#dbeafe"/><path d="M38 16 h6 v24 c0 4 6 4 6 0 v-14" fill="none" stroke="#facc15" stroke-width="4" stroke-linecap="round"/><text x="26" y="44" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#fff">GAS</text></svg>',
+  GAS_PUMP: '<svg viewBox="0 0 60 60"><rect x="12" y="8" width="30" height="44" rx="6" fill="#2563eb" stroke="#bfdbfe" stroke-width="2.5"/><rect x="18" y="14" width="18" height="14" rx="2" fill="#dbeafe"/><circle cx="27" cy="39" r="6" fill="#facc15"/><path d="M42 18 c6 2 8 6 8 13 v16" fill="none" stroke="#93c5fd" stroke-width="3.5" stroke-linecap="round"/></svg>',
+  OIL_DROP: '<svg viewBox="0 0 60 60"><path d="M30 5 C19 20 13 31 13 41 c0 9 8 15 17 15 s17-6 17-15 C47 31 41 20 30 5Z" fill="#111827" stroke="#facc15" stroke-width="3"/><path d="M24 42 c2 5 7 8 13 6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
+  CAR_FILL: '<svg viewBox="0 0 60 60"><path d="M9 34 l7-15 h28 l7 15 v13 h-7 v-5 H16 v5 H9Z" fill="#22c55e" stroke="#dcfce7" stroke-width="2.5"/><circle cx="19" cy="43" r="5" fill="#111827"/><circle cx="41" cy="43" r="5" fill="#111827"/><path d="M19 21 h22 l4 10 H15Z" fill="#bbf7d0"/></svg>',
+  GROCERY_CART: '<svg viewBox="0 0 60 60"><path d="M8 11 h7 l6 27 h24 l7-20 H20" fill="none" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="49" r="4.5" fill="#38bdf8"/><circle cx="43" cy="49" r="4.5" fill="#38bdf8"/></svg>',
+  MILK_JUG: '<svg viewBox="0 0 60 60"><path d="M21 7 h18 l5 11 v35 H16 V18Z" fill="#f8fafc" stroke="#60a5fa" stroke-width="2.5"/><path d="M21 7 l-5 11 h28 L39 7" fill="#dbeafe" stroke="#60a5fa" stroke-width="2"/><text x="30" y="39" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#2563eb">MILK</text></svg>',
+  BREAD_LOAF: '<svg viewBox="0 0 60 60"><path d="M12 30 C12 17 20 8 30 8 s18 9 18 22 v20 H12Z" fill="#d97706" stroke="#fed7aa" stroke-width="2.5"/><path d="M21 24 c5 3 13 3 18 0" fill="none" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/></svg>',
+  GROCERY_BAG: '<svg viewBox="0 0 60 60"><path d="M15 21 h30 l-3 34 H18Z" fill="#facc15" stroke="#92400e" stroke-width="2.5"/><path d="M23 21 c0-10 14-10 14 0" fill="none" stroke="#92400e" stroke-width="3"/><circle cx="24" cy="36" r="3" fill="#ef4444"/><circle cx="35" cy="40" r="3" fill="#22c55e"/></svg>',
+});
+
+const TEMP_GAS_GROCERY_ARCADE_SYMBOLS = {
+  WILD:    { ...svgSym("GAS_GUSHER","WILD GAS"), weight: 3, pay: [0,0,0,80,180,750], wild: true },
+  SCATTER: { ...svgSym("GROCERY_BAG","BONUS BAG"), weight: 2, pay: [0,0,0,5,25,150], scatter: true },
+  PUMP:    { ...svgSym("GAS_PUMP","PUMP"), weight: 6, pay: [0,0,0,40,100,400] },
+  OIL:     { ...svgSym("OIL_DROP","OIL"), weight: 8, pay: [0,0,0,25,70,275] },
+  CAR:     { ...svgSym("CAR_FILL","FILL UP"), weight: 10, pay: [0,0,0,18,50,175] },
+  CART:    { ...svgSym("GROCERY_CART","CART"), weight: 11, pay: [0,0,0,12,35,125] },
+  MILK:    { ...svgSym("MILK_JUG","MILK"), weight: 14, pay: [0,0,0,8,20,75] },
+  BREAD:   { ...svgSym("BREAD_LOAF","BREAD"), weight: 14, pay: [0,0,0,6,18,65] },
+  BAG:     { ...svgSym("GROCERY_BAG","BAG"), weight: 16, pay: [0,0,0,4,12,45] },
+};
+
+Object.values(GAMES).forEach((game) => {
+  game.symbols = TEMP_GAS_GROCERY_ARCADE_SYMBOLS;
+  game.paytableOrder = ["WILD","PUMP","OIL","CAR","CART","MILK","BREAD","SCATTER"];
+  game.tagline = "Gas pumps and grocery runs";
+});
+
 const MUSIC_PROFILES = {
   wildBuffalo:     { volume: 0.12, bassVolume: 0.11, harmonyVolume: 0.05, wave: "sawtooth", bassWave: "square",   pattern: [0,2,4,2,5,4,2,0], bassPattern: [0,0,3,0], harmonyEvery: 4 },
   kingKong:        { volume: 0.13, bassVolume: 0.13, harmonyVolume: 0.04, wave: "square",   bassWave: "sawtooth", pattern: [0,0,2,1,3,2,5,3], bassPattern: [0,0,0,2], harmonyEvery: 6 },
@@ -1127,7 +1156,7 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
     State.player = null;
     State.credits = 0;
     updateDisplays();
-    flashMessage("Log in to your South Diamond account to play slots.");
+    flashMessage("Log in to your South Diamond account to play Gas Gushers.");
     if (redirectOnFail) {
       window.setTimeout(() => {
         window.location.href = "/#signup";

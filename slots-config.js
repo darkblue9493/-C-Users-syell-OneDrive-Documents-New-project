@@ -1,5 +1,5 @@
 /* ============================================================
- * SOUTH DIAMOND SLOTS CONFIG - Shared by admin + arcade
+ * GAS GUSHERS CONFIG - Shared by admin + arcade
  * ============================================================
  * - Stored on the server so admin writes and arcade/player pages read
  * - localStorage remains only as a same-browser fallback

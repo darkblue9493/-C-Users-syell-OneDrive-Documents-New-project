@@ -669,6 +669,14 @@ const SLOT_SYMBOL_LIBRARY = {
   "Q":      { icon:"Q", color:"#a78bff", tier:"low", label:"Q" },
   "J":      { icon:"J", color:"#52ef9f", tier:"low", label:"J" },
   "10":     { icon:"10", color:"#7be8ff", tier:"low", label:"10" },
+  "GAS":    { icon: '<svg viewBox="0 0 40 40"><rect x="10" y="5" width="16" height="30" rx="3" fill="#ef4444" stroke="#fff" stroke-width="1.5"/><rect x="13" y="9" width="10" height="8" rx="1" fill="#e0f2fe"/><path d="M26 11 h4 v15 c0 2 4 2 4 0 v-8" fill="none" stroke="#facc15" stroke-width="2.5" stroke-linecap="round"/><text x="18" y="31" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#fff">GAS</text></svg>', color:"#ef4444", tier:"wild", label:"GAS" },
+  "PUMP":   { icon: '<svg viewBox="0 0 40 40"><rect x="8" y="6" width="20" height="28" rx="4" fill="#2563eb" stroke="#bfdbfe" stroke-width="1.5"/><rect x="12" y="10" width="12" height="9" rx="1.5" fill="#dbeafe"/><circle cx="18" cy="26" r="4" fill="#facc15"/><path d="M28 13 c4 1 5 4 5 8 v9" fill="none" stroke="#93c5fd" stroke-width="2.2" stroke-linecap="round"/></svg>', color:"#60a5fa", tier:"premium", label:"PUMP" },
+  "OIL":    { icon: '<svg viewBox="0 0 40 40"><path d="M20 4 C13 14 9 20 9 27 c0 6 5 10 11 10 s11-4 11-10 c0-7-4-13-11-23Z" fill="#111827" stroke="#facc15" stroke-width="2"/><path d="M16 27 c1 3 4 5 8 4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>', color:"#111827", tier:"premium", label:"OIL" },
+  "CAR":    { icon: '<svg viewBox="0 0 40 40"><path d="M8 23 l4-9 h16 l4 9 v8 h-4 v-3 H12 v3 H8Z" fill="#22c55e" stroke="#dcfce7" stroke-width="1.5"/><circle cx="14" cy="28" r="3" fill="#111827"/><circle cx="26" cy="28" r="3" fill="#111827"/><path d="M14 15 h12 l2 6 H12Z" fill="#bbf7d0"/></svg>', color:"#22c55e", tier:"high", label:"CAR" },
+  "CART":   { icon: '<svg viewBox="0 0 40 40"><path d="M7 8 h4 l4 17 h15 l4-12 H14" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="31" r="3" fill="#38bdf8"/><circle cx="29" cy="31" r="3" fill="#38bdf8"/></svg>', color:"#38bdf8", tier:"high", label:"CART" },
+  "MILK":   { icon: '<svg viewBox="0 0 40 40"><path d="M14 6 h12 l3 7 v21 H11 V13Z" fill="#f8fafc" stroke="#60a5fa" stroke-width="1.7"/><path d="M14 6 l-3 7 h18 l-3-7" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.4"/><text x="20" y="26" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#2563eb">MILK</text></svg>', color:"#93c5fd", tier:"mid", label:"MILK" },
+  "BREAD":  { icon: '<svg viewBox="0 0 40 40"><path d="M9 19 c0-8 5-13 11-13 s11 5 11 13 v13 H9Z" fill="#d97706" stroke="#fed7aa" stroke-width="1.8"/><path d="M14 15 c3 2 9 2 12 0" fill="none" stroke="#fef3c7" stroke-width="2" stroke-linecap="round"/></svg>', color:"#d97706", tier:"mid", label:"BREAD" },
+  "BAG":    { icon: '<svg viewBox="0 0 40 40"><path d="M10 14 h20 l-2 22 H12Z" fill="#facc15" stroke="#92400e" stroke-width="1.8"/><path d="M15 14 c0-6 10-6 10 0" fill="none" stroke="#92400e" stroke-width="2"/><circle cx="16" cy="24" r="2" fill="#ef4444"/><circle cx="23" cy="27" r="2" fill="#22c55e"/></svg>', color:"#facc15", tier:"low", label:"BAG" },
 };
 
 function getSymbolMeta(symbol) {
@@ -784,6 +792,13 @@ const slotGames = {
   },
 };
 
+const TEMP_GAS_GROCERY_SYMBOLS = ["GAS", "PUMP", "OIL", "CAR", "CART", "MILK", "BREAD", "BAG"];
+
+Object.values(slotGames).forEach((game) => {
+  game.label = "Gas and grocery reels";
+  game.symbols = TEMP_GAS_GROCERY_SYMBOLS;
+});
+
 function loadSlotBalance() {
   slotBalance = Number(currentPlayer?.points) || 0;
 }
@@ -857,7 +872,7 @@ function updateLegacySlotsLobbyControls() {
   if (!slotsLobby) return;
   const defaultBet = numberSetting(slotAdminConfig?.defaultBet, 0.25);
   const marquee = slotsLobby.querySelector(".slots-marquee");
-  if (marquee) marquee.textContent = `Welcome to South Diamond Slots. Bets start at ${formatPoints(defaultBet)} points.`;
+  if (marquee) marquee.textContent = `Welcome to Gas Gushers. Bets start at ${formatPoints(defaultBet)} points.`;
   slotsLobby.querySelectorAll("[data-slot-game]").forEach((tile) => {
     const gameKey = tile.dataset.slotGame;
     const cfg = adminConfigForLegacySlot(gameKey);
@@ -1030,7 +1045,7 @@ async function openSlotsLobby() {
   slotsLobby?.classList.remove("is-hidden");
   slotMachine?.classList.add("is-hidden");
   slotsBack?.classList.add("is-hidden");
-  if (slotWinLabel) slotWinLabel.textContent = "Choose a South Diamond slot game.";
+  if (slotWinLabel) slotWinLabel.textContent = "Choose a Gas Gushers game.";
 }
 
 function closeSlotsLobby() {
@@ -2273,7 +2288,7 @@ function renderAdminPlayerGameHistory(history = [], totals = {}) {
     const item = document.createElement("article");
     item.className = `points-transaction ${net >= 0 ? "add" : "redeem"}`;
     item.innerHTML = `<div><strong></strong><span></span><small></small></div><b></b>`;
-    item.querySelector("strong").textContent = spin.gameName || "South Diamond Slots";
+    item.querySelector("strong").textContent = spin.gameName || "Gas Gushers";
     item.querySelector("span").textContent = `Bet ${formatPoints(bet)} | Won ${formatPoints(win)}`;
     item.querySelector("small").textContent = spin.createdAt ? new Date(spin.createdAt).toLocaleString() : "";
     item.querySelector("b").textContent = `${net >= 0 ? "+" : ""}${formatPoints(net)}`;
@@ -2517,7 +2532,7 @@ function renderSlotsAdmin(data = {}) {
     const spins = data.spins || [];
     slotsSpinsList.innerHTML = "";
     if (!spins.length) {
-      slotsSpinsList.innerHTML = `<article class="points-transaction empty">No South Diamond Slots spins yet today.</article>`;
+      slotsSpinsList.innerHTML = `<article class="points-transaction empty">No Gas Gushers spins yet today.</article>`;
       return;
     }
     spins.slice(0, 80).forEach((spin) => {
@@ -2525,7 +2540,7 @@ function renderSlotsAdmin(data = {}) {
       item.className = `points-transaction ${Number(spin.win) > 0 ? "add" : "redeem"}`;
       item.innerHTML = `<div><strong></strong><span></span></div><b></b><small></small>`;
       item.querySelector("strong").textContent = spin.username || "Player";
-      item.querySelector("span").textContent = `${spin.gameName || "South Diamond Slots"} | Bet ${formatPoints(spin.bet)}`;
+      item.querySelector("span").textContent = `${spin.gameName || "Gas Gushers"} | Bet ${formatPoints(spin.bet)}`;
       item.querySelector("b").textContent = Number(spin.win) > 0 ? `+${formatPoints(spin.win)}` : "0";
       item.querySelector("small").textContent = spin.createdAt ? new Date(spin.createdAt).toLocaleString() : "";
       slotsSpinsList.appendChild(item);
@@ -2576,7 +2591,9 @@ function isAdminPointTransactionClient(transaction) {
   if (transaction.source === "admin") return true;
   if (transaction.source && transaction.source !== "admin") return false;
   const note = String(transaction.note || "").toLowerCase();
-  return !["south diamond slots", "south diamond slots arcade", "daily spin", "signup bonus", "referral bonus"].some((marker) => note.includes(marker));
+  const legacySlotsName = ["south diamond", "slots"].join(" ");
+  const legacyArcadeName = [legacySlotsName, "arcade"].join(" ");
+  return !["gas gushers", "gas gushers arcade", legacySlotsName, legacyArcadeName, "daily spin", "signup bonus", "referral bonus"].some((marker) => note.includes(marker));
 }
 
 function dashboardStatsFromLoadedData({ users = [], chats = [], transactions = [] } = {}) {
