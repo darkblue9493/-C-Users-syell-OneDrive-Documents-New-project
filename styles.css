@@ -197,8 +197,7 @@ body {
 
 .admin-body .admin-nav button:hover,
 .admin-body .admin-nav button.is-active,
-.admin-body .admin-nav a:hover,
-.admin-body .admin-nav a.is-active {
+.admin-body .admin-nav a:hover {
   color: #ffe600;
   background: rgba(255, 214, 64, 0.11);
 }
@@ -278,15 +277,6 @@ body {
 
 .admin-topbar-actions .logout-button {
   padding: 0 18px;
-}
-
-.admin-message-alert {
-  position: relative;
-  gap: 8px;
-}
-
-.admin-message-alert .admin-unread-badge {
-  margin-left: 2px;
 }
 
 a {
@@ -2782,27 +2772,6 @@ blockquote {
   border-color: rgba(255, 226, 142, 0.68);
 }
 
-.slot-feature-tile.is-maintenance,
-.slot-game-tile.is-maintenance {
-  cursor: not-allowed;
-  opacity: 0.62;
-  filter: grayscale(0.72);
-}
-
-.slot-feature-tile.is-maintenance:hover,
-.slot-feature-tile.is-maintenance:focus-visible,
-.slot-game-tile.is-maintenance:hover,
-.slot-game-tile.is-maintenance:focus-visible {
-  transform: none;
-  border-color: rgba(255, 226, 142, 0.26);
-}
-
-.slot-feature-tile.is-maintenance span,
-.slot-game-tile.is-maintenance span {
-  background: #2a2d34;
-  color: #d9dde8;
-}
-
 .slot-game-tile::before {
   content: "";
   position: absolute;
@@ -4432,7 +4401,7 @@ body.is-player-logged-in [data-guest-only] {
 
 .admin-points-form {
   grid-column: 1 / -1;
-  grid-template-columns: minmax(120px, 180px) auto auto;
+  grid-template-columns: 110px minmax(160px, 1fr) auto auto;
   padding: 12px;
   border: 1px solid rgba(255, 226, 142, 0.16);
   border-radius: 8px;
@@ -5986,75 +5955,6 @@ body.is-player-logged-in [data-guest-only] {
   color: #fff8df;
 }
 
-.admin-modal-game-history {
-  display: grid;
-  gap: 12px;
-  margin-bottom: 22px;
-  padding: 16px;
-  border: 1px solid rgba(255, 214, 64, 0.18);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.admin-modal-section-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.admin-modal-section-title strong {
-  color: #fff8df;
-}
-
-.admin-modal-section-title span {
-  color: #9d927e;
-  font-size: 0.85rem;
-  font-weight: 800;
-}
-
-.admin-game-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.admin-game-summary article {
-  padding: 10px;
-  border: 1px solid rgba(255, 214, 64, 0.14);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.admin-game-summary span {
-  display: block;
-  color: #9d927e;
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.admin-game-summary strong {
-  display: block;
-  margin-top: 4px;
-  color: #fff8df;
-}
-
-.admin-game-summary strong.positive {
-  color: #52ef9f;
-}
-
-.admin-game-summary strong.negative {
-  color: #ff8b8b;
-}
-
-.admin-game-history-list {
-  display: grid;
-  gap: 10px;
-  max-height: 280px;
-  overflow: auto;
-}
-
 .admin-modal-points {
   display: grid;
   gap: 2px;
@@ -6270,7 +6170,6 @@ body.is-player-logged-in [data-guest-only] {
   }
 
   .admin-player-summary,
-  .admin-game-summary,
   .admin-modal-form-row,
   .admin-modal-form-row.compact {
     grid-template-columns: 1fr;
@@ -6450,94 +6349,6 @@ body.is-player-logged-in [data-guest-only] {
 
 .admin-dashboard.messenger-chat .chat-form {
   flex: 0 0 auto;
-}
-
-.admin-messages-page {
-  overflow: hidden;
-}
-
-.admin-messages-page .admin-main {
-  margin-left: 0;
-  width: 100%;
-}
-
-.admin-messages-page .admin-main {
-  min-height: 100vh;
-}
-
-.admin-messages-page .section {
-  min-height: 100vh;
-  padding: 0;
-}
-
-.admin-messages-page .admin-shell {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  width: 100%;
-  max-width: none;
-  min-height: 100vh;
-  padding: 0;
-}
-
-.admin-messages-page .admin-topbar {
-  min-height: 86px;
-  margin: 0;
-  border-bottom: 1px solid rgba(255, 214, 64, 0.16);
-  border-radius: 0;
-  background: #08080d;
-}
-
-.admin-messages-page .admin-workspace {
-  min-height: 0;
-  padding: 0;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat {
-  grid-template-columns: minmax(320px, 34%) minmax(0, 1fr);
-  width: 100%;
-  height: calc(100vh - 86px);
-  min-height: 0;
-  max-height: none;
-  margin: 0;
-  border-left: 0;
-  border-right: 0;
-  border-bottom: 0;
-  border-radius: 0;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat .chat-inbox {
-  padding: 18px 22px;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat .chat-inbox::before {
-  margin: -18px -22px 12px;
-  padding: 24px 22px 16px;
-  background: #151006;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat .inbox-player {
-  min-height: 78px;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat .inbox-player-name {
-  grid-template-columns: 54px 12px minmax(0, 1fr) auto;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat .inbox-avatar {
-  width: 54px;
-  height: 54px;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat .inbox-player small {
-  display: none;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat .chat-window {
-  min-width: 0;
-}
-
-.admin-messages-page .admin-dashboard.messenger-chat .chat-messages {
-  padding: 24px 28px;
 }
 
 .admin-body .registered-list,
@@ -7046,7 +6857,7 @@ body.is-player-logged-in [data-guest-only] {
 }
 
 /* ============================================================
-   GAS GUSHERS - VISUAL UPGRADE (appended overrides)
+   SOUTH DIAMOND SLOTS — VISUAL UPGRADE (appended overrides)
    ============================================================ */
 
 /* Theme accent fallback */
@@ -7863,33 +7674,10 @@ body.is-player-logged-in [data-guest-only] {
   .slots-summary-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-.slots-master-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-.slots-master-jackpots {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
-  gap: 10px;
-  margin: 16px 0 0;
-  width: 100%;
-}
-.slots-master-jackpots legend {
-  grid-column: 1 / -1;
-}
-.slots-master-jackpots label {
-  grid-template-columns: 1fr;
-  gap: 4px;
-  margin: 0;
-}
-.slots-master-jackpots input {
-  min-height: 38px;
-  font-size: 1rem;
-  font-weight: 800;
-}
+.slots-master-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .slots-master-actions button {
   flex: 1;
   min-width: 140px;
-}
-@media (max-width: 768px) {
-  .slots-master-jackpots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .slots-save-status {
   margin-top: 10px;

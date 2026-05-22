@@ -46,47 +46,47 @@ const defaultSlotSettings = {
   playerDailyPayoutLimit: 8,
 };
 const slotGameNames = {
-  buffalo: "Fountain Soda",
-  diamond: "Candy Aisle",
-  diamond777: "Candy Aisle",
-  lucky777: "Gummy Bears",
-  milkyway: "Moon Pies",
-  dragon: "Energy Drinks",
-  ocean: "Bottled Water",
-  firekirin: "Hot Chips",
-  pandamaster: "Snack Cakes",
-  orion: "Trail Mix",
-  goldendragon: "Sports Drinks",
-  gamevault: "Coffee Run",
-  ultrapanda: "Breakfast Bars",
-  jungle: "Nacho Tray",
-  neon: "Slushie Cups",
+  buffalo: "Buffalo Rush",
+  diamond: "Diamond 777",
+  diamond777: "Diamond 777",
+  lucky777: "Lucky 777",
+  milkyway: "Milky Way 777",
+  dragon: "Dragon Conqueror",
+  ocean: "Ocean Monster",
+  firekirin: "Fire Kirin",
+  pandamaster: "Panda Master",
+  orion: "Orion Stars",
+  goldendragon: "Golden Dragon",
+  gamevault: "Game Vault",
+  ultrapanda: "Ultra Panda",
+  jungle: "Jungle Fortune",
+  neon: "Neon Reels",
 };
 const arcadeSlotGameNames = {
-  wildBuffalo: "Fountain Soda",
-  kingKong: "Hot Chips",
-  triple777: "Candy Aisle",
-  blackjack: "Cold Beer",
-  gorillaGold: "Coffee Run",
-  goldWolf: "Donut Box",
-  wildBull: "Beef Jerky",
-  dragonEmpress: "Energy Drinks",
-  mammothRush: "Ice Cream Cooler",
-  pharaoh: "Pretzel Rack",
-  oceanTreasure: "Bottled Water",
-  vegas7s: "Trail Mix",
-  luckyPanda: "Gummy Bears",
-  lionsPride: "Nacho Tray",
-  piratesTreasure: "Snack Cakes",
-  zeusThunder: "Sports Drinks",
-  cleopatra: "Chocolate Bars",
-  frozenRiches: "Slushie Cups",
-  galaxyStars: "Moon Pies",
-  fruitMania: "Fruit Snacks",
-  vikingGlory: "Corn Nuts",
-  aztecEmpire: "Taco Bites",
-  halloweenHunt: "Sour Candy",
-  luckyCharms: "Breakfast Bars",
+  wildBuffalo: "Wild Buffalo",
+  kingKong: "King Kong",
+  triple777: "Triple 777",
+  blackjack: "Black Jack Slots",
+  gorillaGold: "Gorilla Gold",
+  goldWolf: "Gold Wolf",
+  wildBull: "Wild Bull",
+  dragonEmpress: "Dragon Empress",
+  mammothRush: "Mammoth Rush",
+  pharaoh: "Pharaoh's Riches",
+  oceanTreasure: "Ocean Treasure",
+  vegas7s: "Vegas 7s",
+  luckyPanda: "Lucky Panda 88",
+  lionsPride: "Lion's Pride",
+  piratesTreasure: "Pirate's Treasure",
+  zeusThunder: "Zeus Thunder",
+  cleopatra: "Cleopatra Diamonds",
+  frozenRiches: "Frozen Riches",
+  galaxyStars: "Galaxy Stars",
+  fruitMania: "Fruit Mania",
+  vikingGlory: "Viking Glory",
+  aztecEmpire: "Aztec Empire",
+  halloweenHunt: "Halloween Hunt",
+  luckyCharms: "Lucky Charms",
 };
 const legacySlotArcadeMap = {
   buffalo: "wildBuffalo",
@@ -1397,7 +1397,7 @@ function sanitizeGameHistorySpin(spin) {
     username: spin.username,
     gameKey: spin.gameKey,
     arcadeGameKey: spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey),
-    gameName: spin.gameName || arcadeSlotGameNames[spin.arcadeGameKey] || slotGameNames[spin.gameKey] || "Gas Gushers",
+    gameName: spin.gameName || arcadeSlotGameNames[spin.arcadeGameKey] || slotGameNames[spin.gameKey] || "South Diamond Slots",
     bet: roundPoints(spin.bet),
     win: roundPoints(spin.win),
     requestedWin: spin.requestedWin == null ? null : roundPoints(spin.requestedWin),
@@ -1814,7 +1814,7 @@ async function handleApi(request, response, urlPath, url) {
     const data = await readDatabase();
     ensureSlotPayoutToday(data);
     data.slotSettings = normalizeSlotSettings(body);
-    addActivity(data, "slots-settings", "Updated Gas Gushers daily payout limit", data.slotSettings);
+    addActivity(data, "slots-settings", "Updated South Diamond Slots daily payout limit", data.slotSettings);
     await writeDatabase(data);
     sendSlotLiveEvent({ type: "slot-settings", settings: data.slotSettings });
     return sendJson(response, 200, {
@@ -1843,7 +1843,7 @@ async function handleApi(request, response, urlPath, url) {
     const data = await readDatabase();
     data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(body.config || body);
     data.arcadeSlotsConfig.lastModified = Date.now();
-    addActivity(data, "slots-arcade-config", "Updated Gas Gushers Arcade game controls", {
+    addActivity(data, "slots-arcade-config", "Updated South Diamond Slots Arcade game controls", {
       globalEnabled: data.arcadeSlotsConfig.globalEnabled,
       games: Object.fromEntries(Object.entries(data.arcadeSlotsConfig.games).map(([key, cfg]) => [key, {
         enabled: cfg.enabled,
@@ -2233,13 +2233,13 @@ async function handleApi(request, response, urlPath, url) {
     const transactions = [];
 
     user.points = roundPoints(user.points - bet);
-    const betTransaction = createPointTransaction(user, "redeem", bet, `Gas Gushers pick - ${slotGameNames[gameKey]}`, createdAt);
+    const betTransaction = createPointTransaction(user, "redeem", bet, `South Diamond Slots spin - ${slotGameNames[gameKey]}`, createdAt);
     data.pointTransactions.unshift(betTransaction);
     transactions.push(betTransaction);
 
     if (win > 0) {
       user.points = roundPoints(user.points + win);
-      const winTransaction = createPointTransaction(user, "add", win, `Gas Gushers reward - ${slotGameNames[gameKey]}`, createdAt);
+      const winTransaction = createPointTransaction(user, "add", win, `South Diamond Slots win - ${slotGameNames[gameKey]}`, createdAt);
       data.pointTransactions.unshift(winTransaction);
       transactions.push(winTransaction);
     }
@@ -2349,7 +2349,7 @@ async function handleApi(request, response, urlPath, url) {
       storedUser,
       "redeem",
       bet,
-      `Gas Gushers pick - ${arcadeSlotGameNames[gameKey]}`,
+      `South Diamond Slots spin - ${arcadeSlotGameNames[gameKey]}`,
       createdAt
     );
     data.pointTransactions.unshift(betTransaction);
@@ -2361,7 +2361,7 @@ async function handleApi(request, response, urlPath, url) {
         storedUser,
         "add",
         win,
-        `Gas Gushers reward - ${arcadeSlotGameNames[gameKey]}`,
+        `South Diamond Slots win - ${arcadeSlotGameNames[gameKey]}`,
         createdAt
       );
       data.pointTransactions.unshift(winTransaction);

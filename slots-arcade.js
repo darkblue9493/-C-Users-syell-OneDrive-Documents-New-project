@@ -1,5 +1,5 @@
 /* ============================================================
- * GAS GUSHERS ARCADE - Engine + 24 Games
+ * SOUTH DIAMOND SLOTS ARCADE - Engine + 24 Games
  * ============================================================
  * Self-contained slot engine with:
  *   - 24 distinct themed games
@@ -52,22 +52,6 @@ function emojiSym(emoji, label) {
 function svgSym(key, label) {
   return { type: "svg", icon: SVG[key], label: label || "" };
 }
-function imageSym(src, label) {
-  return { type: "image", src, label: label || "" };
-}
-
-Object.assign(SVG, {
-  BUFFALO_HEAD: `<svg viewBox="0 0 120 120"><defs><radialGradient id="bfFur" cx=".45" cy=".28"><stop offset="0" stop-color="#fff1b8"/><stop offset=".28" stop-color="#e98222"/><stop offset=".7" stop-color="#7a3514"/><stop offset="1" stop-color="#2a1007"/></radialGradient><linearGradient id="bfHorn" x1="0" x2="1"><stop offset="0" stop-color="#fff7d8"/><stop offset="1" stop-color="#7f6750"/></linearGradient></defs><path d="M21 52 C5 35 9 20 27 20 C31 35 39 42 48 45 L43 58 C33 58 27 56 21 52Z" fill="url(#bfHorn)" stroke="#2a1007" stroke-width="3"/><path d="M99 52 C115 35 111 20 93 20 C89 35 81 42 72 45 L77 58 C87 58 93 56 99 52Z" fill="url(#bfHorn)" stroke="#2a1007" stroke-width="3"/><path d="M25 55 C28 25 45 12 60 15 C75 12 92 25 95 55 C101 69 96 93 75 101 C70 111 50 111 45 101 C24 93 19 69 25 55Z" fill="url(#bfFur)" stroke="#180904" stroke-width="4"/><circle cx="45" cy="61" r="6" fill="#120703"/><circle cx="75" cy="61" r="6" fill="#120703"/><circle cx="47" cy="58" r="2" fill="#fff8d8"/><circle cx="77" cy="58" r="2" fill="#fff8d8"/><ellipse cx="60" cy="83" rx="23" ry="17" fill="#2b1209" stroke="#160704" stroke-width="2"/><ellipse cx="52" cy="81" rx="3" ry="5" fill="#080302"/><ellipse cx="68" cy="81" rx="3" ry="5" fill="#080302"/><path d="M31 35 C38 25 47 21 60 21 C73 21 82 25 89 35" fill="none" stroke="#ffd078" stroke-width="5" stroke-linecap="round" opacity=".45"/></svg>`,
-  BUFFALO_EAGLE: `<svg viewBox="0 0 120 120"><defs><linearGradient id="egWing" x1="0" x2="1"><stop offset="0" stop-color="#f5f0ff"/><stop offset="1" stop-color="#8f7cff"/></linearGradient><linearGradient id="egGold" x1="0" x2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset="1" stop-color="#d57916"/></linearGradient></defs><rect x="10" y="11" width="100" height="98" rx="8" fill="#5534b8" stroke="#f7c246" stroke-width="5"/><path d="M28 70 C36 37 60 17 92 23 C76 29 67 42 66 57 C65 74 52 88 30 91 C39 83 34 76 28 70Z" fill="url(#egWing)" stroke="#38236d" stroke-width="3"/><path d="M66 43 C82 35 97 39 106 48 C93 47 82 52 72 62Z" fill="url(#egGold)" stroke="#6d3506" stroke-width="3"/><circle cx="75" cy="45" r="5" fill="#fff"/><circle cx="77" cy="45" r="2.3" fill="#110705"/></svg>`,
-  BUFFALO_COUGAR: `<svg viewBox="0 0 120 120"><defs><linearGradient id="cgFur" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffd29a"/><stop offset=".55" stop-color="#c9652b"/><stop offset="1" stop-color="#5a2412"/></linearGradient></defs><rect x="10" y="11" width="100" height="98" rx="8" fill="#bc4a23" stroke="#f7c246" stroke-width="5"/><path d="M30 51 L26 24 L48 39 C55 36 66 36 73 39 L94 24 L90 51 C96 62 94 82 80 93 C68 103 49 103 38 93 C24 82 24 62 30 51Z" fill="url(#cgFur)" stroke="#2b0f08" stroke-width="3"/><circle cx="45" cy="60" r="5" fill="#111"/><circle cx="75" cy="60" r="5" fill="#111"/><circle cx="47" cy="57" r="1.8" fill="#fff7d8"/><circle cx="77" cy="57" r="1.8" fill="#fff7d8"/><path d="M55 75 L65 75 L60 82Z" fill="#321007"/><path d="M60 82 C55 89 49 90 44 86 M60 82 C65 89 71 90 76 86" fill="none" stroke="#321007" stroke-width="2.5" stroke-linecap="round"/></svg>`,
-  BUFFALO_WOLF: `<svg viewBox="0 0 120 120"><defs><linearGradient id="bwFur" y1="0" y2="1"><stop offset="0" stop-color="#6fe2ff"/><stop offset=".45" stop-color="#1577d5"/><stop offset="1" stop-color="#09295c"/></linearGradient></defs><rect x="10" y="11" width="100" height="98" rx="8" fill="#1f5fb3" stroke="#f7c246" stroke-width="5"/><path d="M60 18 L45 48 L27 41 L40 64 L33 94 L60 80 L87 94 L80 64 L93 41 L75 48Z" fill="url(#bwFur)" stroke="#061633" stroke-width="3"/><path d="M44 56 L55 61 L48 65Z M76 56 L65 61 L72 65Z" fill="#fff"/><circle cx="49" cy="59" r="2.5" fill="#071022"/><circle cx="71" cy="59" r="2.5" fill="#071022"/><path d="M55 72 L65 72 L60 79Z" fill="#061022"/></svg>`,
-  BUFFALO_WILD: `<svg viewBox="0 0 120 120"><defs><linearGradient id="bwldSky" y1="0" y2="1"><stop offset="0" stop-color="#7fdcff"/><stop offset=".5" stop-color="#ffc46a"/><stop offset="1" stop-color="#8f3513"/></linearGradient><linearGradient id="bwldGold" y1="0" y2="1"><stop offset="0" stop-color="#fff7b0"/><stop offset=".45" stop-color="#f7b729"/><stop offset="1" stop-color="#90460b"/></linearGradient></defs><rect x="9" y="10" width="102" height="100" rx="8" fill="url(#bwldSky)" stroke="#f7c246" stroke-width="5"/><path d="M17 72 L39 46 L51 61 L69 34 L101 72Z" fill="#9b4a1c" opacity=".75"/><path d="M15 78 H105 V103 H15Z" fill="#3a1b0b" opacity=".5"/><text x="60" y="84" text-anchor="middle" font-family="Impact,Arial Black" font-size="31" fill="url(#bwldGold)" stroke="#3b1206" stroke-width="2.6">WILD</text></svg>`,
-  BUFFALO_BONUS: `<svg viewBox="0 0 120 120"><defs><linearGradient id="bbGold" y1="0" y2="1"><stop offset="0" stop-color="#fff9c8"/><stop offset=".5" stop-color="#ffca21"/><stop offset="1" stop-color="#9a4b09"/></linearGradient></defs><circle cx="60" cy="52" r="37" fill="url(#bbGold)" stroke="#5a2008" stroke-width="4"/><path d="M28 52 C9 34 15 19 34 18 C39 33 47 39 56 42 L51 55 C42 56 34 55 28 52Z" fill="#f0f1ee" stroke="#5a2008" stroke-width="3"/><path d="M92 52 C111 34 105 19 86 18 C81 33 73 39 64 42 L69 55 C78 56 86 55 92 52Z" fill="#f0f1ee" stroke="#5a2008" stroke-width="3"/><polygon points="60,30 68,49 89,50 72,62 78,84 60,71 42,84 48,62 31,50 52,49" fill="#fff" stroke="#d71920" stroke-width="3"/><text x="60" y="106" text-anchor="middle" font-family="Impact,Arial Black" font-size="23" fill="#e32613" stroke="#ffd96a" stroke-width="1.8">BONUS</text></svg>`,
-  BUFFALO_A: `<svg viewBox="0 0 120 120"><text x="60" y="82" text-anchor="middle" font-family="Impact,Arial Black" font-size="70" fill="#d81919" stroke="#f7c246" stroke-width="5">A</text></svg>`,
-  BUFFALO_K: `<svg viewBox="0 0 120 120"><text x="60" y="82" text-anchor="middle" font-family="Impact,Arial Black" font-size="70" fill="#2fa83a" stroke="#f7c246" stroke-width="5">K</text></svg>`,
-  BUFFALO_Q: `<svg viewBox="0 0 120 120"><text x="60" y="82" text-anchor="middle" font-family="Impact,Arial Black" font-size="70" fill="#8e28ba" stroke="#f7c246" stroke-width="5">Q</text></svg>`,
-  BUFFALO_10: `<svg viewBox="0 0 120 120"><text x="60" y="80" text-anchor="middle" font-family="Impact,Arial Black" font-size="62" fill="#244de0" stroke="#f7c246" stroke-width="5">10</text></svg>`,
-});
 
 
 // ============================================================
@@ -212,12 +196,12 @@ const GAMES = {
   wildBuffalo: {
     rtpScale: 4.92,
     layout: "mascot-watermark",
-    title: "Fountain Soda",
+    title: "Wild Buffalo",
     tagline: "Stampede Across the Plains",
     theme: "buffalo",
     accent: "#ff8533",
     accent2: "#ffd76b",
-    rows: 4, reels: 5, paylines: PAYLINES_5x4,
+    rows: 3, reels: 5, paylines: PAYLINES_5x3,
     mascot: "&#129708;", // 🦬
     sceneClass: "scene-prairie",
     bgEmoji: ["&#127956;","&#127797;","&#127765;","&#9728;&#65039;"], // mountain, cactus, sun-elements
@@ -243,7 +227,7 @@ const GAMES = {
   kingKong: {
     rtpScale: 3.43,
     layout: "mascot-top",
-    title: "Hot Chips",
+    title: "King Kong",
     tagline: "Roar on Top of the World",
     theme: "kingkong",
     accent: "#ff3030",
@@ -274,7 +258,7 @@ const GAMES = {
   triple777: {
     rtpScale: 0.361,
     layout: "classic-compact",
-    title: "Candy Aisle",
+    title: "Triple 777",
     tagline: "Classic Sevens, Classic Wins",
     theme: "triple777",
     accent: "#ff2540",
@@ -303,7 +287,7 @@ const GAMES = {
   blackjack: {
     rtpScale: 1.78,
     layout: "table-felt",
-    title: "Cold Beer",
+    title: "Black Jack Slots",
     tagline: "House Style, Slot Action",
     theme: "blackjack",
     accent: "#2dd55b",
@@ -334,7 +318,7 @@ const GAMES = {
   gorillaGold: {
     rtpScale: 2.78,
     layout: "mascot-watermark",
-    title: "Coffee Run",
+    title: "Gorilla Gold",
     tagline: "Find the Lost Temple Treasure",
     theme: "gorilla",
     accent: "#ffd200",
@@ -365,7 +349,7 @@ const GAMES = {
   goldWolf: {
     rtpScale: 3.12,
     layout: "mascot-watermark",
-    title: "Donut Box",
+    title: "Gold Wolf",
     tagline: "Howling Riches Under the Moon",
     theme: "wolf",
     accent: "#95e3ff",
@@ -396,7 +380,7 @@ const GAMES = {
   wildBull: {
     rtpScale: 0.385,
     layout: "classic-compact",
-    title: "Beef Jerky",
+    title: "Wild Bull",
     tagline: "Sheriff's 777 Showdown",
     theme: "bull",
     accent: "#ffd95e",
@@ -425,7 +409,7 @@ const GAMES = {
   dragonEmpress: {
     rtpScale: 2.93,
     layout: "mascot-watermark",
-    title: "Energy Drinks",
+    title: "Dragon Empress",
     tagline: "Lucky Lantern Fortune",
     theme: "dragon",
     accent: "#d4002a",
@@ -456,7 +440,7 @@ const GAMES = {
   mammothRush: {
     rtpScale: 2.63,
     layout: "mascot-watermark",
-    title: "Ice Cream Cooler",
+    title: "Mammoth Rush",
     tagline: "Stampede From the Ice Age",
     theme: "mammoth",
     accent: "#5dcef0",
@@ -487,7 +471,7 @@ const GAMES = {
   pharaoh: {
     rtpScale: 3.03,
     layout: "mascot-watermark",
-    title: "Pretzel Rack",
+    title: "Pharaoh's Riches",
     tagline: "Treasure of the Sand Kings",
     theme: "pharaoh",
     accent: "#f7c000",
@@ -518,7 +502,7 @@ const GAMES = {
   oceanTreasure: {
     rtpScale: 2.9,
     layout: "mascot-watermark",
-    title: "Bottled Water",
+    title: "Ocean Treasure",
     tagline: "Deep Sea Mega Wins",
     theme: "ocean",
     accent: "#00b4d8",
@@ -549,7 +533,7 @@ const GAMES = {
   vegas7s: {
     rtpScale: 0.439,
     layout: "classic-compact",
-    title: "Trail Mix",
+    title: "Vegas 7s",
     tagline: "Hot Neon Wins",
     theme: "vegas",
     accent: "#ff5fe5",
@@ -578,7 +562,7 @@ const GAMES = {
   luckyPanda: {
     rtpScale: 2.64,
     layout: "mascot-watermark",
-    title: "Gummy Bears",
+    title: "Lucky Panda 88",
     tagline: "Bamboo Fortune Awaits",
     theme: "panda88",
     accent: "#e8222e",
@@ -609,7 +593,7 @@ const GAMES = {
   lionsPride: {
     rtpScale: 2.65,
     layout: "mascot-watermark",
-    title: "Nacho Tray",
+    title: "Lion's Pride",
     tagline: "Roar of the Savanna",
     theme: "lion",
     accent: "#ff7530",
@@ -640,7 +624,7 @@ const GAMES = {
   piratesTreasure: {
     rtpScale: 2.63,
     layout: "mascot-top",
-    title: "Snack Cakes",
+    title: "Pirate's Treasure",
     tagline: "Plunder the Seas",
     theme: "pirate",
     accent: "#b88a3a",
@@ -671,7 +655,7 @@ const GAMES = {
   zeusThunder: {
     rtpScale: 2.61,
     layout: "mascot-watermark",
-    title: "Sports Drinks",
+    title: "Zeus Thunder",
     tagline: "Olympian Lightning",
     theme: "zeus",
     accent: "#2dd6f5",
@@ -702,7 +686,7 @@ const GAMES = {
   cleopatra: {
     rtpScale: 2.42,
     layout: "mascot-watermark",
-    title: "Chocolate Bars",
+    title: "Cleopatra Diamonds",
     tagline: "Queen of the Nile",
     theme: "cleopatra",
     accent: "#ffd200",
@@ -733,7 +717,7 @@ const GAMES = {
   frozenRiches: {
     rtpScale: 2.65,
     layout: "mascot-watermark",
-    title: "Slushie Cups",
+    title: "Frozen Riches",
     tagline: "Icy Cold Cash",
     theme: "arctic",
     accent: "#5dd0f5",
@@ -764,7 +748,7 @@ const GAMES = {
   galaxyStars: {
     rtpScale: 2.7,
     layout: "mascot-top",
-    title: "Moon Pies",
+    title: "Galaxy Stars",
     tagline: "Reach for the Cosmos",
     theme: "galaxy",
     accent: "#a78bff",
@@ -795,7 +779,7 @@ const GAMES = {
   fruitMania: {
     rtpScale: 0.363,
     layout: "classic-compact",
-    title: "Fruit Snacks",
+    title: "Fruit Mania",
     tagline: "Classic Fruit Frenzy",
     theme: "fruit",
     accent: "#ff5630",
@@ -824,7 +808,7 @@ const GAMES = {
   vikingGlory: {
     rtpScale: 2.77,
     layout: "mascot-top",
-    title: "Corn Nuts",
+    title: "Viking Glory",
     tagline: "Battle for Valhalla",
     theme: "viking",
     accent: "#4682b4",
@@ -855,7 +839,7 @@ const GAMES = {
   aztecEmpire: {
     rtpScale: 2.53,
     layout: "mascot-watermark",
-    title: "Taco Bites",
+    title: "Aztec Empire",
     tagline: "Lost City Riches",
     theme: "aztec",
     accent: "#2dd55b",
@@ -886,7 +870,7 @@ const GAMES = {
   halloweenHunt: {
     rtpScale: 2.77,
     layout: "mascot-watermark",
-    title: "Sour Candy",
+    title: "Halloween Hunt",
     tagline: "Trick or Treasure",
     theme: "halloween",
     accent: "#ff7530",
@@ -917,7 +901,7 @@ const GAMES = {
   luckyCharms: {
     rtpScale: 2.62,
     layout: "mascot-watermark",
-    title: "Breakfast Bars",
+    title: "Lucky Charms",
     tagline: "Find the Pot of Gold",
     theme: "irish",
     accent: "#2dd55b",
@@ -942,130 +926,6 @@ const GAMES = {
     paytableOrder: ["WILD","LEPRECHAUN","POT","CLOVER","HORSE","A","K"],
   },
 };
-
-MASCOT_ART.wildBuffalo = SVG.BUFFALO_HEAD;
-
-Object.assign(GAMES.wildBuffalo, {
-  mascot: SVG.BUFFALO_HEAD,
-  symbols: {
-    WILD:    { ...imageSym("assets/slots/buffalo/wild.png","WILD"), weight: 3, pay: [0,0,0,50,100,500], wild: true },
-    SCATTER: { ...imageSym("assets/slots/buffalo/bonus.png","BONUS"), weight: 2, pay: [0,0,0,5,20,100], scatter: true },
-    BUFFALO: { ...imageSym("assets/slots/buffalo/buffalo.png","BUFFALO"), weight: 6, pay: [0,0,0,30,80,300] },
-    EAGLE:   { ...imageSym("assets/slots/buffalo/eagle.png","EAGLE"), weight: 8, pay: [0,0,0,20,50,200] },
-    WOLF:    { ...imageSym("assets/slots/buffalo/wolf.png","WOLF"), weight: 10, pay: [0,0,0,15,40,150] },
-    MESA:    { ...imageSym("assets/slots/buffalo/mesa.png","MESA"), weight: 11, pay: [0,0,0,10,30,100] },
-    A:       { ...imageSym("assets/slots/buffalo/a.png","A"), weight: 14, pay: [0,0,0,5,15,50] },
-    K:       { ...imageSym("assets/slots/buffalo/k.png","K"), weight: 14, pay: [0,0,0,4,12,40] },
-    Q:       { ...svgSym("BUFFALO_Q","Q"), weight: 16, pay: [0,0,0,3,10,30] },
-    TEN:     { ...svgSym("BUFFALO_10","10"), weight: 16, pay: [0,0,0,2,8,25] },
-  },
-  paytableOrder: ["WILD","BUFFALO","EAGLE","WOLF","MESA","SCATTER","A","K"],
-});
-
-Object.assign(SVG, {
-  GAS_GUSHER: '<svg viewBox="0 0 60 60"><rect x="14" y="7" width="24" height="46" rx="5" fill="#ef4444" stroke="#fff7ed" stroke-width="2.5"/><rect x="18" y="12" width="16" height="12" rx="2" fill="#dbeafe"/><path d="M38 16 h6 v24 c0 4 6 4 6 0 v-14" fill="none" stroke="#facc15" stroke-width="4" stroke-linecap="round"/><text x="26" y="44" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#fff">GAS</text></svg>',
-  GAS_PUMP: '<svg viewBox="0 0 60 60"><rect x="12" y="8" width="30" height="44" rx="6" fill="#2563eb" stroke="#bfdbfe" stroke-width="2.5"/><rect x="18" y="14" width="18" height="14" rx="2" fill="#dbeafe"/><circle cx="27" cy="39" r="6" fill="#facc15"/><path d="M42 18 c6 2 8 6 8 13 v16" fill="none" stroke="#93c5fd" stroke-width="3.5" stroke-linecap="round"/></svg>',
-  OIL_DROP: '<svg viewBox="0 0 60 60"><path d="M30 5 C19 20 13 31 13 41 c0 9 8 15 17 15 s17-6 17-15 C47 31 41 20 30 5Z" fill="#111827" stroke="#facc15" stroke-width="3"/><path d="M24 42 c2 5 7 8 13 6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
-  CAR_FILL: '<svg viewBox="0 0 60 60"><path d="M9 34 l7-15 h28 l7 15 v13 h-7 v-5 H16 v5 H9Z" fill="#22c55e" stroke="#dcfce7" stroke-width="2.5"/><circle cx="19" cy="43" r="5" fill="#111827"/><circle cx="41" cy="43" r="5" fill="#111827"/><path d="M19 21 h22 l4 10 H15Z" fill="#bbf7d0"/></svg>',
-  GROCERY_CART: '<svg viewBox="0 0 60 60"><path d="M8 11 h7 l6 27 h24 l7-20 H20" fill="none" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="49" r="4.5" fill="#38bdf8"/><circle cx="43" cy="49" r="4.5" fill="#38bdf8"/></svg>',
-  MILK_JUG: '<svg viewBox="0 0 60 60"><path d="M21 7 h18 l5 11 v35 H16 V18Z" fill="#f8fafc" stroke="#60a5fa" stroke-width="2.5"/><path d="M21 7 l-5 11 h28 L39 7" fill="#dbeafe" stroke="#60a5fa" stroke-width="2"/><text x="30" y="39" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#2563eb">MILK</text></svg>',
-  BREAD_LOAF: '<svg viewBox="0 0 60 60"><path d="M12 30 C12 17 20 8 30 8 s18 9 18 22 v20 H12Z" fill="#d97706" stroke="#fed7aa" stroke-width="2.5"/><path d="M21 24 c5 3 13 3 18 0" fill="none" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/></svg>',
-  GROCERY_BAG: '<svg viewBox="0 0 60 60"><path d="M15 21 h30 l-3 34 H18Z" fill="#facc15" stroke="#92400e" stroke-width="2.5"/><path d="M23 21 c0-10 14-10 14 0" fill="none" stroke="#92400e" stroke-width="3"/><circle cx="24" cy="36" r="3" fill="#ef4444"/><circle cx="35" cy="40" r="3" fill="#22c55e"/></svg>',
-  SODA_CUP: '<svg viewBox="0 0 60 60"><path d="M21 7 h20 l-4 47 H17Z" fill="#ef4444" stroke="#fecaca" stroke-width="2.5"/><path d="M24 7 h20" stroke="#facc15" stroke-width="3"/><path d="M30 7 l7-5 h9" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/><text x="29" y="37" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#fff">POP</text></svg>',
-  CHIP_BAG: '<svg viewBox="0 0 60 60"><path d="M16 7 h30 l-4 47 H18Z" fill="#f97316" stroke="#fed7aa" stroke-width="2.5"/><path d="M20 22 h20" stroke="#fff7ed" stroke-width="3"/><text x="30" y="40" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#fff">CHIP</text></svg>',
-  CANDY_WRAP: '<svg viewBox="0 0 60 60"><path d="M12 28 l10-8 h16 l10 8 l-10 8 H22Z" fill="#ec4899" stroke="#fbcfe8" stroke-width="2.5"/><path d="M12 28 l-8-7 v14Z M48 28 l8-7 v14Z" fill="#a855f7" stroke="#f5d0fe" stroke-width="2"/></svg>',
-  BEER_CAN: '<svg viewBox="0 0 60 60"><rect x="18" y="10" width="25" height="42" rx="5" fill="#f59e0b" stroke="#fef3c7" stroke-width="2.5"/><path d="M43 20 h6 c6 0 6 15 0 15 h-6" fill="none" stroke="#fef3c7" stroke-width="3"/><path d="M18 12 c5-7 17-7 25 0" fill="#fff" stroke="#fff" stroke-width="3"/></svg>',
-  COFFEE_CUP: '<svg viewBox="0 0 60 60"><path d="M18 20 h26 l-3 34 H21Z" fill="#7c2d12" stroke="#fed7aa" stroke-width="2.5"/><path d="M17 20 h28 l-3-8 H20Z" fill="#fef3c7" stroke="#fed7aa" stroke-width="2"/><text x="31" y="39" text-anchor="middle" font-family="Arial Black" font-size="9" fill="#fff">HOT</text></svg>',
-  DONUT_RING: '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="21" fill="#f9a8d4" stroke="#be185d" stroke-width="2.5"/><circle cx="30" cy="30" r="8" fill="#2a1207"/><circle cx="23" cy="22" r="2" fill="#fff"/><circle cx="38" cy="24" r="2" fill="#facc15"/><circle cx="37" cy="39" r="2" fill="#38bdf8"/></svg>',
-  JERKY_BAG: '<svg viewBox="0 0 60 60"><path d="M21 7 h24 l-6 47 H15Z" fill="#991b1b" stroke="#fecaca" stroke-width="2.5"/><text x="30" y="35" text-anchor="middle" font-family="Arial Black" font-size="9" fill="#fff">JERKY</text></svg>',
-  WATER_BOTTLE: '<svg viewBox="0 0 60 60"><path d="M24 7 h12 l3 10 v31 c0 4-3 6-9 6 s-9-2-9-6 V17Z" fill="#dbeafe" stroke="#38bdf8" stroke-width="2.5"/><path d="M21 29 h18 v12 H21Z" fill="#60a5fa"/><text x="30" y="38" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#fff">H2O</text></svg>',
-});
-
-const TEMP_GAS_GROCERY_ARCADE_SYMBOLS = {
-  SODA:    { ...svgSym("SODA_CUP","SODA"), weight: 3, pay: [0,0,0,80,180,750], wild: true },
-  GRAB:    { ...svgSym("GROCERY_BAG","GRAB BAG"), weight: 2, pay: [0,0,0,5,25,150], scatter: true },
-  CHIPS:   { ...svgSym("CHIP_BAG","CHIPS"), weight: 6, pay: [0,0,0,40,100,400] },
-  CANDY:   { ...svgSym("CANDY_WRAP","CANDY"), weight: 8, pay: [0,0,0,25,70,275] },
-  BEER:    { ...svgSym("BEER_CAN","BEER"), weight: 10, pay: [0,0,0,18,50,175] },
-  COFFEE:  { ...svgSym("COFFEE_CUP","COFFEE"), weight: 11, pay: [0,0,0,12,35,125] },
-  DONUT:   { ...svgSym("DONUT_RING","DONUT"), weight: 14, pay: [0,0,0,8,20,75] },
-  JERKY:   { ...svgSym("JERKY_BAG","JERKY"), weight: 14, pay: [0,0,0,6,18,65] },
-  WATER:   { ...svgSym("WATER_BOTTLE","WATER"), weight: 16, pay: [0,0,0,4,12,45] },
-};
-
-const TEMP_GAS_STATION_ARCADE_TITLES = {
-  wildBuffalo: "Fountain Soda",
-  kingKong: "Hot Chips",
-  triple777: "Candy Aisle",
-  blackjack: "Cold Beer",
-  gorillaGold: "Coffee Run",
-  goldWolf: "Donut Box",
-  wildBull: "Beef Jerky",
-  dragonEmpress: "Energy Drinks",
-  mammothRush: "Ice Cream Cooler",
-  pharaoh: "Pretzel Rack",
-  oceanTreasure: "Bottled Water",
-  vegas7s: "Trail Mix",
-  luckyPanda: "Gummy Bears",
-  lionsPride: "Nacho Tray",
-  piratesTreasure: "Snack Cakes",
-  zeusThunder: "Sports Drinks",
-  cleopatra: "Chocolate Bars",
-  frozenRiches: "Slushie Cups",
-  galaxyStars: "Moon Pies",
-  fruitMania: "Fruit Snacks",
-  vikingGlory: "Corn Nuts",
-  aztecEmpire: "Taco Bites",
-  halloweenHunt: "Sour Candy",
-  luckyCharms: "Breakfast Bars",
-};
-
-Object.entries(GAMES).forEach(([key, game]) => {
-  game.title = TEMP_GAS_STATION_ARCADE_TITLES[key] || game.title;
-  game.symbols = TEMP_GAS_GROCERY_ARCADE_SYMBOLS;
-  game.paytableOrder = ["SODA","CHIPS","CANDY","BEER","COFFEE","DONUT","JERKY","GRAB"];
-  game.tagline = "Gas station snacks and cooler picks";
-});
-
-const MUSIC_PROFILES = {
-  wildBuffalo:     { volume: 0.12, bassVolume: 0.11, harmonyVolume: 0.05, wave: "sawtooth", bassWave: "square",   pattern: [0,2,4,2,5,4,2,0], bassPattern: [0,0,3,0], harmonyEvery: 4 },
-  kingKong:        { volume: 0.13, bassVolume: 0.13, harmonyVolume: 0.04, wave: "square",   bassWave: "sawtooth", pattern: [0,0,2,1,3,2,5,3], bassPattern: [0,0,0,2], harmonyEvery: 6 },
-  triple777:       { volume: 0.14, bassVolume: 0.09, harmonyVolume: 0.06, wave: "square",   bassWave: "triangle", pattern: [4,2,4,5,4,2,1,0], bassPattern: [0,2,0,4], harmonyEvery: 2 },
-  blackjack:       { volume: 0.11, bassVolume: 0.10, harmonyVolume: 0.05, wave: "triangle", bassWave: "sine",     pattern: [0,1,2,4,3,2,1,3], bassPattern: [0,0,2,1], harmonyEvery: 3 },
-  gorillaGold:     { volume: 0.13, bassVolume: 0.14, harmonyVolume: 0.04, wave: "sawtooth", bassWave: "square",   pattern: [0,3,0,4,2,5,3,1], bassPattern: [0,3,0,2], harmonyEvery: 4 },
-  goldWolf:        { volume: 0.12, bassVolume: 0.10, harmonyVolume: 0.07, wave: "triangle", bassWave: "sawtooth", pattern: [5,3,2,0,1,2,4,2], bassPattern: [0,0,4,0], harmonyEvery: 5 },
-  wildBull:        { volume: 0.14, bassVolume: 0.12, harmonyVolume: 0.04, wave: "square",   bassWave: "square",   pattern: [0,2,4,5,4,2,0,3], bassPattern: [0,3,0,3], harmonyEvery: 3 },
-  dragonEmpress:   { volume: 0.12, bassVolume: 0.11, harmonyVolume: 0.06, wave: "sine",     bassWave: "triangle", pattern: [0,2,3,5,4,3,1,2], bassPattern: [0,2,0,4], harmonyEvery: 4 },
-  mammothRush:     { volume: 0.13, bassVolume: 0.15, harmonyVolume: 0.04, wave: "sawtooth", bassWave: "square",   pattern: [0,0,1,3,0,4,3,1], bassPattern: [0,0,0,3], harmonyEvery: 6 },
-  pharaoh:         { volume: 0.12, bassVolume: 0.10, harmonyVolume: 0.06, wave: "triangle", bassWave: "sawtooth", pattern: [0,1,4,3,2,5,4,1], bassPattern: [0,4,0,1], harmonyEvery: 4 },
-  oceanTreasure:   { volume: 0.11, bassVolume: 0.10, harmonyVolume: 0.07, wave: "sine",     bassWave: "triangle", pattern: [0,2,5,4,2,3,5,1], bassPattern: [0,2,0,5], harmonyEvery: 3 },
-  vegas7s:         { volume: 0.15, bassVolume: 0.12, harmonyVolume: 0.06, wave: "square",   bassWave: "sawtooth", pattern: [4,5,4,2,5,4,2,0], bassPattern: [0,2,4,2], harmonyEvery: 2 },
-  luckyPanda:      { volume: 0.12, bassVolume: 0.10, harmonyVolume: 0.06, wave: "triangle", bassWave: "sine",     pattern: [0,2,4,5,3,4,2,1], bassPattern: [0,0,3,4], harmonyEvery: 4 },
-  lionsPride:      { volume: 0.13, bassVolume: 0.14, harmonyVolume: 0.04, wave: "sawtooth", bassWave: "square",   pattern: [0,3,5,3,2,4,5,1], bassPattern: [0,0,4,3], harmonyEvery: 5 },
-  piratesTreasure: { volume: 0.13, bassVolume: 0.12, harmonyVolume: 0.05, wave: "square",   bassWave: "triangle", pattern: [0,2,3,5,3,2,4,1], bassPattern: [0,3,0,5], harmonyEvery: 4 },
-  zeusThunder:     { volume: 0.15, bassVolume: 0.14, harmonyVolume: 0.05, wave: "sawtooth", bassWave: "square",   pattern: [5,4,2,5,3,1,4,0], bassPattern: [0,5,0,4], harmonyEvery: 2 },
-  cleopatra:       { volume: 0.12, bassVolume: 0.10, harmonyVolume: 0.07, wave: "triangle", bassWave: "sine",     pattern: [0,2,1,4,3,5,4,2], bassPattern: [0,4,0,2], harmonyEvery: 4 },
-  frozenRiches:    { volume: 0.11, bassVolume: 0.09, harmonyVolume: 0.08, wave: "sine",     bassWave: "triangle", pattern: [5,4,3,1,2,0,2,4], bassPattern: [0,0,5,0], harmonyEvery: 3 },
-  galaxyStars:     { volume: 0.13, bassVolume: 0.11, harmonyVolume: 0.08, wave: "sawtooth", bassWave: "sine",     pattern: [0,4,2,5,1,3,5,4], bassPattern: [0,5,2,4], harmonyEvery: 3 },
-  fruitMania:      { volume: 0.15, bassVolume: 0.10, harmonyVolume: 0.06, wave: "square",   bassWave: "triangle", pattern: [4,2,0,2,5,4,2,1], bassPattern: [0,2,0,5], harmonyEvery: 2 },
-  vikingGlory:     { volume: 0.13, bassVolume: 0.15, harmonyVolume: 0.04, wave: "sawtooth", bassWave: "square",   pattern: [0,0,3,5,3,2,0,4], bassPattern: [0,3,0,5], harmonyEvery: 5 },
-  aztecEmpire:     { volume: 0.13, bassVolume: 0.12, harmonyVolume: 0.05, wave: "triangle", bassWave: "sawtooth", pattern: [0,3,1,4,2,5,3,0], bassPattern: [0,1,0,4], harmonyEvery: 4 },
-  halloweenHunt:   { volume: 0.12, bassVolume: 0.13, harmonyVolume: 0.06, wave: "square",   bassWave: "sawtooth", pattern: [5,4,2,1,0,2,4,3], bassPattern: [0,5,0,2], harmonyEvery: 3 },
-  luckyCharms:     { volume: 0.14, bassVolume: 0.11, harmonyVolume: 0.06, wave: "triangle", bassWave: "square",   pattern: [0,2,4,5,4,3,1,2], bassPattern: [0,4,0,5], harmonyEvery: 2 },
-};
-
-Object.entries(MUSIC_PROFILES).forEach(([key, profile]) => {
-  if (GAMES[key]) GAMES[key].music = { ...(GAMES[key].music || {}), ...profile };
-});
-
-function simpleRowPaylines(reels, rows) {
-  return Array.from({ length: rows }, (_, row) => Array.from({ length: reels }, () => row));
-}
-
-Object.values(GAMES).forEach((game) => {
-  game.paylines = simpleRowPaylines(game.reels, game.rows);
-  game.matchStyle = "Shelf Match";
-});
 
 // Order in which to show games in the lobby
 const GAME_ORDER = [
@@ -1146,7 +1006,6 @@ const STORAGE_PREFIX = "sd_slots_v1_";
 const State = {
   credits: 0,
   bet: 0.25,
-  lobbyJackpots: { grand: 1519.23, major: 524.95, minor: 107.97, mini: 21.87 },
   betLevels: [0.05, 0.10, 0.25, 0.50, 1.00, 2.50, 5.00, 10.00],
   jackpots: { grand: 1519.23, major: 524.95, minor: 107.97, mini: 21.87 },
   jackpotsIncrement: { grand: 0.0035, major: 0.0018, minor: 0.0009, mini: 0.0004 },
@@ -1160,12 +1019,11 @@ const State = {
   musicOn: true,
   soundOn: true,
   fullscreen: false,
-  lobbyFilter: "all",
   player: null,
   pointsSyncedAt: 0,
   appliedControlGame: null,
   appliedControlSignature: "",
-  controlRefreshInFlight: false,
+  appliedDefaultBet: null,
 };
 
 async function arcadeApi(path, options = {}) {
@@ -1192,7 +1050,7 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
     State.player = null;
     State.credits = 0;
     updateDisplays();
-    flashMessage("Log in to your South Diamond account to play Gas Gushers.");
+    flashMessage("Log in to your South Diamond account to play slots.");
     if (redirectOnFail) {
       window.setTimeout(() => {
         window.location.href = "/#signup";
@@ -1204,28 +1062,13 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
 
 async function refreshArcadeControls({ admin = false } = {}) {
   if (typeof SlotsConfig === "undefined" || typeof SlotsConfig.refreshFromServer !== "function") {
-    const config = typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
-    applyGlobalJackpotsFromConfig(config);
-    return config;
+    return typeof SlotsConfig !== "undefined" ? SlotsConfig.load() : null;
   }
   try {
-    const config = await SlotsConfig.refreshFromServer({ admin });
-    applyGlobalJackpotsFromConfig(config);
-    return config;
+    return await SlotsConfig.refreshFromServer({ admin });
   } catch (error) {
-    const config = SlotsConfig.load();
-    applyGlobalJackpotsFromConfig(config);
-    return config;
+    return SlotsConfig.load();
   }
-}
-
-function applyGlobalJackpotsFromConfig(config) {
-  const pool = config?.jackpotPool || null;
-  if (!pool) return;
-  ["grand", "major", "minor", "mini"].forEach((level) => {
-    const fallback = State.lobbyJackpots[level] || 0;
-    State.lobbyJackpots[level] = Math.max(0, numberSetting(pool[level], fallback));
-  });
 }
 
 function adminGameConfig(gameKey) {
@@ -1244,13 +1087,14 @@ function gameControlSignature(gameKey) {
   const cfg = adminGameConfig(gameKey);
   if (!cfg) return "";
   return JSON.stringify({
-    jackpotPool: rootCfg?.jackpotPool || {},
+    defaultBet: numberSetting(rootCfg?.defaultBet, 0.25),
     enabled: cfg.enabled !== false,
     minBet: numberSetting(cfg.minBet, 0.05),
     maxBet: numberSetting(cfg.maxBet, 10),
     targetRtp: numberSetting(cfg.targetRtp, 0.92),
     dailyMaxPayout: numberSetting(cfg.dailyMaxPayout, 1000),
     dailyMinPayout: numberSetting(cfg.dailyMinPayout, 50),
+    jackpotPool: cfg.jackpotPool || {},
   });
 }
 
@@ -1271,17 +1115,27 @@ function applyAdminGameControls(gameKey, { force = false } = {}) {
   const signature = gameControlSignature(gameKey);
   const changed = force || State.appliedControlGame !== gameKey || State.appliedControlSignature !== signature;
   if (!changed) return false;
+  const previousDefaultBet = State.appliedDefaultBet;
   const minBet = Math.max(0.01, numberSetting(cfg.minBet, 0.05));
   const maxBet = Math.max(minBet, numberSetting(cfg.maxBet, 10));
+  const defaultBet = Math.max(minBet, Math.min(numberSetting(rootCfg?.defaultBet, 0.25), maxBet));
   const pool = cfg.jackpotPool || {};
   ["grand", "major", "minor", "mini"].forEach((level) => {
     const fallback = State.jackpots[level] || 0;
     State.jackpots[level] = Math.max(0, numberSetting(pool[level], fallback));
   });
-  applyGlobalJackpotsFromConfig(rootCfg);
   State.appliedControlGame = gameKey;
   State.appliedControlSignature = signature;
-  State.bet = Math.max(minBet, Math.min(State.bet, maxBet));
+  if (
+    force ||
+    State.bet < minBet ||
+    State.bet > maxBet ||
+    previousDefaultBet === null ||
+    Math.abs(State.bet - previousDefaultBet) < 0.001
+  ) {
+    State.bet = defaultBet;
+  }
+  State.appliedDefaultBet = defaultBet;
   clampBetToAdmin(gameKey);
   updateDisplays();
   return true;
@@ -1304,13 +1158,8 @@ function isAdminGameEnabled(gameKey) {
 }
 
 async function applyLiveArcadeControls() {
-  if (State.controlRefreshInFlight) return;
-  State.controlRefreshInFlight = true;
-  try {
   await refreshArcadeControls();
-  updateDisplays();
-  const lobbyView = $("[data-lobby-view]");
-  if ($("[data-lobby-grid]") && lobbyView && !lobbyView.classList.contains("hidden")) renderLobby();
+  if ($("[data-lobby-grid]")) renderLobby();
   if (!State.activeGame) return;
   applyAdminGameControls(State.activeGame);
   if (!isAdminGameEnabled(State.activeGame)) {
@@ -1320,27 +1169,13 @@ async function applyLiveArcadeControls() {
     return;
   }
   hideMaintenanceOverlay();
-  } finally {
-    State.controlRefreshInFlight = false;
-  }
 }
 
 function startArcadeControlsWatcher() {
   setInterval(() => {
     if (State.isSpinning) return;
     applyLiveArcadeControls();
-  }, 5000);
-}
-
-function startArcadeLiveUpdates() {
-  if (!("EventSource" in window)) return;
-  try {
-    const source = new EventSource("/api/player/slots/live");
-    source.onmessage = () => {
-      if (State.isSpinning) return;
-      applyLiveArcadeControls();
-    };
-  } catch (error) {}
+  }, 750);
 }
 
 function loadState() {
@@ -1502,16 +1337,16 @@ const Audio = {
     if (!AC) return null;
     this.ctx = new AC();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.9;
+    this.master.gain.value = 0.5;
     this.master.connect(this.ctx.destination);
     return this.ctx;
   },
   resume() {
     if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
   },
-  tone(freq, dur = 0.12, vol = 0.08, type = "triangle", options = {}) {
+  tone(freq, dur = 0.12, vol = 0.08, type = "triangle") {
     const ctx = this.ensure();
-    if (!ctx || (!State.soundOn && !options.music)) return;
+    if (!ctx || !State.soundOn) return;
     try {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -1523,9 +1358,6 @@ const Audio = {
       osc.connect(gain); gain.connect(this.master);
       osc.start(); osc.stop(ctx.currentTime + dur + 0.02);
     } catch (err) {}
-  },
-  musicTone(freq, dur, vol, type) {
-    this.tone(freq, dur, vol, type, { music: true });
   },
   click() { this.tone(440, 0.05, 0.06, "square"); },
   reelStop() { this.tone(220 + Math.random() * 80, 0.08, 0.05, "triangle"); },
@@ -1548,26 +1380,14 @@ const Audio = {
     if (!ctx) return;
     const tempo = game.music?.tempo || 100;
     const scale = game.music?.scale || [220, 277, 330, 392, 440];
-    const pattern = game.music?.pattern || [0,2,4,2,5,4,2,3,1,3,5,4];
-    const bassPattern = game.music?.bassPattern || [0,0,3,0];
-    const wave = game.music?.wave || "sine";
-    const bassWave = game.music?.bassWave || "triangle";
-    const volume = game.music?.volume || 0.11;
-    const bassVolume = game.music?.bassVolume || 0.1;
-    const harmonyVolume = game.music?.harmonyVolume || 0.05;
-    const harmonyEvery = Math.max(1, game.music?.harmonyEvery || 4);
     const interval = 60000 / tempo / 2;
     let beat = 0;
+    const pattern = [0,2,4,2,5,4,2,3,1,3,5,4];
     this.music.timer = setInterval(() => {
       if (!State.musicOn) return;
       const note = scale[pattern[beat % pattern.length] % scale.length];
-      const bassNote = scale[bassPattern[beat % bassPattern.length] % scale.length] / 2;
-      this.musicTone(note, 0.24, volume, wave);
-      if (beat % 2 === 0) this.musicTone(bassNote, 0.34, bassVolume, bassWave);
-      if (beat % harmonyEvery === 0) {
-        const harmony = scale[(pattern[beat % pattern.length] + 2) % scale.length];
-        this.musicTone(harmony, 0.18, harmonyVolume, "triangle");
-      }
+      this.tone(note, 0.2, 0.03, "sine");
+      if (beat % 4 === 0) this.tone(scale[0] / 2, 0.3, 0.04, "triangle");
       beat++;
     }, interval);
   },
@@ -1592,30 +1412,11 @@ function $$(sel, root = document) { return Array.from(root.querySelectorAll(sel)
 const FEATURED_GAMES = new Set(["wildBuffalo", "kingKong", "dragonEmpress"]);
 const NEW_GAMES = new Set(["gorillaGold", "mammothRush", "oceanTreasure"]);
 const HOT_GAMES = new Set(["triple777", "vegas7s", "pharaoh"]);
-const TABLE_GAMES = new Set(["blackjack"]);
-const GAME_CATEGORIES = {
-  wildBuffalo: "DRINK", kingKong: "CHIPS", triple777: "CANDY", blackjack: "COOLER",
-  gorillaGold: "COFFEE", goldWolf: "BAKERY", wildBull: "JERKY", dragonEmpress: "DRINK",
-  mammothRush: "FROZEN", pharaoh: "SNACK", oceanTreasure: "WATER", vegas7s: "MIX",
-  luckyPanda: "CANDY", lionsPride: "HOT FOOD", piratesTreasure: "CAKES", zeusThunder: "DRINK",
-  cleopatra: "CANDY", frozenRiches: "SLUSHIE", galaxyStars: "CAKES", fruitMania: "FRUIT",
-  vikingGlory: "SNACK", aztecEmpire: "HOT FOOD", halloweenHunt: "SOUR", luckyCharms: "BREAKFAST",
-};
 
 function renderLobby() {
   const lobby = $("[data-lobby-grid]");
   if (!lobby) return;
-  const filter = State.lobbyFilter || "all";
-  const visibleGames = GAME_ORDER.filter((key) => {
-    if (filter === "hot") return HOT_GAMES.has(key) || FEATURED_GAMES.has(key);
-    if (filter === "new") return NEW_GAMES.has(key);
-    if (filter === "slot") return !TABLE_GAMES.has(key);
-    return true;
-  });
-  $$("[data-lobby-filter]").forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.lobbyFilter === filter);
-  });
-  lobby.innerHTML = visibleGames.map(key => {
+  lobby.innerHTML = GAME_ORDER.map(key => {
     const game = GAMES[key];
     const enabled = isAdminGameEnabled(key);
     const mascotSvg = MASCOT_ART[key] || "";
@@ -1632,17 +1433,17 @@ function renderLobby() {
         <div class="tile-info">
           <strong>${game.title}</strong>
           <span>${game.tagline}</span>
-          <small>${GAME_CATEGORIES[key] || "SHELF"} - ${game.matchStyle || "Shelf Match"}</small>
+          <small>${game.reels}×${game.rows} · ${game.paylines.length} ${game.paylines.length === 1 ? "line" : "lines"} · RTP ${Math.round((game.rtpScale || 0.92) * 100 / (game.rtpScale > 1 ? game.rtpScale : 1)) || 92}%</small>
         </div>
         <div class="tile-play">
           <span class="play-icon">▶</span>
-          <span class="play-text">${enabled ? "OPEN" : "OFFLINE"}</span>
+          <span class="play-text">${enabled ? "PLAY NOW" : "OFFLINE"}</span>
         </div>
       </button>
     `;
-  }).join("") || '<p class="lobby-empty">No shelves in this section right now.</p>';
+  }).join("");
   // Apply real images (PNG) if available - SVG is fallback
-  visibleGames.forEach((key) => {
+  GAME_ORDER.forEach((key) => {
     const tile = lobby.querySelector(`[data-game="${key}"]`);
     if (tile) applyTileArt(tile, key);
   });
@@ -1655,23 +1456,20 @@ function renderSymbolHtml(symKey, game, opts = {}) {
   if (sym.type === "svg") {
     return `<span class="sym-cell sym-svg${winClass}" data-sym="${symKey}"><span class="sym-inner">${sym.icon}</span></span>`;
   }
-  if (sym.type === "image") {
-    return `<span class="sym-cell sym-image${winClass}" data-sym="${symKey}"><span class="sym-inner"><img src="${sym.src}" alt="${sym.label || symKey}" draggable="false" /></span></span>`;
-  }
   return `<span class="sym-cell sym-emoji${winClass}" data-sym="${symKey}"><span class="sym-inner">${sym.icon}</span></span>`;
 }
 
 async function renderGameView(gameKey) {
   const game = GAMES[gameKey];
   if (!game) return;
-  enterPhoneFullscreen();
+  await refreshArcadeControls();
   if (!isAdminGameEnabled(gameKey)) {
     State.activeGame = gameKey;
     $("[data-lobby-view]").classList.add("hidden");
     $("[data-game-view]").classList.remove("hidden");
     $("[data-back-button]").classList.remove("hidden");
     showMaintenanceOverlay();
-    setWinMessage("This shelf is currently turned off by admin.");
+    setWinMessage("This game is currently turned off by admin.");
     return;
   }
   State.activeGame = gameKey;
@@ -1767,14 +1565,6 @@ async function renderGameView(gameKey) {
   applyGameArt(gameKey, root);
   // Start music
   if (State.musicOn) Audio.startMusic(game);
-  refreshArcadeControls().then(() => {
-    if (State.activeGame !== gameKey || State.isSpinning) return;
-    applyAdminGameControls(gameKey);
-    if (!isAdminGameEnabled(gameKey)) {
-      showMaintenanceOverlay();
-      setWinMessage("This shelf is currently turned off by admin.");
-    }
-  });
 }
 
 function renderCharacterPaytable(game, root) {
@@ -1784,7 +1574,7 @@ function renderCharacterPaytable(game, root) {
     const sym = game.symbols[symKey];
     if (!sym) return "";
     const pay = sym.pay[topIdx] || 0;
-    const iconHtml = paytableIconHtml(sym, symKey);
+    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
     return `<div class="char-pt"><div class="char-pt-icon">${iconHtml}</div><div class="char-pt-value">${pay}</div></div>`;
   }).join("");
   const bar = document.createElement("div");
@@ -1793,12 +1583,6 @@ function renderCharacterPaytable(game, root) {
   // Insert before play-area
   const playArea = $(".play-area", root);
   if (playArea) playArea.parentNode.insertBefore(bar, playArea);
-}
-
-function paytableIconHtml(sym, symKey) {
-  if (sym.type === "svg") return sym.icon;
-  if (sym.type === "image") return `<img src="${sym.src}" alt="${sym.label || symKey}" draggable="false" />`;
-  return `<span class="pt-emoji">${sym.icon}</span>`;
 }
 
 function renderPaytable(game) {
@@ -1813,7 +1597,7 @@ function renderPaytable(game) {
     // Top payout (5 of a kind or 3 for 3-reel)
     const topIdx = game.reels === 3 ? 2 : 4;
     const pay = sym.pay[topIdx] || 0;
-    const iconHtml = paytableIconHtml(sym, symKey);
+    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
     return `
       <div class="pt-row">
         <div class="pt-icon">${iconHtml}</div>
@@ -1828,11 +1612,10 @@ function renderPaytable(game) {
 function updateDisplays() {
   $("[data-credits]").textContent = fmt(State.credits);
   $("[data-bet]").textContent = fmt(State.bet);
-  const visibleJackpots = State.activeGame ? State.jackpots : State.lobbyJackpots;
-  $$("[data-jp-grand]").forEach((el) => { el.textContent = "$" + fmt(visibleJackpots.grand); });
-  $$("[data-jp-major]").forEach((el) => { el.textContent = "$" + fmt(visibleJackpots.major); });
-  $$("[data-jp-minor]").forEach((el) => { el.textContent = "$" + fmt(visibleJackpots.minor); });
-  $$("[data-jp-mini]").forEach((el) => { el.textContent = "$" + fmt(visibleJackpots.mini); });
+  $("[data-jp-grand]").textContent = "$" + fmt(State.jackpots.grand);
+  $("[data-jp-major]").textContent = "$" + fmt(State.jackpots.major);
+  $("[data-jp-minor]").textContent = "$" + fmt(State.jackpots.minor);
+  $("[data-jp-mini]").textContent = "$" + fmt(State.jackpots.mini);
   const linesEl = $("[data-lines]");
   if (linesEl && State.activeGame) linesEl.textContent = GAMES[State.activeGame].paylines.length;
 }
@@ -1942,7 +1725,7 @@ async function spinGame() {
   }
   clampBetToAdmin(State.activeGame);
   if (State.credits < State.bet) {
-    flashMessage("Not enough South Diamond points for this shelf's admin point limit.");
+    flashMessage("Not enough South Diamond points for this game's admin bet limit.");
     stopAutoSpin();
     return;
   }
@@ -1961,7 +1744,7 @@ async function spinGame() {
   State.spinCount++;
   incrementJackpots(State.bet);
   updateDisplays();
-  setWinMessage("Opening shelf picks...");
+  setWinMessage("Reels rolling...");
   $("[data-win-amount]").textContent = "0.00";
   $("[data-reel-strip]").classList.remove("is-winning");
   hideWinBurst();
@@ -2004,7 +1787,7 @@ async function spinGame() {
       spinButton.classList.remove("is-spinning");
       spinButton.disabled = false;
     }
-    flashMessage(error.message || "Shelf pick could not be saved. Try again.");
+    flashMessage(error.message || "Spin could not be saved. Try again.");
     stopAutoSpin();
     return;
   }
@@ -2044,25 +1827,25 @@ async function spinGame() {
       await showAnticipation(result.jpHit, 2500);
       showJackpotBurst(result.jpHit, result.totalPay);
       Audio.jackpot();
-      setWinMessage(`${rewardLevelName(result.jpHit).toUpperCase()} REWARD! +${fmt(result.totalPay)}`);
+      setWinMessage(`${result.jpHit.toUpperCase()} JACKPOT! +${fmt(result.totalPay)}`);
     } else if (isMega) {
       await showAnticipation("mega", 1500);
       showWinBurst(result.totalPay, true, true);
       Audio.win(true);
-      setWinMessage(`MEGA REWARD! +${fmt(result.totalPay)}`);
+      setWinMessage(`MEGA WIN! +${fmt(result.totalPay)}`);
     } else if (isBig) {
       await showAnticipation("big", 900);
       showWinBurst(result.totalPay, true, false);
       Audio.win(true);
-      setWinMessage(`BIG REWARD! +${fmt(result.totalPay)}`);
+      setWinMessage(`BIG WIN! +${fmt(result.totalPay)}`);
     } else {
       showWinBurst(result.totalPay, false, false);
       Audio.win(false);
-      setWinMessage(`Reward! +${fmt(result.totalPay)}`);
+      setWinMessage(`Win! +${fmt(result.totalPay)}`);
     }
     animateCounter($("[data-win-amount]"), 0, result.totalPay, 1200);
   } else {
-    setWinMessage("Shelf reset. Try another pick.");
+    setWinMessage("Good luck! Try again.");
   }
 
   updateDisplays();
@@ -2119,8 +1902,8 @@ function showWinBurst(amount, isBig, isMega) {
   if (!burst) return;
   burst.classList.remove("hidden", "mega");
   if (isMega) burst.classList.add("mega");
-  $("[data-burst-amount]").innerHTML = isMega ? `MEGA REWARD<br><span>+${fmt(amount)}</span>` :
-                                          isBig ? `BIG REWARD<br><span>+${fmt(amount)}</span>` :
+  $("[data-burst-amount]").innerHTML = isMega ? `MEGA WIN<br><span>+${fmt(amount)}</span>` :
+                                          isBig ? `BIG WIN<br><span>+${fmt(amount)}</span>` :
                                                   `+${fmt(amount)}`;
   const coinBox = $("[data-coin-box]");
   if (coinBox) {
@@ -2144,13 +1927,9 @@ function showJackpotBurst(level, amount) {
   if (!burst) return;
   burst.classList.remove("hidden");
   burst.dataset.level = level;
-  $("[data-jp-burst-level]").textContent = rewardLevelName(level).toUpperCase() + " REWARD";
+  $("[data-jp-burst-level]").textContent = level.toUpperCase() + " JACKPOT";
   $("[data-jp-burst-amount]").textContent = "$" + fmt(amount);
   setTimeout(() => burst.classList.add("hidden"), 4000);
-}
-
-function rewardLevelName(level) {
-  return ({ grand: "Family Pack", major: "Snack Run", minor: "Cooler Pick", mini: "Quick Treat" })[level] || String(level || "Shelf");
 }
 
 function hideWinBurst() {
@@ -2170,12 +1949,12 @@ function showAnticipation(level, durationMs) {
     overlay.dataset.level = level;
     const txt = $("[data-anticipation-text]");
     if (txt) {
-      if (level === "grand")      txt.textContent = "FAMILY PACK REWARD INCOMING!";
-      else if (level === "major") txt.textContent = "SNACK RUN REWARD INCOMING!";
-      else if (level === "minor") txt.textContent = "COOLER PICK REWARD INCOMING!";
-      else if (level === "mini")  txt.textContent = "QUICK TREAT REWARD INCOMING!";
-      else if (level === "mega")  txt.textContent = "MEGA REWARD INCOMING!";
-      else                         txt.textContent = "BIG REWARD INCOMING!";
+      if (level === "grand")      txt.textContent = "GRAND JACKPOT INCOMING!";
+      else if (level === "major") txt.textContent = "MAJOR PRIZE INCOMING!";
+      else if (level === "minor") txt.textContent = "MINOR PRIZE INCOMING!";
+      else if (level === "mini")  txt.textContent = "MINI PRIZE INCOMING!";
+      else if (level === "mega")  txt.textContent = "MEGA WIN INCOMING!";
+      else                         txt.textContent = "BIG WIN INCOMING!";
     }
     // Drumroll: rising tone build-up
     if (Audio.ensure()) {
@@ -2215,15 +1994,15 @@ function openPaytableModal() {
   const modal = $("[data-paytable-modal]");
   if (!modal || !State.activeGame) return;
   const game = GAMES[State.activeGame];
-  $("[data-ptm-title]").textContent = game.title + " - Item Guide";
-  $("[data-ptm-info]").textContent = `${game.tagline} - rewards are simple left-to-right shelf matches.`;
+  $("[data-ptm-title]").textContent = game.title + " - Paytable";
+  $("[data-ptm-info]").innerHTML = `${game.reels}x${game.rows} reels &middot; ${game.paylines.length} ${game.paylines.length === 1 ? "line" : "lines"} &middot; ${game.tagline}`;
   const grid = $("[data-ptm-symbols]");
   const allSymbols = Object.keys(game.symbols).sort((a, b) => Math.max(...game.symbols[b].pay) - Math.max(...game.symbols[a].pay));
   grid.innerHTML = allSymbols.map((symKey) => {
     const sym = game.symbols[symKey];
-    const iconHtml = paytableIconHtml(sym, symKey);
+    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
     const pays = sym.pay || [];
-    const tier = sym.wild ? "FEATURED" : sym.scatter ? "GRAB BAG" : "";
+    const tier = sym.wild ? "WILD" : sym.scatter ? "BONUS" : "";
     return `
       <div class="ptm-symbol-row ${sym.wild ? "is-wild" : ""} ${sym.scatter ? "is-scatter" : ""}">
         <div class="ptm-sym-icon">${iconHtml}</div>
@@ -2268,42 +2047,13 @@ async function toggleFullscreen() {
   }
 }
 
-function isPhoneViewport() {
-  return window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
-}
-
-async function enterPhoneFullscreen() {
-  if (!isPhoneViewport() || State.fullscreen) return;
-  document.body.classList.add("is-phone-panorama");
-  try {
-    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-      await document.documentElement.requestFullscreen();
-    }
-    try { if (screen.orientation?.lock) await screen.orientation.lock("landscape"); } catch (err) {}
-    State.fullscreen = !!document.fullscreenElement || document.body.classList.contains("is-phone-panorama");
-  } catch (err) {
-    document.body.classList.add("is-pseudo-fullscreen");
-    State.fullscreen = true;
-  }
-  $("[data-fullscreen-btn]")?.classList.toggle("is-active", State.fullscreen);
-}
-
-function setupPhonePanoramaMode() {
-  if (!isPhoneViewport()) return;
-  document.body.classList.add("is-phone-panorama");
-  enterPhoneFullscreen();
-  const retry = () => enterPhoneFullscreen();
-  window.addEventListener("pointerdown", retry, { once: true, passive: true });
-  window.addEventListener("touchstart", retry, { once: true, passive: true });
-}
-
 // ============================================================
 // 11) NAVIGATION
 // ============================================================
 function backToLobby() {
   stopAutoSpin();
   Audio.stopMusic();
-  if (document.body.classList.contains("is-pseudo-fullscreen") && !isPhoneViewport()) {
+  if (document.body.classList.contains("is-pseudo-fullscreen")) {
     document.body.classList.remove("is-pseudo-fullscreen");
     State.fullscreen = false;
     $("[data-fullscreen-btn]")?.classList.remove("is-active");
@@ -2361,13 +2111,6 @@ function setMaxBet() {
 // ============================================================
 function bindEvents() {
   document.addEventListener("click", (e) => {
-    const filterBtn = e.target.closest("[data-lobby-filter]");
-    if (filterBtn) {
-      State.lobbyFilter = filterBtn.dataset.lobbyFilter || "all";
-      Audio.click();
-      renderLobby();
-      return;
-    }
     const tile = e.target.closest("[data-game]");
     if (tile) {
       Audio.resume();
@@ -2375,7 +2118,6 @@ function bindEvents() {
       renderGameView(tile.dataset.game);
       return;
     }
-    if (e.target.closest("[data-arcade-home]")) { backToLobby(); return; }
     if (e.target.closest("[data-back-button]")) { backToLobby(); return; }
     if (e.target.closest("[data-spin-btn]")) { Audio.resume(); spinGame(); return; }
     if (e.target.closest("[data-bet-up]")) { changeBet(+1); return; }
@@ -2421,9 +2163,7 @@ async function bootstrap() {
   updateDisplays();
   bindEvents();
   startJackpotTicker();
-  startArcadeLiveUpdates();
   startArcadeControlsWatcher();
-  setupPhonePanoramaMode();
   // Music/sound button initial state
   const mb = $("[data-music-btn]"); if (mb) { mb.textContent = State.musicOn ? "\u{1F3B5} ON" : "\u{1F3B5} OFF"; mb.classList.toggle("is-active", State.musicOn); }
   const sb = $("[data-sound-btn]"); if (sb) { sb.textContent = State.soundOn ? "\u{1F50A}" : "\u{1F507}"; sb.classList.toggle("is-active", State.soundOn); }

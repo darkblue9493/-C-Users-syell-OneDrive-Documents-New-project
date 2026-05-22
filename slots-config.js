@@ -1,5 +1,5 @@
 /* ============================================================
- * GAS GUSHERS CONFIG - Shared by admin + arcade
+ * SOUTH DIAMOND SLOTS CONFIG - Shared by admin + arcade
  * ============================================================
  * - Stored on the server so admin writes and arcade/player pages read
  * - localStorage remains only as a same-browser fallback
@@ -14,60 +14,33 @@
 
   // List of game keys + display titles (kept in sync with slots-arcade.js GAMES)
   const GAME_LIST = [
-    { key: "wildBuffalo",     title: "Fountain Soda",      theme: "buffalo"   },
-    { key: "kingKong",        title: "Hot Chips",          theme: "kingkong"  },
-    { key: "triple777",       title: "Candy Aisle",        theme: "triple777" },
-    { key: "blackjack",       title: "Cold Beer",          theme: "blackjack" },
-    { key: "gorillaGold",     title: "Coffee Run",         theme: "gorilla"   },
-    { key: "goldWolf",        title: "Donut Box",          theme: "wolf"      },
-    { key: "wildBull",        title: "Beef Jerky",         theme: "bull"      },
-    { key: "dragonEmpress",   title: "Energy Drinks",      theme: "dragon"    },
-    { key: "mammothRush",     title: "Ice Cream Cooler",   theme: "mammoth"   },
-    { key: "pharaoh",         title: "Pretzel Rack",       theme: "pharaoh"   },
-    { key: "oceanTreasure",   title: "Bottled Water",      theme: "ocean"     },
-    { key: "vegas7s",         title: "Trail Mix",          theme: "vegas"     },
-    { key: "luckyPanda",      title: "Gummy Bears",        theme: "panda88"   },
-    { key: "lionsPride",      title: "Nacho Tray",         theme: "lion"      },
-    { key: "piratesTreasure", title: "Snack Cakes",        theme: "pirate"    },
-    { key: "zeusThunder",     title: "Sports Drinks",      theme: "zeus"      },
-    { key: "cleopatra",       title: "Chocolate Bars",     theme: "cleopatra" },
-    { key: "frozenRiches",    title: "Slushie Cups",       theme: "arctic"    },
-    { key: "galaxyStars",     title: "Moon Pies",          theme: "galaxy"    },
-    { key: "fruitMania",      title: "Fruit Snacks",       theme: "fruit"     },
-    { key: "vikingGlory",     title: "Corn Nuts",          theme: "viking"    },
-    { key: "aztecEmpire",     title: "Taco Bites",         theme: "aztec"     },
-    { key: "halloweenHunt",   title: "Sour Candy",         theme: "halloween" },
-    { key: "luckyCharms",     title: "Breakfast Bars",     theme: "irish"     },
+    { key: "wildBuffalo",     title: "Wild Buffalo",       theme: "buffalo"   },
+    { key: "kingKong",        title: "King Kong",          theme: "kingkong"  },
+    { key: "triple777",       title: "Triple 777",         theme: "triple777" },
+    { key: "blackjack",       title: "Black Jack Slots",   theme: "blackjack" },
+    { key: "gorillaGold",     title: "Gorilla Gold",       theme: "gorilla"   },
+    { key: "goldWolf",        title: "Gold Wolf",          theme: "wolf"      },
+    { key: "wildBull",        title: "Wild Bull",          theme: "bull"      },
+    { key: "dragonEmpress",   title: "Dragon Empress",     theme: "dragon"    },
+    { key: "mammothRush",     title: "Mammoth Rush",       theme: "mammoth"   },
+    { key: "pharaoh",         title: "Pharaoh's Riches",   theme: "pharaoh"   },
+    { key: "oceanTreasure",   title: "Ocean Treasure",     theme: "ocean"     },
+    { key: "vegas7s",         title: "Vegas 7s",           theme: "vegas"     },
+    { key: "luckyPanda",      title: "Lucky Panda 88",     theme: "panda88"   },
+    { key: "lionsPride",      title: "Lion's Pride",       theme: "lion"      },
+    { key: "piratesTreasure", title: "Pirate's Treasure",  theme: "pirate"    },
+    { key: "zeusThunder",     title: "Zeus Thunder",       theme: "zeus"      },
+    { key: "cleopatra",       title: "Cleopatra Diamonds", theme: "cleopatra" },
+    { key: "frozenRiches",    title: "Frozen Riches",      theme: "arctic"    },
+    { key: "galaxyStars",     title: "Galaxy Stars",       theme: "galaxy"    },
+    { key: "fruitMania",      title: "Fruit Mania",        theme: "fruit"     },
+    { key: "vikingGlory",     title: "Viking Glory",       theme: "viking"    },
+    { key: "aztecEmpire",     title: "Aztec Empire",       theme: "aztec"     },
+    { key: "halloweenHunt",   title: "Halloween Hunt",     theme: "halloween" },
+    { key: "luckyCharms",     title: "Lucky Charms",       theme: "irish"     },
   ];
 
-  const GAME_DEFAULT_OVERRIDES = {
-    wildBuffalo:     { targetRtp: 0.91, dailyMaxPayout: 850,  dailyMinPayout: 35, minBet: 0.05, maxBet: 8 },
-    kingKong:        { targetRtp: 0.92, dailyMaxPayout: 1200, dailyMinPayout: 50, minBet: 0.1,  maxBet: 12 },
-    triple777:       { targetRtp: 0.9,  dailyMaxPayout: 700,  dailyMinPayout: 25, minBet: 0.05, maxBet: 5 },
-    blackjack:       { targetRtp: 0.93, dailyMaxPayout: 1500, dailyMinPayout: 75, minBet: 0.25, maxBet: 15 },
-    gorillaGold:     { targetRtp: 0.92, dailyMaxPayout: 1100, dailyMinPayout: 50, minBet: 0.1,  maxBet: 10 },
-    goldWolf:        { targetRtp: 0.91, dailyMaxPayout: 900,  dailyMinPayout: 40, minBet: 0.05, maxBet: 8 },
-    wildBull:        { targetRtp: 0.9,  dailyMaxPayout: 650,  dailyMinPayout: 25, minBet: 0.05, maxBet: 5 },
-    dragonEmpress:   { targetRtp: 0.94, dailyMaxPayout: 1800, dailyMinPayout: 90, minBet: 0.25, maxBet: 20 },
-    mammothRush:     { targetRtp: 0.93, dailyMaxPayout: 1600, dailyMinPayout: 80, minBet: 0.2,  maxBet: 18 },
-    pharaoh:         { targetRtp: 0.92, dailyMaxPayout: 1250, dailyMinPayout: 60, minBet: 0.1,  maxBet: 12 },
-    oceanTreasure:   { targetRtp: 0.91, dailyMaxPayout: 950,  dailyMinPayout: 45, minBet: 0.05, maxBet: 9 },
-    vegas7s:         { targetRtp: 0.9,  dailyMaxPayout: 750,  dailyMinPayout: 30, minBet: 0.05, maxBet: 6 },
-    luckyPanda:      { targetRtp: 0.92, dailyMaxPayout: 1000, dailyMinPayout: 50, minBet: 0.1,  maxBet: 10 },
-    lionsPride:      { targetRtp: 0.93, dailyMaxPayout: 1400, dailyMinPayout: 70, minBet: 0.2,  maxBet: 14 },
-    piratesTreasure: { targetRtp: 0.91, dailyMaxPayout: 1050, dailyMinPayout: 50, minBet: 0.1,  maxBet: 10 },
-    zeusThunder:     { targetRtp: 0.94, dailyMaxPayout: 2000, dailyMinPayout: 100, minBet: 0.25, maxBet: 20 },
-    cleopatra:       { targetRtp: 0.93, dailyMaxPayout: 1550, dailyMinPayout: 75, minBet: 0.2,  maxBet: 16 },
-    frozenRiches:    { targetRtp: 0.91, dailyMaxPayout: 900,  dailyMinPayout: 40, minBet: 0.05, maxBet: 8 },
-    galaxyStars:     { targetRtp: 0.92, dailyMaxPayout: 1300, dailyMinPayout: 65, minBet: 0.1,  maxBet: 12 },
-    fruitMania:      { targetRtp: 0.9,  dailyMaxPayout: 600,  dailyMinPayout: 20, minBet: 0.05, maxBet: 5 },
-    vikingGlory:     { targetRtp: 0.92, dailyMaxPayout: 1150, dailyMinPayout: 55, minBet: 0.1,  maxBet: 11 },
-    aztecEmpire:     { targetRtp: 0.93, dailyMaxPayout: 1450, dailyMinPayout: 70, minBet: 0.2,  maxBet: 15 },
-    halloweenHunt:   { targetRtp: 0.91, dailyMaxPayout: 800,  dailyMinPayout: 35, minBet: 0.05, maxBet: 7 },
-    luckyCharms:     { targetRtp: 0.92, dailyMaxPayout: 1000, dailyMinPayout: 50, minBet: 0.1,  maxBet: 10 },
-  };
-
-  function defaultGameConfig(gameKey) {
+  function defaultGameConfig() {
     return {
       enabled: true,
       targetRtp: 0.92,
@@ -76,7 +49,6 @@
       maxBet: 10,
       minBet: 0.05,
       jackpotPool: { grand: 1500, major: 500, minor: 100, mini: 20 },
-      ...(GAME_DEFAULT_OVERRIDES[gameKey] || {}),
     };
   }
 
@@ -85,13 +57,12 @@
       version: 1,
       globalEnabled: true,
       defaultBet: 0.25,
-      jackpotPool: { grand: 1500, major: 500, minor: 100, mini: 20 },
       dailyResetUtcHour: 0,
       lastModified: Date.now(),
       games: {},
     };
     for (const g of GAME_LIST) {
-      cfg.games[g.key] = defaultGameConfig(g.key);
+      cfg.games[g.key] = defaultGameConfig();
     }
     return cfg;
   }
@@ -131,10 +102,6 @@
   function mergeConfig(config) {
     const parsed = config && typeof config === "object" ? config : {};
     const def = defaultConfig();
-    parsed.jackpotPool = {
-      ...def.jackpotPool,
-      ...(parsed.jackpotPool || {}),
-    };
     parsed.games = parsed.games || {};
     for (const g of GAME_LIST) {
       parsed.games[g.key] = { ...def.games[g.key], ...(parsed.games[g.key] || {}) };

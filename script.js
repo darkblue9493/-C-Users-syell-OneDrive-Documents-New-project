@@ -2,7 +2,7 @@ const header = document.querySelector("[data-header]");
 const nav = document.querySelector("[data-nav]");
 const navToggle = document.querySelector("[data-nav-toggle]");
 const canUseApi = location.protocol === "http:" || location.protocol === "https:";
-const isAdminPage = Boolean(document.querySelector("[data-admin-title]"));
+const isAdminPage = Boolean(document.querySelector("[data-admin-inbox]"));
 const winnerList = document.querySelector("[data-winner-list]");
 const winnerHighlight = document.querySelector("[data-winner-highlight]");
 const promoTracks = document.querySelectorAll(".promo-track");
@@ -64,19 +64,19 @@ const winnerNames = [
 ];
 
 const winnerGames = [
-  "Sports Drinks reward shelf",
-  "Trail Mix shelf reward",
-  "Breakfast Bars quick pick",
-  "Coffee Run reward",
-  "Fountain Soda streak",
-  "Hot Chips shelf",
-  "Gummy Bears reward",
-  "Bottled Water pick",
-  "Moon Pies counter treat",
-  "Candy Aisle grab bag",
+  "Golden Dragon bonus round",
+  "Orion Stars jackpot session",
+  "Ultra Panda slot run",
+  "Game Vault lucky spin",
+  "JUWA fish table streak",
+  "Fire Kirin hot room",
+  "Panda Master reel hit",
+  "Vblink diamond spin",
+  "Milky Way table win",
+  "Lucky 777 bonus room",
 ];
 
-const playerChatWelcomeText = "Welcome to South Diamond. Please let us know which shelf you'd like to open, and our team will be happy to assist you.";
+const playerChatWelcomeText = "Welcome to South Diamond. Please let us know which game you'd like to play, and our team will be happy to assist you.";
 
 function randomWinnerAmount() {
   const amount = Math.floor((260 + Math.random() * 1740) / 10) * 10;
@@ -377,9 +377,6 @@ let slotMusicTimer = null;
 let slotAutoSpinning = false;
 let slotAutoSpinTimer = null;
 let slotCurrentWin = 0;
-let slotAdminConfig = null;
-let slotAdminDefaultBet = null;
-let slotControlsRefreshInFlight = false;
 let lastPlayerOperatorMessageId = "";
 let playerNotificationsReady = false;
 const referralCodeFromUrl = (() => {
@@ -393,28 +390,12 @@ const adminSearchState = {
   players: "",
   vip: "",
   transactions: "",
-  points: "",
+  add: "",
+  redeem: "",
   activity: "",
   broadcast: "",
   spin: "",
   slots: "",
-};
-const legacySlotArcadeMap = {
-  buffalo: "wildBuffalo",
-  diamond: "triple777",
-  diamond777: "triple777",
-  lucky777: "triple777",
-  milkyway: "vegas7s",
-  dragon: "dragonEmpress",
-  ocean: "oceanTreasure",
-  firekirin: "dragonEmpress",
-  pandamaster: "gorillaGold",
-  orion: "vegas7s",
-  goldendragon: "dragonEmpress",
-  gamevault: "wildBuffalo",
-  ultrapanda: "gorillaGold",
-  jungle: "gorillaGold",
-  neon: "vegas7s",
 };
 
 let adminPlayerFilter = "all";
@@ -669,22 +650,6 @@ const SLOT_SYMBOL_LIBRARY = {
   "Q":      { icon:"Q", color:"#a78bff", tier:"low", label:"Q" },
   "J":      { icon:"J", color:"#52ef9f", tier:"low", label:"J" },
   "10":     { icon:"10", color:"#7be8ff", tier:"low", label:"10" },
-  "GAS":    { icon: '<svg viewBox="0 0 40 40"><rect x="10" y="5" width="16" height="30" rx="3" fill="#ef4444" stroke="#fff" stroke-width="1.5"/><rect x="13" y="9" width="10" height="8" rx="1" fill="#e0f2fe"/><path d="M26 11 h4 v15 c0 2 4 2 4 0 v-8" fill="none" stroke="#facc15" stroke-width="2.5" stroke-linecap="round"/><text x="18" y="31" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#fff">GAS</text></svg>', color:"#ef4444", tier:"wild", label:"GAS" },
-  "PUMP":   { icon: '<svg viewBox="0 0 40 40"><rect x="8" y="6" width="20" height="28" rx="4" fill="#2563eb" stroke="#bfdbfe" stroke-width="1.5"/><rect x="12" y="10" width="12" height="9" rx="1.5" fill="#dbeafe"/><circle cx="18" cy="26" r="4" fill="#facc15"/><path d="M28 13 c4 1 5 4 5 8 v9" fill="none" stroke="#93c5fd" stroke-width="2.2" stroke-linecap="round"/></svg>', color:"#60a5fa", tier:"premium", label:"PUMP" },
-  "OIL":    { icon: '<svg viewBox="0 0 40 40"><path d="M20 4 C13 14 9 20 9 27 c0 6 5 10 11 10 s11-4 11-10 c0-7-4-13-11-23Z" fill="#111827" stroke="#facc15" stroke-width="2"/><path d="M16 27 c1 3 4 5 8 4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>', color:"#111827", tier:"premium", label:"OIL" },
-  "CAR":    { icon: '<svg viewBox="0 0 40 40"><path d="M8 23 l4-9 h16 l4 9 v8 h-4 v-3 H12 v3 H8Z" fill="#22c55e" stroke="#dcfce7" stroke-width="1.5"/><circle cx="14" cy="28" r="3" fill="#111827"/><circle cx="26" cy="28" r="3" fill="#111827"/><path d="M14 15 h12 l2 6 H12Z" fill="#bbf7d0"/></svg>', color:"#22c55e", tier:"high", label:"CAR" },
-  "CART":   { icon: '<svg viewBox="0 0 40 40"><path d="M7 8 h4 l4 17 h15 l4-12 H14" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="31" r="3" fill="#38bdf8"/><circle cx="29" cy="31" r="3" fill="#38bdf8"/></svg>', color:"#38bdf8", tier:"high", label:"CART" },
-  "MILK":   { icon: '<svg viewBox="0 0 40 40"><path d="M14 6 h12 l3 7 v21 H11 V13Z" fill="#f8fafc" stroke="#60a5fa" stroke-width="1.7"/><path d="M14 6 l-3 7 h18 l-3-7" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.4"/><text x="20" y="26" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#2563eb">MILK</text></svg>', color:"#93c5fd", tier:"mid", label:"MILK" },
-  "BREAD":  { icon: '<svg viewBox="0 0 40 40"><path d="M9 19 c0-8 5-13 11-13 s11 5 11 13 v13 H9Z" fill="#d97706" stroke="#fed7aa" stroke-width="1.8"/><path d="M14 15 c3 2 9 2 12 0" fill="none" stroke="#fef3c7" stroke-width="2" stroke-linecap="round"/></svg>', color:"#d97706", tier:"mid", label:"BREAD" },
-  "BAG":    { icon: '<svg viewBox="0 0 40 40"><path d="M10 14 h20 l-2 22 H12Z" fill="#facc15" stroke="#92400e" stroke-width="1.8"/><path d="M15 14 c0-6 10-6 10 0" fill="none" stroke="#92400e" stroke-width="2"/><circle cx="16" cy="24" r="2" fill="#ef4444"/><circle cx="23" cy="27" r="2" fill="#22c55e"/></svg>', color:"#facc15", tier:"low", label:"BAG" },
-  "SODA":   { icon: '<svg viewBox="0 0 40 40"><path d="M14 5 h13 l-2 30 H12Z" fill="#ef4444" stroke="#fecaca" stroke-width="1.8"/><path d="M16 5 h12" stroke="#facc15" stroke-width="2"/><path d="M20 5 l4-3 h5" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/><text x="19" y="24" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#fff">POP</text></svg>', color:"#ef4444", tier:"wild", label:"SODA" },
-  "CHIPS":  { icon: '<svg viewBox="0 0 40 40"><path d="M10 7 h20 l-2 29 H12Z" fill="#f97316" stroke="#fed7aa" stroke-width="1.8"/><path d="M13 15 h14" stroke="#fff7ed" stroke-width="2"/><text x="20" y="27" text-anchor="middle" font-family="Arial Black" font-size="7" fill="#fff">CHIP</text></svg>', color:"#f97316", tier:"premium", label:"CHIPS" },
-  "CANDY":  { icon: '<svg viewBox="0 0 40 40"><path d="M8 18 l7-5 h10 l7 5 l-7 5 H15Z" fill="#ec4899" stroke="#fbcfe8" stroke-width="1.8"/><path d="M8 18 l-5-4 v8Z M32 18 l5-4 v8Z" fill="#a855f7" stroke="#f5d0fe" stroke-width="1.5"/></svg>', color:"#ec4899", tier:"premium", label:"CANDY" },
-  "BEER":   { icon: '<svg viewBox="0 0 40 40"><rect x="10" y="9" width="17" height="25" rx="3" fill="#f59e0b" stroke="#fef3c7" stroke-width="1.8"/><path d="M27 15 h4 c4 0 4 10 0 10 h-4" fill="none" stroke="#fef3c7" stroke-width="2.2"/><path d="M10 11 c3-5 11-5 17 0" fill="#fff" stroke="#fff" stroke-width="2"/></svg>', color:"#f59e0b", tier:"high", label:"BEER" },
-  "COFFEE": { icon: '<svg viewBox="0 0 40 40"><path d="M12 13 h17 l-2 22 H14Z" fill="#7c2d12" stroke="#fed7aa" stroke-width="1.8"/><path d="M11 13 h19 l-2-5 H13Z" fill="#fef3c7" stroke="#fed7aa" stroke-width="1.5"/><text x="20" y="27" text-anchor="middle" font-family="Arial Black" font-size="6" fill="#fff">HOT</text></svg>', color:"#7c2d12", tier:"high", label:"COFFEE" },
-  "DONUT":  { icon: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="14" fill="#f9a8d4" stroke="#be185d" stroke-width="1.8"/><circle cx="20" cy="20" r="5" fill="#2a1207"/><circle cx="15" cy="14" r="1.5" fill="#fff"/><circle cx="25" cy="16" r="1.5" fill="#facc15"/><circle cx="24" cy="25" r="1.5" fill="#38bdf8"/></svg>', color:"#f9a8d4", tier:"mid", label:"DONUT" },
-  "JERKY":  { icon: '<svg viewBox="0 0 40 40"><path d="M14 5 h16 l-4 31 H10Z" fill="#991b1b" stroke="#fecaca" stroke-width="1.8"/><text x="20" y="23" text-anchor="middle" font-family="Arial Black" font-size="6" fill="#fff">JERKY</text></svg>', color:"#991b1b", tier:"mid", label:"JERKY" },
-  "WATER":  { icon: '<svg viewBox="0 0 40 40"><path d="M16 5 h8 l2 7 v21 c0 2-2 3-6 3 s-6-1-6-3 V12Z" fill="#dbeafe" stroke="#38bdf8" stroke-width="1.8"/><path d="M14 19 h12 v8 H14Z" fill="#60a5fa"/><text x="20" y="25" text-anchor="middle" font-family="Arial Black" font-size="5" fill="#fff">H2O</text></svg>', color:"#38bdf8", tier:"low", label:"WATER" },
 };
 
 function getSymbolMeta(symbol) {
@@ -693,42 +658,42 @@ function getSymbolMeta(symbol) {
 
 const slotGames = {
   buffalo: {
-    title: "Fountain Soda",
+    title: "Buffalo Rush",
     label: "Wild prairie reels",
     className: "buffalo",
     accent: "#ffb162",
     symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
   },
   diamond: {
-    title: "Candy Aisle",
+    title: "Diamond 777",
     label: "Classic jackpot reels",
     className: "diamond",
     accent: "#7be8ff",
     symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
   },
   dragon: {
-    title: "Energy Drinks",
+    title: "Dragon Conqueror",
     label: "Fire bonus reels",
     className: "dragon",
     accent: "#ff5630",
     symbols: ["DRG", "FIRE", "SWORD", "GOLD", "PALACE", "A", "K", "SD"],
   },
   ocean: {
-    title: "Bottled Water",
+    title: "Ocean Monster",
     label: "Deep sea wins",
     className: "ocean",
     accent: "#3bb8ff",
     symbols: ["OCEAN", "SHARK", "CRAB", "PEARL", "FISH", "A", "K", "SD"],
   },
   jungle: {
-    title: "Nacho Tray",
+    title: "Jungle Fortune",
     label: "Big wild wins",
     className: "jungle",
     accent: "#52ef9f",
     symbols: ["TIGER", "LEOP", "GOLD", "MASK", "LEAF", "A", "K", "SD"],
   },
   neon: {
-    title: "Slushie Cups",
+    title: "Neon Reels",
     label: "Fast city spins",
     className: "neon",
     accent: "#ff5fe5",
@@ -736,63 +701,63 @@ const slotGames = {
   },
   // Bonus mapped games (use generic mappings)
   milkyway: {
-    title: "Moon Pies",
+    title: "Milky Way 777",
     label: "Galaxy reels",
     className: "neon",
     accent: "#a78bff",
     symbols: ["777", "DIA", "BOLT", "BELL", "A", "K", "SD"],
   },
   lucky777: {
-    title: "Gummy Bears",
+    title: "Lucky 777",
     label: "Classic sevens",
     className: "diamond",
     accent: "#ff4d6d",
     symbols: ["777", "BAR", "CHERRY", "BELL", "DIA", "A", "K", "SD"],
   },
   diamond777: {
-    title: "Candy Aisle",
+    title: "Diamond 777",
     label: "Premium gem reels",
     className: "diamond",
     accent: "#7be8ff",
     symbols: ["777", "DIA", "BAR", "BELL", "CHERRY", "A", "K", "SD"],
   },
   firekirin: {
-    title: "Hot Chips",
+    title: "Fire Kirin",
     label: "Flame wild reels",
     className: "dragon",
     accent: "#ff7a30",
     symbols: ["DRG", "FIRE", "GOLD", "PALACE", "A", "K", "Q", "SD"],
   },
   pandamaster: {
-    title: "Snack Cakes",
+    title: "Panda Master",
     label: "Panda bonus reels",
     className: "jungle",
     accent: "#7ad186",
     symbols: ["TIGER", "LEAF", "BELL", "GOLD", "A", "K", "Q", "SD"],
   },
   orion: {
-    title: "Trail Mix",
+    title: "Orion Stars",
     label: "Neon star wins",
     className: "neon",
     accent: "#a78bff",
     symbols: ["BOLT", "DICE", "ROUL", "DIA", "777", "A", "K", "SD"],
   },
   goldendragon: {
-    title: "Sports Drinks",
+    title: "Golden Dragon",
     label: "VIP dragon reels",
     className: "dragon",
     accent: "#ffd76b",
     symbols: ["DRG", "GOLD", "FIRE", "PALACE", "SWORD", "A", "K", "SD"],
   },
   gamevault: {
-    title: "Coffee Run",
+    title: "Game Vault",
     label: "Treasure reels",
     className: "buffalo",
     accent: "#f6c85f",
     symbols: ["GOLD", "BAR", "DIA", "BELL", "CHERRY", "A", "K", "SD"],
   },
   ultrapanda: {
-    title: "Breakfast Bars",
+    title: "Ultra Panda",
     label: "Lucky panda reels",
     className: "jungle",
     accent: "#69d27a",
@@ -800,141 +765,8 @@ const slotGames = {
   },
 };
 
-const TEMP_GAS_GROCERY_SYMBOLS = ["SODA", "CHIPS", "CANDY", "BEER", "COFFEE", "DONUT", "JERKY", "WATER"];
-const TEMP_GAS_STATION_GAME_TITLES = {
-  buffalo: "Fountain Soda",
-  diamond: "Candy Aisle",
-  dragon: "Energy Drinks",
-  ocean: "Bottled Water",
-  jungle: "Nacho Tray",
-  neon: "Slushie Cups",
-  milkyway: "Moon Pies",
-  lucky777: "Gummy Bears",
-  diamond777: "Candy Aisle",
-  firekirin: "Hot Chips",
-  pandamaster: "Snack Cakes",
-  orion: "Trail Mix",
-  goldendragon: "Sports Drinks",
-  gamevault: "Coffee Run",
-  ultrapanda: "Breakfast Bars",
-};
-
-Object.entries(slotGames).forEach(([key, game]) => {
-  game.title = TEMP_GAS_STATION_GAME_TITLES[key] || game.title;
-  game.label = "Gas station picks";
-  game.symbols = TEMP_GAS_GROCERY_SYMBOLS;
-});
-
 function loadSlotBalance() {
   slotBalance = Number(currentPlayer?.points) || 0;
-}
-
-function numberSetting(value, fallback = 0) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
-}
-
-function adminConfigForLegacySlot(gameKey = activeSlotGame) {
-  if (slotAdminConfig?.games?.[gameKey]) return slotAdminConfig.games[gameKey];
-  const arcadeKey = legacySlotArcadeMap[gameKey] || "wildBuffalo";
-  return slotAdminConfig?.games?.[arcadeKey] || null;
-}
-
-function legacySlotIsEnabled(gameKey) {
-  const cfg = adminConfigForLegacySlot(gameKey);
-  return slotAdminConfig?.globalEnabled !== false && (!cfg || cfg.enabled !== false);
-}
-
-function legacyBetLevels(gameKey = activeSlotGame) {
-  const cfg = adminConfigForLegacySlot(gameKey);
-  const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.25;
-  const maxBet = cfg ? Math.max(minBet, numberSetting(cfg.maxBet, 10)) : 10;
-  return [...new Set([0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, minBet, maxBet]
-    .map((value) => Math.round(Number(value) * 100) / 100)
-    .filter((value) => Number.isFinite(value) && value >= minBet && value <= maxBet))]
-    .sort((a, b) => a - b);
-}
-
-function applySlotAdminControls({ forceDefault = false } = {}) {
-  const cfg = adminConfigForLegacySlot();
-  const enabled = legacySlotIsEnabled(activeSlotGame);
-  const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.25;
-  const maxBet = cfg ? Math.max(minBet, numberSetting(cfg.maxBet, 10)) : 10;
-  const defaultBet = Math.max(minBet, Math.min(numberSetting(slotAdminConfig?.defaultBet, 0.25), maxBet));
-  if (
-    forceDefault ||
-    slotAdminDefaultBet === null ||
-    slotBet < minBet ||
-    slotBet > maxBet ||
-    Math.abs(slotBet - slotAdminDefaultBet) < 0.001
-  ) {
-    slotBet = defaultBet;
-  }
-  slotAdminDefaultBet = defaultBet;
-  if (slotSpinButton) slotSpinButton.disabled = !enabled;
-  if (!enabled) {
-    stopSlotAutoSpin();
-    if (slotWinLabel) slotWinLabel.textContent = "This slot game is currently turned off by admin.";
-  }
-  updateSlotUi();
-  return enabled;
-}
-
-function updateLegacySlotJackpots(gameKey = activeSlotGame) {
-  const cfg = adminConfigForLegacySlot(gameKey);
-  const pool = cfg?.jackpotPool || {};
-  const levels = ["grand", "major", "minor", "mini"];
-  document.querySelectorAll(".slots-jackpot-strip").forEach((strip) => {
-    levels.forEach((level) => {
-      const value = pool[level];
-      if (!Number.isFinite(Number(value))) return;
-      const item = strip.querySelector(`.jackpot-${level} b`) || strip.querySelectorAll("b")[levels.indexOf(level)];
-      if (item) item.textContent = formatPoints(Number(value));
-    });
-  });
-}
-
-function updateLegacySlotsLobbyControls() {
-  if (!slotsLobby) return;
-  const defaultBet = numberSetting(slotAdminConfig?.defaultBet, 0.25);
-  const marquee = slotsLobby.querySelector(".slots-marquee");
-  if (marquee) marquee.textContent = `Welcome to Gas Gushers. Picks start at ${formatPoints(defaultBet)} points.`;
-  slotsLobby.querySelectorAll("[data-slot-game]").forEach((tile) => {
-    const gameKey = tile.dataset.slotGame;
-    const cfg = adminConfigForLegacySlot(gameKey);
-    const enabled = legacySlotIsEnabled(gameKey);
-    const minBet = cfg ? Math.max(0.01, numberSetting(cfg.minBet, 0.05)) : 0.25;
-    const maxBet = cfg ? Math.max(minBet, numberSetting(cfg.maxBet, 10)) : 10;
-    const badge = tile.querySelector("span");
-    const copy = tile.querySelector("small");
-    if (badge && !badge.dataset.baseText) badge.dataset.baseText = badge.textContent;
-    if (copy && !copy.dataset.baseText) copy.dataset.baseText = copy.textContent;
-    if (badge) badge.textContent = enabled ? (badge.dataset.baseText || "Play") : "Offline";
-    if (copy) {
-      const base = copy.dataset.baseText || copy.textContent;
-      copy.textContent = enabled ? `${base} | Bet ${formatPoints(minBet)}-${formatPoints(maxBet)}` : "Temporarily unavailable";
-    }
-    tile.classList.toggle("is-maintenance", !enabled);
-    tile.disabled = !enabled;
-    tile.setAttribute("aria-disabled", enabled ? "false" : "true");
-  });
-}
-
-async function refreshLegacySlotControls({ forceDefault = false } = {}) {
-  if (slotControlsRefreshInFlight) return slotAdminConfig;
-  slotControlsRefreshInFlight = true;
-  try {
-    const data = await api("/api/player/slots/arcade-config");
-    slotAdminConfig = data.config || null;
-    updateLegacySlotsLobbyControls();
-    updateLegacySlotJackpots();
-    if (slotAdminConfig) applySlotAdminControls({ forceDefault });
-    return slotAdminConfig;
-  } catch (error) {
-    return slotAdminConfig;
-  } finally {
-    slotControlsRefreshInFlight = false;
-  }
 }
 
 function updateSlotUi() {
@@ -952,7 +784,6 @@ function updateSlotUi() {
     if (game.accent) slotMachine.style.setProperty("--slot-accent", game.accent);
   }
   if (slotWinAmount && !slotIsSpinning) slotWinAmount.textContent = formatPoints(slotCurrentWin);
-  updateLegacySlotJackpots(activeSlotGame);
 }
 
 function renderSymbolCell(symbol, isWinning) {
@@ -1057,13 +888,12 @@ function stopSlotMusic() {
   if (slotsMusicButton) slotsMusicButton.textContent = "Music Off";
 }
 
-async function openSlotsLobby() {
+function openSlotsLobby() {
   if (!currentPlayer) {
     document.querySelector('[data-auth-tab="login"]')?.click();
     playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
-  await refreshLegacySlotControls();
   loadSlotBalance();
   updateSlotUi();
   slotsModal?.classList.remove("is-hidden");
@@ -1071,7 +901,7 @@ async function openSlotsLobby() {
   slotsLobby?.classList.remove("is-hidden");
   slotMachine?.classList.add("is-hidden");
   slotsBack?.classList.add("is-hidden");
-  if (slotWinLabel) slotWinLabel.textContent = "Choose a Gas Gushers shelf.";
+  if (slotWinLabel) slotWinLabel.textContent = "Choose a South Diamond slot game.";
 }
 
 function closeSlotsLobby() {
@@ -1080,16 +910,15 @@ function closeSlotsLobby() {
   stopSlotMusic();
 }
 
-async function openSlotGame(gameKey) {
+function openSlotGame(gameKey) {
   activeSlotGame = slotGames[gameKey] ? gameKey : "buffalo";
-  await refreshLegacySlotControls({ forceDefault: true });
   const game = slotGames[activeSlotGame];
   slotsLobby?.classList.add("is-hidden");
   slotMachine?.classList.remove("is-hidden");
   slotsBack?.classList.remove("is-hidden");
   renderSlotReels(shuffleItems(game.symbols).slice(0, 5));
-  if (slotWinLabel) slotWinLabel.textContent = "Tap Open to start.";
-  applySlotAdminControls({ forceDefault: true });
+  if (slotWinLabel) slotWinLabel.textContent = "Tap Spin to start.";
+  updateSlotUi();
 }
 
 function animateCount(el, fromVal, toVal, duration = 1200) {
@@ -1141,17 +970,15 @@ function showWinBurst(amount, isBig) {
 
 async function spinSlotGame() {
   if (slotIsSpinning || !currentPlayer) return;
-  await refreshLegacySlotControls();
-  if (!applySlotAdminControls()) return;
   slotBalance = Number(currentPlayer.points) || 0;
   if (slotBalance < slotBet) {
-    if (slotWinLabel) slotWinLabel.textContent = "Not enough points. Lower your pick or ask admin to add points.";
+    if (slotWinLabel) slotWinLabel.textContent = "Not enough points. Lower your bet or ask admin to add points.";
     stopSlotAutoSpin();
     return;
   }
   slotIsSpinning = true;
   slotCurrentWin = 0;
-  if (slotWinLabel) slotWinLabel.textContent = "Opening shelf picks...";
+  if (slotWinLabel) slotWinLabel.textContent = "Reels rolling...";
   if (slotWinAmount) slotWinAmount.textContent = "0";
   slotBoard?.classList.remove("is-winning");
   if (slotSpinButton) {
@@ -1182,7 +1009,7 @@ async function spinSlotGame() {
           reel.classList.remove("is-spinning");
           reel.classList.add("just-stopped");
           // Render only this reel with final symbols
-          const reelSymbols = (grid[index] || ["SODA","CHIPS","CANDY"]).slice(0, 3);
+          const reelSymbols = (grid[index] || ["SD","SD","SD"]).slice(0, 3);
           reel.innerHTML = reelSymbols
             .map((symbol) => renderSymbolCell(symbol || "SD", false))
             .join("");
@@ -1199,7 +1026,7 @@ async function spinSlotGame() {
         slotCurrentWin = winAmt;
         if (slotWinLabel) {
           const bonusText = data.bonus?.amount ? ` (incl. ${formatPoints(data.bonus.amount)} bonus)` : "";
-          slotWinLabel.textContent = winAmt > 0 ? `REWARD! ${formatPoints(winAmt)} points${bonusText}` : "Shelf reset. Try another pick.";
+          slotWinLabel.textContent = winAmt > 0 ? `WIN! ${formatPoints(winAmt)} points${bonusText}` : "No win. Spin again.";
         }
         if (winAmt > 0) {
           animateCount(slotWinAmount, 0, winAmt, 1200);
@@ -1216,7 +1043,7 @@ async function spinSlotGame() {
           slotSpinButton.disabled = false;
           slotSpinButton.classList.remove("is-spinning");
           const txt = slotSpinButton.querySelector(".spin-button-text");
-          if (txt) txt.textContent = "OPEN";
+          if (txt) txt.textContent = "SPIN";
         }
         // Auto-spin continues
         if (slotAutoSpinning) {
@@ -1235,7 +1062,7 @@ async function spinSlotGame() {
       slotSpinButton.disabled = false;
       slotSpinButton.classList.remove("is-spinning");
       const txt = slotSpinButton.querySelector(".spin-button-text");
-      if (txt) txt.textContent = "OPEN";
+      if (txt) txt.textContent = "SPIN";
     }
     updateSlotUi();
   }
@@ -1258,12 +1085,9 @@ function stopSlotAutoSpin() {
 }
 
 function setMaxBet() {
-  const cfg = adminConfigForLegacySlot();
-  const adminMax = cfg ? numberSetting(cfg.maxBet, 10) : 10;
-  const maxAllowed = Math.min(slotBalance, adminMax);
-  const maxBets = legacyBetLevels();
-  const affordable = maxBets.filter((b) => b <= maxAllowed);
-  slotBet = affordable.length ? affordable[affordable.length - 1] : maxBets[0] || 0.25;
+  const maxBets = [0.25, 0.5, 1, 2, 5, 10];
+  const affordable = maxBets.filter((b) => b <= slotBalance);
+  slotBet = affordable.length ? affordable[affordable.length - 1] : 0.25;
   updateSlotUi();
 }
 
@@ -1281,7 +1105,7 @@ function openSpinModal(message = "") {
   if (spinResult) spinResult.textContent = message;
   if (spinButton) {
     spinButton.disabled = false;
-    spinButton.textContent = "Reveal";
+    spinButton.textContent = "Spin";
   }
   spinModal.classList.remove("is-hidden");
   spinModal.setAttribute("aria-hidden", "false");
@@ -1296,7 +1120,7 @@ function formatNextSpin(value) {
   if (!value) return "";
   const next = new Date(value);
   if (Number.isNaN(next.getTime())) return "";
-  return `Next reward opens ${next.toLocaleString()}.`;
+  return `Next spin opens ${next.toLocaleString()}.`;
 }
 
 async function maybeShowDailySpin() {
@@ -1304,7 +1128,7 @@ async function maybeShowDailySpin() {
   hasCheckedDailySpin = true;
   try {
     const data = await api("/api/player/spin-status");
-    if (data.eligible) openSpinModal("Your daily reward is ready.");
+    if (data.eligible) openSpinModal("Your daily spin is ready.");
   } catch {
     // Keep the page smooth if the spin status cannot load.
   }
@@ -1316,18 +1140,18 @@ async function openSpinForPlayer() {
     playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
-  openSpinModal("Checking your daily reward...");
+  openSpinModal("Checking your daily spin...");
   try {
     const data = await api("/api/player/spin-status");
     if (data.eligible) {
-      if (spinResult) spinResult.textContent = "Your daily reward is ready.";
+      if (spinResult) spinResult.textContent = "Your daily spin is ready.";
       return;
     }
     if (spinButton) {
       spinButton.disabled = true;
       spinButton.textContent = "Come Back Tomorrow";
     }
-    if (spinResult) spinResult.textContent = `Daily reward already used. ${formatNextSpin(data.nextSpinAt)}`;
+    if (spinResult) spinResult.textContent = `Daily spin already used. ${formatNextSpin(data.nextSpinAt)}`;
   } catch (error) {
     if (spinResult) spinResult.textContent = error.message;
   }
@@ -1355,8 +1179,8 @@ async function runSpinWheel() {
   }
   if (!spinButton || !spinWheel) return;
   spinButton.disabled = true;
-  spinButton.textContent = "Revealing...";
-  if (spinResult) spinResult.textContent = "Reward is revealing. Good luck!";
+  spinButton.textContent = "Spinning...";
+  if (spinResult) spinResult.textContent = "Wheel is spinning. Good luck!";
   try {
     const data = await api("/api/player/spin", { method: "POST", body: JSON.stringify({}) });
     spinWheel.classList.add("is-spinning");
@@ -1377,7 +1201,7 @@ async function runSpinWheel() {
   } catch (error) {
     if (spinResult) spinResult.textContent = `${error.message} ${formatNextSpin(error.nextSpinAt)}`.trim();
     spinButton.disabled = false;
-    spinButton.textContent = "Reveal";
+    spinButton.textContent = "Spin";
   }
 }
 
@@ -1840,28 +1664,17 @@ slotsModal?.addEventListener("click", (event) => {
 slotsLobby?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-slot-game]");
   if (!button) return;
-  if (button.disabled || button.getAttribute("aria-disabled") === "true") {
-    event.preventDefault();
-    if (slotWinLabel) slotWinLabel.textContent = "This slot game is currently turned off by admin.";
-    return;
-  }
   openSlotGame(button.dataset.slotGame);
 });
 
 slotBetDown?.addEventListener("click", () => {
-  const levels = legacyBetLevels();
-  const currentIndex = levels.findIndex((level) => Math.abs(level - slotBet) < 0.001);
-  const fallbackIndex = levels.reduce((best, level, index) => (level <= slotBet ? index : best), 0);
-  slotBet = levels[Math.max(0, (currentIndex === -1 ? fallbackIndex : currentIndex) - 1)] || slotBet;
+  slotBet = Math.max(0.25, Math.round((slotBet - 0.25) * 100) / 100);
   playSlotSound("click");
   updateSlotUi();
 });
 
 slotBetUp?.addEventListener("click", () => {
-  const levels = legacyBetLevels();
-  const currentIndex = levels.findIndex((level) => Math.abs(level - slotBet) < 0.001);
-  const fallbackIndex = levels.reduce((best, level, index) => (level <= slotBet ? index : best), 0);
-  slotBet = levels[Math.min(levels.length - 1, (currentIndex === -1 ? fallbackIndex : currentIndex) + 1)] || slotBet;
+  slotBet = Math.min(500, Math.round((slotBet + 0.25) * 100) / 100);
   playSlotSound("click");
   updateSlotUi();
 });
@@ -1872,19 +1685,6 @@ slotsMusicButton?.addEventListener("click", () => {
   if (slotMusicOn) stopSlotMusic();
   else startSlotMusic();
 });
-
-function startLegacySlotLiveUpdates() {
-  if (!("EventSource" in window)) return;
-  try {
-    const source = new EventSource("/api/player/slots/live");
-    source.onmessage = () => {
-      if (slotIsSpinning) return;
-      refreshLegacySlotControls({ forceDefault: Boolean(slotMachine && !slotMachine.classList.contains("is-hidden")) });
-    };
-  } catch (error) {}
-}
-
-startLegacySlotLiveUpdates();
 
 const adminInbox = document.querySelector("[data-admin-inbox]");
 const adminMessages = document.querySelector("[data-admin-messages]");
@@ -1901,7 +1701,8 @@ const adminVipCount = document.querySelector("[data-vip-count]");
 const dashboardStats = document.querySelector("[data-dashboard-stats]");
 const pointsTransactions = document.querySelector("[data-points-transactions]");
 const pointsCount = document.querySelector("[data-points-count]");
-const pointsManagerList = document.querySelector("[data-points-manager-list]");
+const pointsAddList = document.querySelector("[data-points-add-list]");
+const pointsRedeemList = document.querySelector("[data-points-redeem-list]");
 const adminActivityList = document.querySelector("[data-admin-activity]");
 const broadcastUsers = document.querySelector("[data-broadcast-users]");
 const broadcastForm = document.querySelector("[data-broadcast-form]");
@@ -1937,12 +1738,6 @@ const modalOpenChat = document.querySelector("[data-modal-open-chat]");
 const modalPointsForm = document.querySelector("[data-modal-points-form]");
 const modalResetForm = document.querySelector("[data-modal-reset-form]");
 const modalNoteForm = document.querySelector("[data-modal-note-form]");
-const modalGameSummary = document.querySelector("[data-modal-game-summary]");
-const modalGameHistory = document.querySelector("[data-modal-game-history]");
-const modalGameHistoryCount = document.querySelector("[data-modal-game-history-count]");
-const modalPointsSummary = document.querySelector("[data-modal-points-summary]");
-const modalPointsHistory = document.querySelector("[data-modal-points-history]");
-const modalPointsHistoryCount = document.querySelector("[data-modal-points-history-count]");
 const playerFilterButtons = document.querySelectorAll("[data-player-filter]");
 const loginForm = document.querySelector("[data-login-form]");
 const loginUsername = document.querySelector("[data-login-username]");
@@ -1966,13 +1761,7 @@ let adminHasRenderedOnce = false;
 let adminRenderInFlight = false;
 let adminRenderQueued = false;
 let adminSearchRenderTimer = null;
-let adminDataCache = null;
 const adminBroadcastExcludedUserIds = new Set();
-try {
-  if (location.pathname === "/messages9493") {
-    activeAdminThread = new URLSearchParams(location.search).get("thread") || null;
-  }
-} catch {}
 const adminIdleLimitMs = 2 * 60 * 60 * 1000;
 const adminKeepAliveMs = 5 * 60 * 1000;
 let adminLastActivityAt = Date.now();
@@ -1983,7 +1772,8 @@ const adminPanelTitles = {
   activity: "Live Activity",
   players: "All Players",
   vip: "VIP Players",
-  points: "Points",
+  add: "Add Points",
+  redeem: "Redeem Points",
   spin: "Spin Wheel",
   slots: "Slots Control",
   transactions: "Transactions",
@@ -1998,13 +1788,11 @@ adminPanelButtons.forEach((button) => {
     adminPanelButtons.forEach((item) => item.classList.toggle("is-active", item === button));
     adminPanels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.adminPanel === panelName));
     if (adminTitle) adminTitle.textContent = adminPanelTitles[panelName] || "Admin Portal";
-    renderAdmin({ preferCache: true });
   });
 });
 
 adminChatJumps.forEach((jump) => {
-  jump.addEventListener("click", (event) => {
-    if (jump.tagName === "A") return;
+  jump.addEventListener("click", () => {
     adminPanelButtons.forEach((item) => item.classList.remove("is-active"));
     adminChatJumps.forEach((item) => item.classList.toggle("is-active", item === jump));
     if (adminTitle) adminTitle.textContent = "Messages";
@@ -2019,7 +1807,7 @@ document.querySelectorAll("[data-admin-search]").forEach((input) => {
   input.addEventListener("input", () => {
     adminSearchState[input.dataset.adminSearch] = input.value;
     clearTimeout(adminSearchRenderTimer);
-    adminSearchRenderTimer = setTimeout(() => renderAdmin({ preferCache: true }), 80);
+    adminSearchRenderTimer = setTimeout(renderAdmin, 160);
   });
 });
 
@@ -2027,7 +1815,7 @@ playerFilterButtons.forEach((button) => {
   button.addEventListener("click", () => {
     adminPlayerFilter = button.dataset.playerFilter || "all";
     playerFilterButtons.forEach((item) => item.classList.toggle("is-active", item === button));
-    renderAdmin({ preferCache: true });
+    renderAdmin();
   });
 });
 
@@ -2241,101 +2029,6 @@ function formatAdminDate(value, fallback = "-") {
   return value ? new Date(value).toLocaleDateString() : fallback;
 }
 
-function renderAdminPlayerPointsHistory(transactions = [], totals = {}) {
-  if (modalPointsHistoryCount) {
-    modalPointsHistoryCount.textContent = `${transactions.length} transaction${transactions.length === 1 ? "" : "s"}`;
-  }
-  if (modalPointsSummary) {
-    modalPointsSummary.innerHTML = `
-      <article><span>Added</span><strong class="positive">+${formatPoints(totals.added || 0)}</strong></article>
-      <article><span>Redeemed</span><strong class="negative">-${formatPoints(totals.redeemed || 0)}</strong></article>
-      <article><span>Net Change</span><strong class="${Number(totals.net || 0) >= 0 ? "positive" : "negative"}">${Number(totals.net || 0) >= 0 ? "+" : ""}${formatPoints(totals.net || 0)}</strong></article>
-      <article><span>Last Balance</span><strong>${formatPoints(totals.currentBalance || 0)}</strong></article>
-    `;
-  }
-  if (!modalPointsHistory) return;
-  modalPointsHistory.innerHTML = "";
-  if (!transactions.length) {
-    modalPointsHistory.innerHTML = `<article class="points-transaction empty">No admin add or redeem history yet.</article>`;
-    return;
-  }
-  transactions.forEach((transaction) => {
-    const isRedeem = transaction.type === "redeem";
-    const item = document.createElement("article");
-    item.className = `points-transaction ${isRedeem ? "redeem" : "add"}`;
-    item.innerHTML = `<div><strong></strong><span></span><small></small></div><b></b>`;
-    item.querySelector("strong").textContent = isRedeem ? "Redeemed Points" : "Added Points";
-    item.querySelector("span").textContent = transaction.note || (isRedeem ? "Redeemed from player account" : "Added to player account");
-    item.querySelector("small").textContent = `${transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : ""} | Balance ${formatPoints(transaction.balanceAfter)}`;
-    item.querySelector("b").textContent = `${isRedeem ? "-" : "+"}${formatPoints(transaction.points)}`;
-    modalPointsHistory.appendChild(item);
-  });
-}
-
-async function refreshAdminPlayerPointsHistory(userId) {
-  if (!modalPointsHistory || !userId) return;
-  modalPointsHistory.innerHTML = `<article class="points-transaction empty">Loading point history...</article>`;
-  if (modalPointsSummary) modalPointsSummary.innerHTML = "";
-  if (modalPointsHistoryCount) modalPointsHistoryCount.textContent = "Loading";
-  try {
-    const data = await api(`/api/admin/player-points-history?userId=${encodeURIComponent(userId)}`);
-    renderAdminPlayerPointsHistory(data.transactions || [], data.totals || {});
-  } catch (error) {
-    if (modalPointsHistoryCount) modalPointsHistoryCount.textContent = "Unavailable";
-    modalPointsHistory.innerHTML = `<article class="points-transaction empty">${error.message}</article>`;
-  }
-}
-
-function renderAdminPlayerGameHistory(history = [], totals = {}) {
-  if (modalGameHistoryCount) {
-    modalGameHistoryCount.textContent = `${history.length} spin${history.length === 1 ? "" : "s"}`;
-  }
-  if (modalGameSummary) {
-    const wagered = Number(totals.wagered) || 0;
-    const won = Number(totals.won) || 0;
-    const net = won - wagered;
-    modalGameSummary.innerHTML = `
-      <article><span>Total Spins</span><strong>${formatPoints(Number(totals.spins) || history.length)}</strong></article>
-      <article><span>Total Bet</span><strong>${formatPoints(wagered)}</strong></article>
-      <article><span>Total Won</span><strong>${formatPoints(won)}</strong></article>
-      <article><span>Net</span><strong class="${net >= 0 ? "positive" : "negative"}">${net >= 0 ? "+" : ""}${formatPoints(net)}</strong></article>
-    `;
-  }
-  if (!modalGameHistory) return;
-  modalGameHistory.innerHTML = "";
-  if (!history.length) {
-    modalGameHistory.innerHTML = `<article class="points-transaction empty">No game history yet.</article>`;
-    return;
-  }
-  history.forEach((spin) => {
-    const bet = Number(spin.bet) || 0;
-    const win = Number(spin.win) || 0;
-    const net = win - bet;
-    const item = document.createElement("article");
-    item.className = `points-transaction ${net >= 0 ? "add" : "redeem"}`;
-    item.innerHTML = `<div><strong></strong><span></span><small></small></div><b></b>`;
-    item.querySelector("strong").textContent = spin.gameName || "Gas Gushers";
-    item.querySelector("span").textContent = `Bet ${formatPoints(bet)} | Won ${formatPoints(win)}`;
-    item.querySelector("small").textContent = spin.createdAt ? new Date(spin.createdAt).toLocaleString() : "";
-    item.querySelector("b").textContent = `${net >= 0 ? "+" : ""}${formatPoints(net)}`;
-    modalGameHistory.appendChild(item);
-  });
-}
-
-async function refreshAdminPlayerGameHistory(userId) {
-  if (!modalGameHistory || !userId) return;
-  modalGameHistory.innerHTML = `<article class="points-transaction empty">Loading game history...</article>`;
-  if (modalGameSummary) modalGameSummary.innerHTML = "";
-  if (modalGameHistoryCount) modalGameHistoryCount.textContent = "Loading";
-  try {
-    const data = await api(`/api/admin/player-game-history?userId=${encodeURIComponent(userId)}`);
-    renderAdminPlayerGameHistory(data.history || [], data.totals || {});
-  } catch (error) {
-    if (modalGameHistoryCount) modalGameHistoryCount.textContent = "Unavailable";
-    modalGameHistory.innerHTML = `<article class="points-transaction empty">${error.message}</article>`;
-  }
-}
-
 function openAdminPlayerModal(userId, focusTarget = "") {
   const user = getAdminUser(userId);
   if (!user || !playerModal) return;
@@ -2355,10 +2048,6 @@ function openAdminPlayerModal(userId, focusTarget = "") {
   modalResetForm.dataset.userId = user.id;
   modalNoteForm.dataset.userId = user.id;
   modalNoteForm.note.value = user.adminNote || "";
-  renderAdminPlayerPointsHistory([], { currentBalance: user.points });
-  refreshAdminPlayerPointsHistory(user.id);
-  renderAdminPlayerGameHistory([], {});
-  refreshAdminPlayerGameHistory(user.id);
   playerModal.classList.remove("is-hidden");
   playerModal.setAttribute("aria-hidden", "false");
   if (focusTarget === "points") modalPointsForm.points.focus();
@@ -2382,7 +2071,8 @@ function filterItems(items, query, fields) {
   );
 }
 
-function pointsActionCard(user) {
+function pointsActionCard(user, action) {
+  const isRedeem = action === "redeem";
   return `
     <article class="points-action-card">
       <div>
@@ -2390,22 +2080,30 @@ function pointsActionCard(user) {
         <span>${user.email}</span>
         <small>${formatPoints(user.points)} available points</small>
       </div>
-      <form class="admin-points-form" data-points-user>
+      <form class="admin-points-form" data-points-user data-points-action="${action}">
         <input name="points" type="number" min="1" step="1" placeholder="Points" required />
-        <button class="game-link" type="submit" name="action" value="add">Add</button>
-        <button class="game-link redeem" type="submit" name="action" value="redeem">Redeem</button>
+        <input name="note" type="text" placeholder="Note" />
+        <button class="game-link${isRedeem ? " redeem" : ""}" type="submit">${isRedeem ? "Redeem" : "Add"}</button>
       </form>
     </article>
   `;
 }
 
 function renderPointsActionLists(users) {
-  if (!pointsManagerList) return;
-  const visibleUsers = filterItems(users, adminSearchState.points, (user) => [user.username, user.email, user.phone, user.points]);
-  pointsManagerList.innerHTML = visibleUsers.length ? visibleUsers.map((user) => pointsActionCard(user)).join("") : `<article class="points-action-card">No matching players.</article>`;
-  visibleUsers.forEach((user, index) => {
-    pointsManagerList.querySelectorAll("[data-points-user]")[index].dataset.userId = user.id;
-  });
+  const addUsers = filterItems(users, adminSearchState.add, (user) => [user.username, user.email, user.phone, user.points]);
+  const redeemUsers = filterItems(users, adminSearchState.redeem, (user) => [user.username, user.email, user.phone, user.points]);
+  if (pointsAddList) {
+    pointsAddList.innerHTML = addUsers.length ? addUsers.map((user) => pointsActionCard(user, "add")).join("") : `<article class="points-action-card">No matching players.</article>`;
+    addUsers.forEach((user, index) => {
+      pointsAddList.querySelectorAll("[data-points-user]")[index].dataset.userId = user.id;
+    });
+  }
+  if (pointsRedeemList) {
+    pointsRedeemList.innerHTML = redeemUsers.length ? redeemUsers.map((user) => pointsActionCard(user, "redeem")).join("") : `<article class="points-action-card">No matching players.</article>`;
+    redeemUsers.forEach((user, index) => {
+      pointsRedeemList.querySelectorAll("[data-points-user]")[index].dataset.userId = user.id;
+    });
+  }
 }
 
 function getBroadcastVisibleUsers(users) {
@@ -2558,7 +2256,7 @@ function renderSlotsAdmin(data = {}) {
     const spins = data.spins || [];
     slotsSpinsList.innerHTML = "";
     if (!spins.length) {
-      slotsSpinsList.innerHTML = `<article class="points-transaction empty">No Gas Gushers spins yet today.</article>`;
+      slotsSpinsList.innerHTML = `<article class="points-transaction empty">No South Diamond Slots spins yet today.</article>`;
       return;
     }
     spins.slice(0, 80).forEach((spin) => {
@@ -2566,7 +2264,7 @@ function renderSlotsAdmin(data = {}) {
       item.className = `points-transaction ${Number(spin.win) > 0 ? "add" : "redeem"}`;
       item.innerHTML = `<div><strong></strong><span></span></div><b></b><small></small>`;
       item.querySelector("strong").textContent = spin.username || "Player";
-      item.querySelector("span").textContent = `${spin.gameName || "Gas Gushers"} | Bet ${formatPoints(spin.bet)}`;
+      item.querySelector("span").textContent = `${spin.gameName || "South Diamond Slots"} | Bet ${formatPoints(spin.bet)}`;
       item.querySelector("b").textContent = Number(spin.win) > 0 ? `+${formatPoints(spin.win)}` : "0";
       item.querySelector("small").textContent = spin.createdAt ? new Date(spin.createdAt).toLocaleString() : "";
       slotsSpinsList.appendChild(item);
@@ -2612,63 +2310,24 @@ function latestChatTime(chat) {
   return lastMessage?.createdAt ? new Date(lastMessage.createdAt).getTime() : 0;
 }
 
-function isAdminPointTransactionClient(transaction) {
-  if (!transaction) return false;
-  if (transaction.source === "admin") return true;
-  if (transaction.source && transaction.source !== "admin") return false;
-  const note = String(transaction.note || "").toLowerCase();
-  const legacySlotsName = ["south diamond", "slots"].join(" ");
-  const legacyArcadeName = [legacySlotsName, "arcade"].join(" ");
-  return !["gas gushers", "gas gushers arcade", legacySlotsName, legacyArcadeName, "daily spin", "signup bonus", "referral bonus"].some((marker) => note.includes(marker));
-}
+async function renderAdmin() {
+  if (!adminInbox || !adminMessages) return;
+  if (adminRenderInFlight) {
+    adminRenderQueued = true;
+    return;
+  }
 
-function dashboardStatsFromLoadedData({ users = [], chats = [], transactions = [] } = {}) {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const activeSince = Date.now() - 24 * 60 * 60 * 1000;
-  const messages = chats.flatMap((chat) => chat.messages || []);
-  const adminTransactions = transactions.filter(isAdminPointTransactionClient);
-  return {
-    totalUsers: users.length,
-    usersToday: users.filter((user) => user.createdAt && new Date(user.createdAt).getTime() >= startOfToday.getTime()).length,
-    activePlayers: users.filter((user) => {
-      const activeAt = user.lastActiveAt || user.lastLoginAt;
-      return activeAt && new Date(activeAt).getTime() >= activeSince;
-    }).length,
-    openChats: chats.length,
-    unreadChats: chats.reduce((total, chat) => total + (Number(chat.unreadForAdmin) || 0), 0),
-    totalMessages: messages.length,
-    imageUploads: messages.filter((message) => message.imageUrl).length,
-    adminAddedPoints: adminTransactions
-      .filter((transaction) => transaction.type === "add")
-      .reduce((total, transaction) => total + (Number(transaction.points) || 0), 0),
-    adminRedeemedPoints: adminTransactions
-      .filter((transaction) => transaction.type === "redeem")
-      .reduce((total, transaction) => total + (Number(transaction.points) || 0), 0),
-  };
-}
-
-function renderAdminData(data = {}) {
-  const hasChatUi = Boolean(adminInbox && adminMessages);
-  const hasAdminUi = Boolean(
-    hasChatUi ||
-    adminUsers ||
-    adminVipUsers ||
-    dashboardStats ||
-    pointsTransactions ||
-    adminActivityList ||
-    broadcastUsers ||
-    spinAdminStats ||
-    slotsAdminStats
-  );
-  if (!hasAdminUi) return;
-  const chatData = data.chatData || { chats: [] };
-  const userData = data.userData || { users: [] };
-  const dashboardData = data.dashboardData || { stats: {} };
-  const pointsData = data.pointsData || { transactions: [] };
-  const activityData = data.activityData || { activity: [] };
-  const spinData = data.spinData || { settings: { limits: {} }, counts: {}, awards: [] };
-  const slotsData = data.slotsData || { settings: {}, payout: {}, spins: [] };
+  adminRenderInFlight = true;
+  try {
+  const [chatData, userData, dashboardData, pointsData, activityData, spinData, slotsData] = await Promise.all([
+    api("/api/chats").catch(() => ({ chats: [] })),
+    api("/api/admin/users").catch(() => ({ users: [] })),
+    api("/api/admin/dashboard").catch(() => ({ stats: {} })),
+    api("/api/admin/points").catch(() => ({ transactions: [] })),
+    api("/api/admin/activity").catch(() => ({ activity: [] })),
+    api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
+    api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
+  ]);
   const chats = (chatData.chats || [])
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
     .sort((a, b) => latestChatTime(b) - latestChatTime(a));
@@ -2689,14 +2348,7 @@ function renderAdminData(data = {}) {
     adminUserCount.textContent = `${users.length} player${users.length === 1 ? "" : "s"}`;
   }
   renderVipUsers(users);
-  renderDashboard({
-    ...(dashboardData.stats || {}),
-    ...dashboardStatsFromLoadedData({
-      users,
-      chats,
-      transactions: pointsData.transactions || [],
-    }),
-  });
+  renderDashboard(dashboardData.stats || {});
   renderPointTransactions(pointsData.transactions || []);
   renderActivity(activityData.activity || []);
   renderBroadcastUsers(users);
@@ -2708,13 +2360,10 @@ function renderAdminData(data = {}) {
     badge.textContent = unreadTotal;
     badge.classList.toggle("is-hidden", unreadTotal <= 0);
   });
-  const isMessagesPage = location.pathname === "/messages9493";
-  document.title = unreadTotal > 0 ? `(${unreadTotal}) ${isMessagesPage ? "South Diamond Messages" : "South Diamond Admin"}` : (isMessagesPage ? "South Diamond Messages" : "South Diamond Admin");
+  document.title = unreadTotal > 0 ? `(${unreadTotal}) South Diamond Admin` : "South Diamond Admin";
   if (adminHasRenderedOnce && unreadTotal > lastAdminUnreadTotal) playAdminAlert();
   lastAdminUnreadTotal = unreadTotal;
   adminHasRenderedOnce = true;
-
-  if (!hasChatUi) return;
 
   if (!activeAdminThread && chats.length) activeAdminThread = chats[0].id;
   if (activeAdminThread && !chats.some((chat) => chat.id === activeAdminThread)) activeAdminThread = chats[0]?.id || null;
@@ -2759,47 +2408,6 @@ function renderAdminData(data = {}) {
   adminName.classList.toggle("is-vip-name", Boolean(selectedUser?.isVip));
   adminMessages.dataset.messageScope = selected.id;
   renderMessages(adminMessages, selected.messages);
-}
-
-async function renderAdmin({ preferCache = false, background = false } = {}) {
-  const hasAdminUi = Boolean(
-    adminInbox ||
-    adminUsers ||
-    adminVipUsers ||
-    dashboardStats ||
-    pointsTransactions ||
-    adminActivityList ||
-    broadcastUsers ||
-    spinAdminStats ||
-    slotsAdminStats
-  );
-  if (!hasAdminUi) return;
-  if (preferCache && adminDataCache) {
-    renderAdminData(adminDataCache);
-    if (adminRenderInFlight || background) return;
-  }
-  if (adminRenderInFlight) {
-    adminRenderQueued = true;
-    return;
-  }
-
-  adminRenderInFlight = true;
-  try {
-  const [chatData, userData, dashboardData] = await Promise.all([
-    api("/api/chats").catch(() => ({ chats: [] })),
-    api("/api/admin/users").catch(() => ({ users: [] })),
-    api("/api/admin/dashboard").catch(() => ({ stats: {} })),
-  ]);
-  adminDataCache = { ...(adminDataCache || {}), chatData, userData, dashboardData };
-  renderAdminData(adminDataCache);
-  const [pointsData, activityData, spinData, slotsData] = await Promise.all([
-    api("/api/admin/points").catch(() => ({ transactions: [] })),
-    api("/api/admin/activity").catch(() => ({ activity: [] })),
-    api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
-    api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
-  ]);
-  adminDataCache = { chatData, userData, dashboardData, pointsData, activityData, spinData, slotsData };
-  renderAdminData(adminDataCache);
   } finally {
     adminRenderInFlight = false;
     if (adminRenderQueued) {
@@ -2815,10 +2423,6 @@ async function openAdminChatForUser(userId) {
     body: JSON.stringify({ userId }),
   });
   activeAdminThread = data.chat.id;
-  if (!adminInbox || !adminMessages) {
-    location.href = `/messages9493?thread=${encodeURIComponent(activeAdminThread)}`;
-    return;
-  }
   await renderAdmin();
   document.querySelector(".admin-dashboard")?.scrollIntoView({ behavior: "smooth", block: "start" });
   adminInput?.focus();
@@ -2874,7 +2478,7 @@ async function handleAdminPlayerListClick(event) {
   }
 }
 
-if (isAdminPage) {
+if (adminInbox && adminForm) {
   setupAdminIdleLogout();
   requireAdminSession().then(renderAdmin);
 
@@ -2936,36 +2540,36 @@ if (isAdminPage) {
 
   }
 
-  pointsManagerList?.addEventListener("submit", async (event) => {
-    const form = event.target.closest("[data-points-user]");
-    if (!form) return;
-    event.preventDefault();
-    const submitter = event.submitter;
-    const action = submitter?.value || "add";
-    const buttonText = submitter?.textContent || "Save";
-    if (submitter) {
+  [pointsAddList, pointsRedeemList].forEach((list) => {
+    if (!list) return;
+    list.addEventListener("submit", async (event) => {
+      const form = event.target.closest("[data-points-user]");
+      if (!form) return;
+      event.preventDefault();
+      const action = form.dataset.pointsAction;
+      const submitter = event.submitter;
+      const buttonText = submitter.textContent;
       submitter.disabled = true;
       submitter.textContent = action === "add" ? "Adding" : "Redeeming";
-    }
-    try {
-      await api("/api/admin/points", {
-        method: "POST",
-        body: JSON.stringify({
-          userId: form.dataset.userId,
-          action,
-          points: Number(form.points.value),
-        }),
-      });
-      form.reset();
-      await renderAdmin();
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      if (submitter) {
+      try {
+        await api("/api/admin/points", {
+          method: "POST",
+          body: JSON.stringify({
+            userId: form.dataset.userId,
+            action,
+            points: Number(form.points.value),
+            note: form.note.value.trim(),
+          }),
+        });
+        form.reset();
+        await renderAdmin();
+      } catch (error) {
+        alert(error.message);
+      } finally {
         submitter.disabled = false;
         submitter.textContent = buttonText;
       }
-    }
+    });
   });
 
   broadcastUsers?.addEventListener("change", (event) => {
@@ -3070,7 +2674,7 @@ if (isAdminPage) {
     }
   });
 
-  adminInbox?.addEventListener("click", async (event) => {
+  adminInbox.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-thread-id]");
     if (!button) return;
     activeAdminThread = button.dataset.threadId;
@@ -3082,7 +2686,7 @@ if (isAdminPage) {
     adminInput.focus();
   });
 
-  adminMessages?.addEventListener("click", async (event) => {
+  adminMessages.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-payment-status]");
     if (!button || !activeAdminThread) return;
     button.disabled = true;
@@ -3103,7 +2707,7 @@ if (isAdminPage) {
     }
   });
 
-  adminForm?.addEventListener("submit", async (event) => {
+  adminForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const text = adminInput.value.trim();
     if (!text || !activeAdminThread) return;
@@ -3118,7 +2722,7 @@ if (isAdminPage) {
     adminInput.focus();
   });
 
-  deleteChat?.addEventListener("click", async () => {
+  deleteChat.addEventListener("click", async () => {
     if (!activeAdminThread) return;
     const confirmed = confirm("Delete this selected player's chat history? This only deletes the chat, not the registered player account.");
     if (!confirmed) return;
@@ -3171,6 +2775,7 @@ modalPointsForm?.addEventListener("submit", async (event) => {
         userId: activeModalUserId,
         action,
         points: Number(modalPointsForm.points.value),
+        note: modalPointsForm.note.value.trim(),
       }),
     });
     modalPointsForm.reset();

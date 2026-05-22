@@ -27,12 +27,13 @@
         <span class="admin-nav-label">Players</span>
         <button type="button" data-admin-panel-button="players"><span>AP</span>All Players</button>
         <button type="button" data-admin-panel-button="vip"><span>VIP</span>VIP Players</button>
-        <button type="button" data-admin-panel-button="points"><span>PT</span>Points</button>
+        <button type="button" data-admin-panel-button="add"><span>AD</span>Add Points</button>
+        <button type="button" data-admin-panel-button="redeem"><span>RD</span>Redeem Points</button>
         <button type="button" data-admin-panel-button="spin"><span>SW</span>Spin Wheel</button>
         <button type="button" data-admin-panel-button="slots"><span>SL</span>Slots Control</button>
         <span class="admin-nav-label">Payments</span>
         <button type="button" data-admin-panel-button="transactions"><span>TR</span>Transactions</button>
-        <a href="/messages9493" data-admin-chat-jump><span>MS</span>Messages <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b></a>
+        <button type="button" data-admin-chat-jump><span>MS</span>Messages <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b></button>
         <span class="admin-nav-label">Content</span>
         <button type="button" data-admin-panel-button="broadcast"><span>BC</span>Broadcast</button>
         <button type="button" data-admin-panel-button="agents"><span>AL</span>Agent Links</button>
@@ -46,10 +47,6 @@
             <h1 data-admin-title>Overview</h1>
             <div class="admin-topbar-actions">
               <button class="game-link" type="button" data-admin-refresh>Refresh</button>
-              <a class="game-link admin-message-alert" href="/messages9493" aria-label="Open unread messages">
-                <span>Messages</span>
-                <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b>
-              </a>
               <button class="logout-button" type="button" data-logout>Log Out</button>
             </div>
           </div>
@@ -78,8 +75,8 @@
                   <article><span>Unread Chats</span><strong data-stat="unreadChats">0</strong></article>
                   <article><span>Total Messages</span><strong data-stat="totalMessages">0</strong></article>
                   <article><span>Screenshots</span><strong data-stat="imageUploads">0</strong></article>
-                  <article><span>Admin Added Points</span><strong data-stat="adminAddedPoints">0</strong></article>
-                  <article><span>Admin Redeemed Points</span><strong data-stat="adminRedeemedPoints">0</strong></article>
+                  <article><span>Total Points</span><strong data-stat="totalPoints">0</strong></article>
+                  <article><span>Redeemed Points</span><strong data-stat="redeemedPoints">0</strong></article>
                 </div>
               </section>
 
@@ -140,19 +137,34 @@
                 <div class="points-transaction-list" data-points-transactions></div>
               </section>
 
-              <section class="admin-control-panel" data-admin-panel="points">
+              <section class="admin-control-panel" data-admin-panel="add">
                 <div class="chat-topbar">
                   <div>
                     <span class="status-dot"></span>
-                    <strong>Add or Redeem Points</strong>
+                    <strong>Add Points</strong>
                   </div>
-                  <small>Search one player and choose an action</small>
+                  <small>Credit player balance</small>
                 </div>
                 <div class="admin-search-row">
-                  <label class="sr-only" for="points-search">Search players to add or redeem points</label>
-                  <input id="points-search" type="search" placeholder="Search players to add or redeem points..." data-admin-search="points" />
+                  <label class="sr-only" for="add-search">Search players to add points</label>
+                  <input id="add-search" type="search" placeholder="Search players to add points..." data-admin-search="add" />
                 </div>
-                <div class="points-action-list" data-points-manager-list></div>
+                <div class="points-action-list" data-points-add-list></div>
+              </section>
+
+              <section class="admin-control-panel" data-admin-panel="redeem">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>Redeem Points</strong>
+                  </div>
+                  <small>Remove points from player balance</small>
+                </div>
+                <div class="admin-search-row">
+                  <label class="sr-only" for="redeem-search">Search players to redeem points</label>
+                  <input id="redeem-search" type="search" placeholder="Search players to redeem points..." data-admin-search="redeem" />
+                </div>
+                <div class="points-action-list" data-points-redeem-list></div>
               </section>
 
               <section class="admin-control-panel" data-admin-panel="spin">
@@ -200,42 +212,49 @@
                   <small data-slots-admin-date>Daily controls reset at UTC midnight</small>
                 </div>
 
+                <!-- Master controls -->
                 <div class="slots-admin-master">
-                  <section class="slots-master-card" aria-label="All slot games summary">
+                  <div class="slots-master-card">
                     <div class="slots-master-row">
-                      <div>
-                        <strong>All Games Total</strong>
-                        <small data-slots-save-status></small>
-                      </div>
                       <label class="slots-toggle">
                         <input type="checkbox" data-slots-global-enabled checked />
                         <span class="toggle-slider"></span>
-                        <b class="slots-status-pill online" data-slots-status-pill>LIVE</b>
+                        <strong>Slots Arcade Online</strong>
+                      </label>
+                      <span data-slots-status-pill class="slots-status-pill online">LIVE</span>
+                    </div>
+                    <div class="slots-summary-grid" data-slots-summary>
+                      <article><span>Today's spins</span><strong data-summary-spins>0</strong></article>
+                      <article><span>Total wagered</span><strong data-summary-wagered>0.00</strong></article>
+                      <article><span>Total paid out</span><strong data-summary-won>0.00</strong></article>
+                      <article><span>House RTP today</span><strong data-summary-rtp>--%</strong></article>
+                    </div>
+                    <div class="sga-control">
+                      <label>
+                        <span>Default Bet</span>
+                        <input type="number" min="0.01" step="0.05" value="0.25" data-slots-default-bet />
+                        <small>Starting bet shown when players open an arcade slot game.</small>
                       </label>
                     </div>
-                    <div class="slots-summary-grid">
-                      <article><span>Spins</span><strong data-summary-spins>0</strong></article>
-                      <article><span>Wagered</span><strong data-summary-wagered>0.00</strong></article>
-                      <article><span>Paid Out</span><strong data-summary-won>0.00</strong></article>
-                      <article><span>Total RTP</span><strong data-summary-rtp>--%</strong></article>
-                      <article><span>Daily Min Target</span><strong data-summary-daily-min>0.00</strong></article>
-                      <article><span>Daily Max Target</span><strong data-summary-daily-max>0.00</strong></article>
-                      <article><span>Min Bet</span><strong data-summary-min-bet>0.00</strong></article>
-                      <article><span>Max Bet</span><strong data-summary-max-bet>0.00</strong></article>
+                    <div class="sga-control sga-grid-2">
+                      <label>
+                        <span>Total Daily Payout Limit</span>
+                        <input type="number" min="0" step="1" value="25" data-slots-daily-payout-limit />
+                        <small>Maximum points all slot games can pay today.</small>
+                      </label>
+                      <label>
+                        <span>Per Player Daily Win Limit</span>
+                        <input type="number" min="0" step="1" value="8" data-slots-player-payout-limit />
+                        <small>Maximum slot winnings one player can receive today.</small>
+                      </label>
                     </div>
-                    <fieldset class="sga-jackpots slots-master-jackpots">
-                      <legend>Lobby Jackpot Display</legend>
-                      <label><span>Grand</span><input type="number" min="0" step="10" value="1500" data-slots-jp-grand /></label>
-                      <label><span>Major</span><input type="number" min="0" step="10" value="500" data-slots-jp-major /></label>
-                      <label><span>Minor</span><input type="number" min="0" step="5" value="100" data-slots-jp-minor /></label>
-                      <label><span>Mini</span><input type="number" min="0" step="1" value="20" data-slots-jp-mini /></label>
-                    </fieldset>
                     <div class="slots-master-actions">
-                      <button class="button primary" type="button" data-slots-save-all>Save All</button>
-                      <button class="game-link" type="button" data-slots-reset-stats>Reset Stats</button>
-                      <button class="game-link" type="button" data-slots-export-config>Export Config</button>
+                      <button type="button" class="button primary" data-slots-save-all>Save All Changes</button>
+                      <button type="button" class="button secondary" data-slots-reset-stats>Reset Today's Stats</button>
+                      <button type="button" class="button secondary" data-slots-export-config>Export Config</button>
                     </div>
-                  </section>
+                    <p class="slots-save-status" data-slots-save-status></p>
+                  </div>
                 </div>
 
                 <!-- Per-game control grid -->
@@ -318,6 +337,35 @@
             </div>
           </section>
 
+          <div class="admin-layout">
+          <div class="admin-workspace">
+            <div class="chat-section-heading">
+              <div>
+                <p class="section-kicker">Support</p>
+                <h2>Messages</h2>
+              </div>
+              <button class="button secondary admin-clear" type="button" data-delete-chat>Delete Selected Chat</button>
+            </div>
+            <div class="chat-dashboard admin-dashboard messenger-chat" aria-label="South Diamond admin inbox">
+              <aside class="chat-inbox" aria-label="Player conversations" data-admin-inbox></aside>
+              <div class="chat-window" aria-label="Selected player conversation">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot" data-admin-chat-status></span>
+                    <strong data-admin-name>No player selected</strong>
+                  </div>
+                  <small data-admin-count>0 chats</small>
+                </div>
+                <div class="chat-messages" data-admin-messages aria-live="polite"></div>
+                <form class="chat-form" data-admin-form>
+                  <label class="sr-only" for="admin-reply">Reply</label>
+                  <input id="admin-reply" data-admin-input type="text" placeholder="Type your reply..." autocomplete="off" />
+                  <button class="button primary" type="submit">Send</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          </div>
         </div>
       </section>
     </main>
@@ -336,34 +384,13 @@
           <p class="admin-modal-points"><strong data-modal-points>0</strong><span>available points</span></p>
         </div>
 
-        <section class="admin-modal-game-history" aria-label="Admin point history">
-          <div class="admin-modal-section-title">
-            <strong>Admin Points History</strong>
-            <span data-modal-points-history-count>0 transactions</span>
-          </div>
-          <div class="admin-game-summary" data-modal-points-summary></div>
-          <div class="admin-game-history-list" data-modal-points-history>
-            <article class="points-transaction empty">No admin add or redeem history yet.</article>
-          </div>
-        </section>
-
-        <section class="admin-modal-game-history" aria-label="Player game history">
-          <div class="admin-modal-section-title">
-            <strong>Game History</strong>
-            <span data-modal-game-history-count>0 spins</span>
-          </div>
-          <div class="admin-game-summary" data-modal-game-summary></div>
-          <div class="admin-game-history-list" data-modal-game-history>
-            <article class="points-transaction empty">No game history yet.</article>
-          </div>
-        </section>
-
         <div class="admin-modal-actions">
           <button class="admin-action-button gold" type="button" data-modal-open-chat>Open Chat</button>
           <form class="admin-modal-form" data-modal-points-form>
             <label>Add or redeem points</label>
             <div class="admin-modal-form-row">
               <input name="points" type="number" min="1" step="1" placeholder="Points" required />
+              <input name="note" type="text" placeholder="Note" />
             </div>
             <div class="admin-modal-form-row compact">
               <button class="admin-action-button green" type="submit" name="action" value="add">Add Points</button>
