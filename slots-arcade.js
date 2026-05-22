@@ -207,16 +207,14 @@ const GAMES = {
     bgEmoji: ["&#127956;","&#127797;","&#127765;","&#9728;&#65039;"], // mountain, cactus, sun-elements
     music: { tempo: 140, scale: [196,247,294,330,392,440] },
     symbols: {
-      WILD:    { ...svgSym("WILD","WILD"), weight: 3, pay: [0,0,0,50,100,500], wild: true },
-      SCATTER: { ...svgSym("SCATTER","BONUS"), weight: 2, pay: [0,0,0,5,20,100], scatter: true },
-      BUFFALO: { ...emojiSym("&#129708;","BUFFALO"), weight: 6, pay: [0,0,0,30,80,300] },
-      EAGLE:   { ...emojiSym("&#129413;","EAGLE"), weight: 8, pay: [0,0,0,20,50,200] },
-      SHERIFF: { ...emojiSym("&#11088;","SHERIFF"), weight: 10, pay: [0,0,0,15,40,150] },
-      MONEY:   { ...svgSym("GOLD_COIN","GOLD"), weight: 10, pay: [0,0,0,10,30,100] },
-      A:       { ...svgSym("CARD_A","A"), weight: 14, pay: [0,0,0,5,15,50] },
-      K:       { ...svgSym("CARD_K","K"), weight: 14, pay: [0,0,0,4,12,40] },
-      Q:       { ...svgSym("CARD_Q","Q"), weight: 16, pay: [0,0,0,3,10,30] },
-      J:       { ...svgSym("CARD_J","J"), weight: 16, pay: [0,0,0,2,8,25] },
+      WILD:    { ...imageSym("assets/slots/buffalo/wild.png","WILD"), weight: 3, pay: [0,0,0,50,100,500], wild: true },
+      SCATTER: { ...imageSym("assets/slots/buffalo/bonus.png","BONUS"), weight: 2, pay: [0,0,0,5,20,100], scatter: true },
+      BUFFALO: { ...imageSym("assets/slots/buffalo/buffalo.png","BUFFALO"), weight: 6, pay: [0,0,0,30,80,300] },
+      EAGLE:   { ...imageSym("assets/slots/buffalo/eagle.png","EAGLE"), weight: 8, pay: [0,0,0,20,50,200] },
+      SHERIFF: { ...imageSym("assets/slots/buffalo/wolf.png","WOLF"), weight: 10, pay: [0,0,0,15,40,150] },
+      MONEY:   { ...imageSym("assets/slots/buffalo/mesa.png","MESA"), weight: 10, pay: [0,0,0,10,30,100] },
+      A:       { ...imageSym("assets/slots/buffalo/a.png","A"), weight: 14, pay: [0,0,0,5,15,50] },
+      K:       { ...imageSym("assets/slots/buffalo/k.png","K"), weight: 14, pay: [0,0,0,4,12,40] },
     },
     paytableOrder: ["WILD","BUFFALO","EAGLE","SHERIFF","MONEY","A","K"],
   },
@@ -999,6 +997,67 @@ function applyGameArt(gameKey, root) {
   });
 }
 
+const GENERATED_SYMBOL_SETS = {
+  wildBuffalo: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","buffalo.png","BUFFALO"],["S2","wolf.png","WOLF"],["S3","eagle.png","EAGLE"],["S4","mesa.png","MESA"],["S5","a.png","A"],["S6","k.png","K"]],
+  kingKong: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","king_kong.png","KING KONG"],["S2","gorilla.png","GORILLA"],["S3","roaring_gorilla.png","ROAR"],["S4","lion.png","LION"],["S5","a.png","A"],["S6","k.png","K"]],
+  triple777: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","red_777.png","777"],["S2","fire_777.png","FIRE 777"],["S3","blue_777.png","BLUE 777"],["S4","purple_777.png","PURPLE 777"],["S5","bell.png","BELL"],["S6","diamond.png","DIAMOND"]],
+  blackjack: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","blackjack_red.png","BLACKJACK"],["S2","blackjack_blue.png","BLACKJACK"],["S3","blackjack_green.png","BLACKJACK"],["S4","blackjack_purple.png","BLACKJACK"],["S5","crown.png","CROWN"],["S6","coins.png","CHIPS"]],
+  gorillaGold: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","gorilla.png","GORILLA"],["S2","gorilla_purple.png","GORILLA"],["S3","gold_chest.png","CHEST"],["S4","coins.png","GOLD"],["S5","crown.png","CROWN"],["S6","gem.png","GEM"]],
+  goldWolf: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","wolf.png","WOLF"],["S2","wolf_round.png","WOLF"],["S3","moon_wolf.png","MOON WOLF"],["S4","blue_gem.png","BLUE GEM"],["S5","gold.png","GOLD"],["S6","k.png","K"]],
+  wildBull: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","buffalo.png","BULL"],["S2","bull_skull.png","SKULL"],["S3","buffalo_round.png","BULL"],["S4","horseshoe.png","HORSESHOE"],["S5","gold.png","GOLD"],["S6","a.png","A"]],
+  dragonEmpress: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","red_dragon.png","RED DRAGON"],["S2","green_dragon.png","GREEN DRAGON"],["S3","green_dragon_2.png","EMERALD DRAGON"],["S4","blue_dragon.png","BLUE DRAGON"],["S5","red_gem.png","RUBY"],["S6","crown.png","CROWN"]],
+  mammothRush: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","purple_mammoth.png","MAMMOTH"],["S2","brown_mammoth.png","MAMMOTH"],["S3","mammoth.png","MAMMOTH"],["S4","mountain.png","MOUNTAIN"],["S5","gold.png","GOLD"],["S6","q.png","Q"]],
+  pharaoh: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","crown.png","CROWN"],["S2","gold_skull.png","SKULL"],["S3","coins.png","COINS"],["S4","red_gem.png","RUBY"],["S5","green_gem.png","EMERALD"],["S6","purple_gem.png","AMETHYST"]],
+  oceanTreasure: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","treasure.png","TREASURE"],["S2","anchor.png","ANCHOR"],["S3","pearl.png","PEARL"],["S4","shipwreck.png","SHIPWRECK"],["S5","ship.png","SHIP"],["S6","chest.png","CHEST"]],
+  vegas7s: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","red_777.png","777"],["S2","blue_777.png","BLUE 777"],["S3","bell.png","BELL"],["S4","crown.png","CROWN"],["S5","red_gem.png","RUBY"],["S6","coins.png","COINS"]],
+  luckyPanda: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","panda_gold.png","PANDA"],["S2","panda_coin.png","PANDA"],["S3","panda_red.png","PANDA"],["S4","panda_black.png","PANDA"],["S5","clover.png","CLOVER"],["S6","coins.png","COINS"]],
+  lionsPride: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","lion.png","LION"],["S2","lion_2.png","LION"],["S3","lion_3.png","LION"],["S4","white_lion.png","WHITE LION"],["S5","king_lion.png","KING LION"],["S6","crown.png","CROWN"]],
+  piratesTreasure: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","pirate.png","PIRATE"],["S2","pirate_blue.png","PIRATE"],["S3","pirate_parrot.png","PARROT"],["S4","ship.png","SHIP"],["S5","rum.png","RUM"],["S6","skull.png","SKULL"]],
+  zeusThunder: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","blue_wild.png","THUNDER"],["S2","crown.png","CROWN"],["S3","blue_gem.png","BLUE GEM"],["S4","bell.png","BELL"],["S5","gold_coin.png","GOLD"],["S6","purple_gem.png","AMETHYST"]],
+  cleopatra: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","crown.png","CROWN"],["S2","red_gem.png","RUBY"],["S3","green_gem.png","EMERALD"],["S4","purple_gem.png","AMETHYST"],["S5","blue_diamond.png","DIAMOND"],["S6","gold_skull.png","GOLD SKULL"]],
+  frozenRiches: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","white_lion.png","WHITE LION"],["S2","blue_gem.png","ICE GEM"],["S3","blue_landscape.png","ICE PEAK"],["S4","waterfall.png","FROZEN FALLS"],["S5","wolf.png","WOLF"],["S6","ice_9.png","ICE 9"]],
+  galaxyStars: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","star.png","STAR"],["S2","purple_gem.png","AMETHYST"],["S3","blue_diamond.png","DIAMOND"],["S4","red_gem.png","RUBY"],["S5","green_gem.png","EMERALD"],["S6","orange_gem.png","SUN GEM"]],
+  fruitMania: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","cherry.png","CHERRY"],["S2","lemon.png","LEMON"],["S3","orange.png","ORANGE"],["S4","plum.png","PLUM"],["S5","grapes.png","GRAPES"],["S6","watermelon.png","WATERMELON"]],
+  vikingGlory: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","skull.png","SKULL"],["S2","crown.png","CROWN"],["S3","gold_pot.png","GOLD"],["S4","coins.png","COINS"],["S5","bear.png","BEAR"],["S6","axe.png","AXE"]],
+  aztecEmpire: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","green_gem.png","EMERALD"],["S2","clover.png","GREEN SEAL"],["S3","gold_coin.png","GOLD"],["S4","crown.png","CROWN"],["S5","skull.png","SKULL"],["S6","emerald.png","EMERALD"]],
+  halloweenHunt: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","skull.png","SKULL"],["S2","pirate_skull.png","BONES"],["S3","orange_gem.png","EMBER"],["S4","red_gem.png","RUBY"],["S5","purple_gem.png","AMETHYST"],["S6","rum.png","POTION"]],
+  luckyCharms: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","clover.png","CLOVER"],["S2","clover_2.png","CLOVER"],["S3","horseshoe.png","HORSESHOE"],["S4","pot.png","GOLD POT"],["S5","crown.png","CROWN"],["S6","green_gem.png","EMERALD"]],
+};
+
+function generatedSymbol(gameKey, entry, index) {
+  const [key, file, label, role] = entry;
+  const isWild = role === "wild";
+  const isScatter = role === "scatter";
+  const payoutTiers = [
+    [0,0,0,50,100,500],
+    [0,0,0,5,20,100],
+    [0,0,0,30,80,300],
+    [0,0,0,20,50,200],
+    [0,0,0,15,40,150],
+    [0,0,0,10,30,100],
+    [0,0,0,5,15,50],
+    [0,0,0,4,12,40],
+  ];
+  return {
+    ...imageSym(`${ASSET_BASE}generated/${gameKey}/${file}`, label),
+    weight: isWild ? 3 : isScatter ? 2 : index < 4 ? 7 : index < 6 ? 10 : 14,
+    pay: payoutTiers[index] || payoutTiers[payoutTiers.length - 1],
+    ...(isWild ? { wild: true } : {}),
+    ...(isScatter ? { scatter: true } : {}),
+  };
+}
+
+function applyGeneratedSymbolSets() {
+  Object.entries(GENERATED_SYMBOL_SETS).forEach(([gameKey, entries]) => {
+    const game = GAMES[gameKey];
+    if (!game) return;
+    game.symbols = Object.fromEntries(entries.map((entry, index) => [entry[0], generatedSymbol(gameKey, entry, index)]));
+    game.paytableOrder = entries.map((entry) => entry[0]);
+  });
+}
+
+applyGeneratedSymbolSets();
+
 // ============================================================
 // 4) STATE - Credits, jackpots, current game
 // ============================================================
@@ -1453,6 +1512,10 @@ function renderSymbolHtml(symKey, game, opts = {}) {
   const sym = game.symbols[symKey];
   if (!sym) return `<span class="sym-cell"><span class="sym-text">${symKey}</span></span>`;
   const winClass = opts.winning ? " is-winning" : "";
+  if (sym.type === "image") {
+    const label = sym.label || symKey;
+    return `<span class="sym-cell sym-image${winClass}" data-sym="${symKey}"><span class="sym-inner"><img src="${sym.src}" alt="${label}" loading="eager" draggable="false" /></span></span>`;
+  }
   if (sym.type === "svg") {
     return `<span class="sym-cell sym-svg${winClass}" data-sym="${symKey}"><span class="sym-inner">${sym.icon}</span></span>`;
   }

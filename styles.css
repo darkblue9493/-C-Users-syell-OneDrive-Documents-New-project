@@ -2945,6 +2945,15 @@ blockquote {
   animation: slot-symbol-win 900ms ease-in-out 2;
 }
 
+.slot-reel .symbol-cell.sym-image img {
+  display: block;
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.45)) drop-shadow(0 0 12px rgba(255, 223, 139, 0.24));
+  user-select: none;
+}
+
 .slot-reel.is-spinning span {
   animation: reel-tumble 240ms linear infinite;
 }

@@ -619,10 +619,14 @@ const SLOT_SYMBOL_LIBRARY = {
   "BELL":   { icon:"\uD83D\uDD14", color:"#ffc845", tier:"high", label:"BELL" },
   "CHERRY": { icon:"\uD83C\uDF52", color:"#ff5675", tier:"high", label:"CHERRY" },
   // Theme: Buffalo
-  "BUF":    { icon:"\uD83E\uDD8C", color:"#ffb162", tier:"premium", label:"BUFFALO" },
-  "BISON":  { icon:"\uD83D\uDC03", color:"#cf8a4a", tier:"high", label:"BISON" },
-  "EAGLE":  { icon:"\uD83E\uDD85", color:"#e8c489", tier:"high", label:"EAGLE" },
-  "CACT":   { icon:"\uD83C\uDF35", color:"#69d27a", tier:"mid", label:"CACTUS" },
+  "BUF":    { icon:"assets/slots/buffalo/buffalo.png", color:"#ffb162", tier:"premium", label:"BUFFALO", type:"image" },
+  "BISON":  { icon:"assets/slots/buffalo/wolf.png", color:"#cf8a4a", tier:"high", label:"WOLF", type:"image" },
+  "EAGLE":  { icon:"assets/slots/buffalo/eagle.png", color:"#e8c489", tier:"high", label:"EAGLE", type:"image" },
+  "CACT":   { icon:"assets/slots/buffalo/mesa.png", color:"#69d27a", tier:"mid", label:"MESA", type:"image" },
+  "BUFFALO_BONUS": { icon:"assets/slots/buffalo/bonus.png", color:"#ffd76b", tier:"high", label:"BONUS", type:"image" },
+  "BUFFALO_WILD":  { icon:"assets/slots/buffalo/wild.png", color:"#ffd76b", tier:"wild", label:"WILD", type:"image" },
+  "BUFFALO_A":     { icon:"assets/slots/buffalo/a.png", color:"#ff5675", tier:"low", label:"A", type:"image" },
+  "BUFFALO_K":     { icon:"assets/slots/buffalo/k.png", color:"#ffc845", tier:"low", label:"K", type:"image" },
   // Theme: Dragon
   "DRG":    { icon:"\uD83D\uDC09", color:"#ff5630", tier:"premium", label:"DRAGON" },
   "FIRE":   { icon:"\uD83D\uDD25", color:"#ff7a30", tier:"high", label:"FIRE" },
@@ -662,7 +666,7 @@ const slotGames = {
     label: "Wild prairie reels",
     className: "buffalo",
     accent: "#ffb162",
-    symbols: ["BUF", "BISON", "EAGLE", "CACT", "A", "K", "Q", "SD"],
+    symbols: ["BUFFALO_WILD", "BUFFALO_BONUS", "BUF", "BISON", "EAGLE", "CACT", "BUFFALO_A", "BUFFALO_K"],
   },
   diamond: {
     title: "Diamond 777",
@@ -788,6 +792,10 @@ function updateSlotUi() {
 
 function renderSymbolCell(symbol, isWinning) {
   const meta = getSymbolMeta(symbol);
+  if (meta.type === "image") {
+    const winClass = isWinning ? " is-winning" : "";
+    return `<span class="symbol-cell tier-${meta.tier || "low"} sym-image${winClass}" data-symbol="${symbol}" style="--sym-color:${meta.color}"><img src="${meta.icon}" alt="${meta.label || symbol}" loading="eager" draggable="false" /></span>`;
+  }
   const isSvg = typeof meta.icon === "string" && meta.icon.startsWith("<svg");
   const tierClass = `tier-${meta.tier || "low"}`;
   const winClass = isWinning ? " is-winning" : "";
