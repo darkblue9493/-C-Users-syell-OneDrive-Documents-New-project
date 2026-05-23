@@ -1082,7 +1082,7 @@ function generatedSymbol(gameKey, entry, index) {
     [0,0,0,4,12,40],
   ];
   return {
-    ...imageSym(`/${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}?v=29`, label),
+    ...imageSym(`${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}?v=30`, label),
     weight: isWild ? 3 : isScatter ? 2 : index < 4 ? 7 : index < 6 ? 10 : 14,
     pay: payoutTiers[index] || payoutTiers[payoutTiers.length - 1],
     ...(isWild ? { wild: true } : {}),

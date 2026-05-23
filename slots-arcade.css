@@ -721,6 +721,10 @@ button { font-family: inherit; cursor: pointer; }
   display: grid; place-items: center;
   filter: drop-shadow(0 2px 0 rgba(0,0,0,.6));
 }
+.sym-cell.sym-image .sym-inner {
+  width: 96%;
+  height: 96%;
+}
 .sym-cell.sym-svg .sym-inner svg { display: block; width: 100%; height: auto; max-height: 100%; }
 .sym-cell.sym-image .sym-inner img {
   display: block;
