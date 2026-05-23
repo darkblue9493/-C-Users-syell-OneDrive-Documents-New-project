@@ -7,7 +7,7 @@
 > 2. `/api/admin/dashboard`, `/api/admin/activity`, `/api/admin/points` (GET)
 >    now accept sub-admin sessions and return data scoped to their players.
 > 3. Admin-only nav buttons + panels (Overview, Live Activity, VIP, Spin Wheel,
->    Slots Control, Sub-Admins) are now marked `data-admin-only` and hidden
+>    Sub-Admins) are now marked `data-admin-only` and hidden
 >    from sub-admin view by `script.js`.
 > 4. When a sub-admin lands on the panel, the active tab is auto-switched to
 >    "All Players" (which is their players, scoped). A "Sub-admin" badge is

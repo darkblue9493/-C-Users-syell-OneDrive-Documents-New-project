@@ -436,6 +436,9 @@ function normalizeDatabase(data) {
   if (!normalized.subAdminSlotsConfig || typeof normalized.subAdminSlotsConfig !== "object") {
     normalized.subAdminSlotsConfig = {};
   }
+  Object.keys(normalized.subAdminSlotsConfig).forEach((subAdminId) => {
+    normalized.subAdminSlotsConfig[subAdminId] = normalizeArcadeSlotsConfig(normalized.subAdminSlotsConfig[subAdminId]);
+  });
   if (!Array.isArray(normalized.pointTransactions)) normalized.pointTransactions = [];
   if (!Array.isArray(normalized.activityLog)) normalized.activityLog = [];
   if (!Array.isArray(normalized.gameHistory)) normalized.gameHistory = [];
@@ -874,7 +877,7 @@ function arcadeTotalDailyMinPayout(arcadeSlotsConfig) {
   }, 0));
 }
 
-function arcadeSlotsStatsFromPayout(slotPayout) {
+function arcadeSlotsStatsFromPayout(slotPayout, spinFilter = null) {
   const payout = normalizeSlotPayout(slotPayout);
   const stats = {
     date: payout.date,
@@ -890,6 +893,7 @@ function arcadeSlotsStatsFromPayout(slotPayout) {
     recentWins: [],
   };
   for (const spin of payout.spins || []) {
+    if (typeof spinFilter === "function" && !spinFilter(spin)) continue;
     const gameKey = spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey);
     if (!Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, gameKey)) continue;
     const bet = roundPoints(spin.bet);
@@ -914,10 +918,11 @@ function arcadeSlotsStatsFromPayout(slotPayout) {
   return stats;
 }
 
-function arcadeGameStatsFromPayout(slotPayout, gameKey) {
+function arcadeGameStatsFromPayout(slotPayout, gameKey, spinFilter = null) {
   const stats = { wagered: 0, won: 0, spins: 0 };
   const payout = normalizeSlotPayout(slotPayout);
   for (const spin of payout.spins || []) {
+    if (typeof spinFilter === "function" && !spinFilter(spin)) continue;
     const spinGameKey = spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey);
     if (spinGameKey !== gameKey) continue;
     stats.wagered = roundPoints(stats.wagered + Math.max(0, roundPoints(spin.bet)));
@@ -925,6 +930,28 @@ function arcadeGameStatsFromPayout(slotPayout, gameKey) {
     stats.spins += 1;
   }
   return stats;
+}
+
+function scopedSpinFilterForOperator(operator, data) {
+  if (!operator || operator.role === "admin") return null;
+  const ownedUserIds = new Set(
+    (data.users || []).filter((user) => operatorOwnsPlayer(operator, user)).map((user) => user.id)
+  );
+  return (spin) => ownedUserIds.has(spin?.userId);
+}
+
+function arcadeConfigForOperator(data, operator) {
+  data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
+  if (!operator || operator.role === "admin") return data.arcadeSlotsConfig;
+  const scopedConfigs = data.subAdminSlotsConfig && typeof data.subAdminSlotsConfig === "object"
+    ? data.subAdminSlotsConfig
+    : {};
+  return normalizeArcadeSlotsConfig(scopedConfigs[operator.id] || data.arcadeSlotsConfig);
+}
+
+function arcadeConfigForPlayer(data, player) {
+  const ownerId = String(player?.parentAdminId || "admin");
+  return arcadeConfigForOperator(data, ownerId === "admin" ? { role: "admin", id: "admin" } : { role: "sub_admin", id: ownerId });
 }
 
 function arcadePayoutMultiplier(gameConfig, gameStats) {
@@ -2306,56 +2333,85 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/slots-settings") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
+    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spins = (data.slotPayout.spins || []).filter((spin) => !spinFilter || spinFilter(spin));
+    const scopedConfig = arcadeConfigForOperator(data, op);
+    const settings = op.role === "admin"
+      ? data.slotSettings
+      : normalizeSlotSettings(scopedConfig._slotSettings || data.slotSettings);
     return sendJson(response, 200, {
-      settings: data.slotSettings,
-      payout: data.slotPayout,
+      settings,
+      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + (Number(spin.win) || 0)), 0) },
       date: data.slotPayout.date,
-      spins: (data.slotPayout.spins || []).slice(0, 120),
+      spins: spins.slice(0, 120),
     });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/slots-settings") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const data = await readDatabase();
     ensureSlotPayoutToday(data);
-    data.slotSettings = normalizeSlotSettings(body);
-    addActivity(data, "slots-settings", "Updated South Diamond Slots daily payout limit", data.slotSettings);
+    const nextSettings = normalizeSlotSettings(body);
+    if (op.role === "admin") {
+      data.slotSettings = nextSettings;
+    } else {
+      data.subAdminSlotsConfig = data.subAdminSlotsConfig && typeof data.subAdminSlotsConfig === "object" ? data.subAdminSlotsConfig : {};
+      const current = arcadeConfigForOperator(data, op);
+      data.subAdminSlotsConfig[op.id] = normalizeArcadeSlotsConfig({ ...current, _slotSettings: nextSettings });
+    }
+    const settings = op.role === "admin" ? data.slotSettings : nextSettings;
+    addActivity(data, "slots-settings", "Updated South Diamond Slots daily payout limit", { ...settings, operator: op.role, operatorId: op.id });
     await writeDatabase(data);
-    sendSlotLiveEvent({ type: "slot-settings", settings: data.slotSettings });
+    sendSlotLiveEvent({ type: "slot-settings", settings, operator: op.role, operatorId: op.id });
+    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spins = (data.slotPayout.spins || []).filter((spin) => !spinFilter || spinFilter(spin));
     return sendJson(response, 200, {
-      settings: data.slotSettings,
-      payout: data.slotPayout,
+      settings,
+      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + (Number(spin.win) || 0)), 0) },
       date: data.slotPayout.date,
-      spins: (data.slotPayout.spins || []).slice(0, 120),
+      spins: spins.slice(0, 120),
     });
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/slots-arcade-config") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
-    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
+    const spinFilter = scopedSpinFilterForOperator(op, data);
     return sendJson(response, 200, {
-      config: data.arcadeSlotsConfig,
-      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
+      config: arcadeConfigForOperator(data, op),
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout, spinFilter),
+      scope: op.role === "admin" ? "global" : "sub_admin",
     });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/slots-arcade-config") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const data = await readDatabase();
-    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(body.config || body);
-    data.arcadeSlotsConfig.lastModified = Date.now();
-    addActivity(data, "slots-arcade-config", "Updated South Diamond Slots Arcade game controls", {
-      globalEnabled: data.arcadeSlotsConfig.globalEnabled,
-      games: Object.fromEntries(Object.entries(data.arcadeSlotsConfig.games).map(([key, cfg]) => [key, {
+    const nextConfig = normalizeArcadeSlotsConfig(body.config || body);
+    nextConfig.lastModified = Date.now();
+    if (op.role === "admin") {
+      data.arcadeSlotsConfig = nextConfig;
+    } else {
+      data.subAdminSlotsConfig = data.subAdminSlotsConfig && typeof data.subAdminSlotsConfig === "object" ? data.subAdminSlotsConfig : {};
+      data.subAdminSlotsConfig[op.id] = nextConfig;
+    }
+    addActivity(data, "slots-arcade-config", op.role === "admin" ? "Updated global South Diamond Slots Arcade game controls" : "Updated sub-admin Slots Arcade game controls", {
+      operator: op.role,
+      operatorId: op.id,
+      globalEnabled: nextConfig.globalEnabled,
+      games: Object.fromEntries(Object.entries(nextConfig.games).map(([key, cfg]) => [key, {
         enabled: cfg.enabled,
         minBet: cfg.minBet,
         maxBet: cfg.maxBet,
@@ -2365,36 +2421,46 @@ async function handleApi(request, response, urlPath, url) {
     await writeDatabase(data);
     sendSlotLiveEvent({
       type: "arcade-config",
-      lastModified: data.arcadeSlotsConfig.lastModified,
-      defaultBet: data.arcadeSlotsConfig.defaultBet,
+      lastModified: nextConfig.lastModified,
+      defaultBet: nextConfig.defaultBet,
+      operator: op.role,
+      operatorId: op.id,
     });
+    const spinFilter = scopedSpinFilterForOperator(op, data);
     return sendJson(response, 200, {
-      config: data.arcadeSlotsConfig,
-      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
+      config: nextConfig,
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout, spinFilter),
+      scope: op.role === "admin" ? "global" : "sub_admin",
     });
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/slots-arcade-stats") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
+    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spins = (data.slotPayout.spins || []).filter((spin) => !spinFilter || spinFilter(spin));
     return sendJson(response, 200, {
-      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
-      payout: data.slotPayout,
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout, spinFilter),
+      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + (Number(spin.win) || 0)), 0) },
     });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/slots-arcade-stats/reset") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const gameKey = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, body.gameKey) ? String(body.gameKey) : "";
     const data = await readDatabase();
     ensureSlotPayoutToday(data);
+    const spinFilter = scopedSpinFilterForOperator(op, data);
     data.slotPayout.spins = (data.slotPayout.spins || []).filter((spin) => {
       const spinGameKey = spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey);
       const isArcadeSpin = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, spinGameKey);
       if (!isArcadeSpin) return true;
+      if (spinFilter && !spinFilter(spin)) return true;
       return gameKey ? spinGameKey !== gameKey : false;
     });
     data.slotPayout = recalculateSlotPaidOut(data.slotPayout);
@@ -2402,7 +2468,7 @@ async function handleApi(request, response, urlPath, url) {
     await writeDatabase(data);
     sendSlotLiveEvent({ type: "arcade-stats-reset", gameKey: gameKey || null });
     return sendJson(response, 200, {
-      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout, spinFilter),
       payout: data.slotPayout,
     });
   }
@@ -2764,10 +2830,16 @@ async function handleApi(request, response, urlPath, url) {
 
     const data = await readDatabase();
     ensureSlotPayoutToday(data);
-    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
+    const user = data.users.find((item) => item.id === sessionUser.id);
+    if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    const effectiveArcadeConfig = arcadeConfigForPlayer(data, user);
+    const ownerOp = String(user.parentAdminId || "admin") === "admin"
+      ? { role: "admin", id: "admin" }
+      : { role: "sub_admin", id: String(user.parentAdminId) };
+    const ownerSpinFilter = scopedSpinFilterForOperator(ownerOp, data);
     const arcadeGameKey = arcadeKeyForLegacySlot(gameKey);
-    const arcadeGameConfig = data.arcadeSlotsConfig.games[arcadeGameKey] || defaultArcadeGameConfig();
-    if (!data.arcadeSlotsConfig.globalEnabled || arcadeGameConfig.enabled === false) {
+    const arcadeGameConfig = effectiveArcadeConfig.games[arcadeGameKey] || defaultArcadeGameConfig();
+    if (!effectiveArcadeConfig.globalEnabled || arcadeGameConfig.enabled === false) {
       return sendJson(response, 403, { error: "This slot game is currently turned off by admin." });
     }
     if (!Number.isFinite(bet) || bet < arcadeGameConfig.minBet || bet > arcadeGameConfig.maxBet) {
@@ -2777,8 +2849,6 @@ async function handleApi(request, response, urlPath, url) {
         maxBet: arcadeGameConfig.maxBet,
       });
     }
-    const user = data.users.find((item) => item.id === sessionUser.id);
-    if (!user) return sendJson(response, 404, { error: "Player was not found." });
     user.points = roundPoints(user.points);
     if (user.points < bet) {
       return sendJson(response, 400, { error: "Not enough available points for that bet.", user: sanitizeUser(user) });
@@ -2786,7 +2856,7 @@ async function handleApi(request, response, urlPath, url) {
 
     const createdAt = new Date().toISOString();
     const theme = slotGameThemes[gameKey] || slotGameThemes.diamond777;
-    const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, arcadeGameKey);
+    const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, arcadeGameKey, ownerSpinFilter);
     const gamePaidToday = arcadeGameStats.won;
     const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
     const payoutMultiplier = arcadePayoutMultiplier(arcadeGameConfig, arcadeGameStats);
@@ -2854,8 +2924,8 @@ async function handleApi(request, response, urlPath, url) {
       wins,
       bonus,
       balanceAfter: user.points,
-      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(data.arcadeSlotsConfig) - arcadeSlotsStatsFromPayout(data.slotPayout).totalWon)),
-      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(data.arcadeSlotsConfig) - arcadeSlotsStatsFromPayout(data.slotPayout).totalWon)),
+      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
+      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
     });
     await writeDatabase(data);
     return sendJson(response, 200, {
@@ -2866,8 +2936,8 @@ async function handleApi(request, response, urlPath, url) {
       bonus,
       bet,
       win,
-      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(data.arcadeSlotsConfig) - arcadeSlotsStatsFromPayout(data.slotPayout).totalWon)),
-      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(data.arcadeSlotsConfig) - arcadeSlotsStatsFromPayout(data.slotPayout).totalWon)),
+      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
+      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
       remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
       user: sanitizeUser(user),
       transactions: transactions.map(sanitizePointTransaction),
@@ -2893,9 +2963,15 @@ async function handleApi(request, response, urlPath, url) {
     }
 
     const data = await readDatabase();
-    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
-    const arcadeGameConfig = data.arcadeSlotsConfig.games[gameKey];
-    if (!data.arcadeSlotsConfig.globalEnabled || arcadeGameConfig?.enabled === false) {
+    const storedUser = data.users.find((item) => item.id === user.id);
+    if (!storedUser) return sendJson(response, 401, { error: "Player login is required." });
+    const effectiveArcadeConfig = arcadeConfigForPlayer(data, storedUser);
+    const ownerOp = String(storedUser.parentAdminId || "admin") === "admin"
+      ? { role: "admin", id: "admin" }
+      : { role: "sub_admin", id: String(storedUser.parentAdminId) };
+    const ownerSpinFilter = scopedSpinFilterForOperator(ownerOp, data);
+    const arcadeGameConfig = effectiveArcadeConfig.games[gameKey];
+    if (!effectiveArcadeConfig.globalEnabled || arcadeGameConfig?.enabled === false) {
       return sendJson(response, 403, { error: "This arcade game is currently turned off by admin." });
     }
     if (bet < arcadeGameConfig.minBet || bet > arcadeGameConfig.maxBet) {
@@ -2905,14 +2981,12 @@ async function handleApi(request, response, urlPath, url) {
         maxBet: arcadeGameConfig.maxBet,
       });
     }
-    const storedUser = data.users.find((item) => item.id === user.id);
-    if (!storedUser) return sendJson(response, 401, { error: "Player login is required." });
     if ((Number(storedUser.points) || 0) < bet) {
       return sendJson(response, 400, { error: "Not enough South Diamond points for that bet." });
     }
 
     ensureSlotPayoutToday(data);
-    const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey);
+    const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey, ownerSpinFilter);
     const gamePaidToday = arcadeGameStats.won;
     const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
     const payoutMultiplier = arcadePayoutMultiplier(arcadeGameConfig, arcadeGameStats);
@@ -2981,8 +3055,8 @@ async function handleApi(request, response, urlPath, url) {
       win,
       requestedWin,
       capped: win < requestedWin,
-      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(data.arcadeSlotsConfig) - arcadeSlotsStatsFromPayout(data.slotPayout).totalWon)),
-      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(data.arcadeSlotsConfig) - arcadeSlotsStatsFromPayout(data.slotPayout).totalWon)),
+      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
+      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
       remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
       user: sanitizeUser(storedUser),
       transactions: transactions.map(sanitizePointTransaction),
@@ -2990,13 +3064,19 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/player/slots/arcade-config") {
+    const sessionUser = await getPlayerUser(request);
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
-    data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
+    const storedUser = sessionUser ? (data.users || []).find((item) => item.id === sessionUser.id) : null;
+    const effectiveArcadeConfig = storedUser ? arcadeConfigForPlayer(data, storedUser) : arcadeConfigForOperator(data, { role: "admin", id: "admin" });
+    const ownerOp = storedUser && String(storedUser.parentAdminId || "admin") !== "admin"
+      ? { role: "sub_admin", id: String(storedUser.parentAdminId) }
+      : { role: "admin", id: "admin" };
+    const ownerSpinFilter = scopedSpinFilterForOperator(ownerOp, data);
     return sendJson(response, 200, {
-      config: data.arcadeSlotsConfig,
-      stats: arcadeSlotsStatsFromPayout(data.slotPayout),
+      config: effectiveArcadeConfig,
+      stats: arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter),
     });
   }
 

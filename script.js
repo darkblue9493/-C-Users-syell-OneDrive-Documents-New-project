@@ -2324,19 +2324,14 @@ async function renderAdmin() {
 
   adminRenderInFlight = true;
   try {
-  const isSubAdminSession = window.__sdAdminSessionRole === "sub_admin";
   const [chatData, userData, dashboardData, pointsData, activityData, spinData, slotsData] = await Promise.all([
     api("/api/chats").catch(() => ({ chats: [] })),
     api("/api/admin/users").catch(() => ({ users: [] })),
     api("/api/admin/dashboard").catch(() => ({ stats: {} })),
     api("/api/admin/points").catch(() => ({ transactions: [] })),
     api("/api/admin/activity").catch(() => ({ activity: [] })),
-    isSubAdminSession
-      ? Promise.resolve({ settings: { limits: {} }, counts: {}, awards: [] })
-      : api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
-    isSubAdminSession
-      ? Promise.resolve({ settings: {}, payout: {}, spins: [] })
-      : api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
+    api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
+    api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
   ]);
   const chats = (chatData.chats || [])
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
@@ -3013,6 +3008,25 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
     }
   }
 
+  function updateSubAdminWallet(wallet) {
+    const amount = Number(wallet) || 0;
+    const walletText = `Available points: ${amount}`;
+    const walletNote = document.querySelector("[data-cp-wallet-note]");
+    if (walletNote) walletNote.textContent = `${walletText}. Starting points are deducted from this.`;
+    const existingBadge = document.querySelector("[data-subadmin-wallet-badge]");
+    if (existingBadge) {
+      existingBadge.textContent = walletText;
+      return;
+    }
+    const topbar = document.querySelector(".admin-topbar-actions");
+    if (!topbar) return;
+    const badge = document.createElement("span");
+    badge.setAttribute("data-subadmin-wallet-badge", "");
+    badge.style.cssText = "padding:0.3rem 0.7rem;background:rgba(255,215,107,0.15);color:#ffd76b;border:1px solid rgba(255,215,107,0.45);border-radius:4px;font-size:0.8rem;font-weight:700;";
+    badge.textContent = walletText;
+    topbar.prepend(badge);
+  }
+
   async function loadOperator() {
     try {
       const response = await fetch("/api/admin/sub-admin/me", { credentials: "same-origin" });
@@ -3028,7 +3042,7 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
       const walletNote = document.querySelector("[data-cp-wallet-note]");
       if (walletNote) {
         if (payload.role === "sub_admin") {
-          walletNote.textContent = `Your wallet: ${payload.wallet} points. Starting points are deducted from this.`;
+          updateSubAdminWallet(payload.wallet);
         } else {
           walletNote.textContent = "Admin mode — points are minted, no wallet limit.";
         }
@@ -3192,9 +3206,10 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
         // Update wallet note if sub-admin.
         if (currentOperator?.role === "sub_admin" && payload.subAdminWallet != null) {
           currentOperator.wallet = payload.subAdminWallet;
-          const walletNote = document.querySelector("[data-cp-wallet-note]");
-          if (walletNote) walletNote.textContent = `Your wallet: ${payload.subAdminWallet} points. Starting points are deducted from this.`;
+          updateSubAdminWallet(payload.subAdminWallet);
         }
+        await renderAdmin();
+        document.querySelector('[data-admin-panel-button="players"]')?.click();
       } catch {
         if (status) status.textContent = "Could not reach the server.";
       }
