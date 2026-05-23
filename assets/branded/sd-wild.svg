@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  South Diamond branded WILD symbol.
+  Designed to sit inside a reel cell (square aspect). 256x256 viewBox so it
+  scales crisply at every reel size. All effects use SVG filters/gradients —
+  no external dependencies.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="South Diamond Wild">
+  <defs>
+    <radialGradient id="sd-wild-bg" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#1f1530"/>
+      <stop offset="55%" stop-color="#0c0820"/>
+      <stop offset="100%" stop-color="#02010a"/>
+    </radialGradient>
+    <linearGradient id="sd-wild-diamond" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff7c8"/>
+      <stop offset="50%" stop-color="#f7c948"/>
+      <stop offset="100%" stop-color="#a96b14"/>
+    </linearGradient>
+    <linearGradient id="sd-wild-facet" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="sd-wild-text" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff5b0"/>
+      <stop offset="100%" stop-color="#e3a812"/>
+    </linearGradient>
+    <filter id="sd-wild-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="sd-wild-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+
+  <!-- Background plate -->
+  <rect x="6" y="6" width="244" height="244" rx="22" ry="22" fill="url(#sd-wild-bg)"
+        stroke="#f7c948" stroke-width="3"/>
+  <!-- Inner gold trim -->
+  <rect x="14" y="14" width="228" height="228" rx="16" ry="16" fill="none"
+        stroke="#a96b14" stroke-width="1" opacity="0.7"/>
+
+  <!-- Corner accent stars -->
+  <g fill="#f7c948" opacity="0.85">
+    <circle cx="26" cy="26" r="2.5"/>
+    <circle cx="230" cy="26" r="2.5"/>
+    <circle cx="26" cy="230" r="2.5"/>
+    <circle cx="230" cy="230" r="2.5"/>
+  </g>
+
+  <!-- Central diamond shape -->
+  <g filter="url(#sd-wild-shadow)">
+    <polygon points="128,42 196,128 128,214 60,128"
+             fill="url(#sd-wild-diamond)"
+             stroke="#fff8d8" stroke-width="2"/>
+    <!-- Top facet (light reflection) -->
+    <polygon points="128,42 196,128 128,128 60,128"
+             fill="url(#sd-wild-facet)"/>
+    <!-- Inner facet lines -->
+    <polyline points="128,42 128,214" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1"/>
+    <polyline points="60,128 196,128" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1"/>
+    <polyline points="94,85 162,171" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1"/>
+    <polyline points="162,85 94,171" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1"/>
+  </g>
+
+  <!-- WILD text band -->
+  <g filter="url(#sd-wild-glow)">
+    <rect x="44" y="116" width="168" height="32" rx="6" ry="6"
+          fill="#0a0418" stroke="#f7c948" stroke-width="1.5" opacity="0.92"/>
+    <text x="128" y="139" text-anchor="middle"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-size="24" font-weight="900"
+          fill="url(#sd-wild-text)" letter-spacing="6">WILD</text>
+  </g>
+
+  <!-- SD initials at top -->
+  <text x="128" y="34" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="11" font-weight="700" letter-spacing="4"
+        fill="#f7c948" opacity="0.9">SOUTH DIAMOND</text>
+</svg>
