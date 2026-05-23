@@ -1069,7 +1069,7 @@ function generatedSymbol(gameKey, entry, index) {
     [0,0,0,4,12,40],
   ];
   return {
-    ...imageSym(`${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}`, label),
+    ...imageSym(`/${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}`, label),
     weight: isWild ? 3 : isScatter ? 2 : index < 4 ? 7 : index < 6 ? 10 : 14,
     pay: payoutTiers[index] || payoutTiers[payoutTiers.length - 1],
     ...(isWild ? { wild: true } : {}),
@@ -2212,6 +2212,7 @@ function bindEvents() {
       return;
     }
     if (e.target.closest("[data-back-button]")) { backToLobby(); return; }
+    if (e.target.closest("[data-arcade-home]")) { backToLobby(); return; }
     if (e.target.closest("[data-spin-btn]")) { Audio.resume(); spinGame(); return; }
     if (e.target.closest("[data-bet-up]")) { changeBet(+1); return; }
     if (e.target.closest("[data-bet-down]")) { changeBet(-1); return; }
