@@ -4130,14 +4130,6 @@ blockquote {
   order: 2;
 }
 
-.auth-panel[data-player-signup].is-active,
-.auth-panel[data-player-reset].is-active {
-  order: 4;
-  margin-top: 6px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(255, 226, 142, 0.18);
-}
-
 .player-auth-card {
   border: 1px solid rgba(255, 226, 142, 0.24);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
@@ -6027,7 +6019,7 @@ body.is-player-logged-in [data-guest-only] {
   resize: vertical;
 }
 
-.referral-signup-note {
+.referral-login-note {
   margin: 4px 0 0;
   color: #52ef9f;
   font-weight: 800;

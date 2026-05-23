@@ -1292,6 +1292,17 @@ function operatorOwnsPlayer(operator, player) {
   return String(player.parentAdminId) === String(operator.id);
 }
 
+// True if the operator may view/modify the given chat thread.
+// Admin owns everything. Sub-admin owns only chats belonging to their players.
+// Guest chats (no userId on the chat) are admin-only.
+function operatorOwnsChat(operator, chat, data) {
+  if (!operator || !chat) return false;
+  if (operator.role === "admin") return true;
+  if (!chat.userId) return false;
+  const user = (data?.users || []).find((u) => u.id === chat.userId);
+  return operatorOwnsPlayer(operator, user);
+}
+
 function clientKey(request) {
   return String(request.headers["x-forwarded-for"] || request.socket.remoteAddress || "unknown")
     .split(",")[0]
@@ -1620,6 +1631,8 @@ function publicFilePath(urlPath) {
     "/service-worker.js",
     "/manifest.webmanifest",
     "/admin.webmanifest",
+    // Sub-admin login page (served by request handler at /admin, not directly)
+    "/sub-admin-login.html",
   ]);
   const isAssetPath =
     cleanPath.startsWith("/assets/") ||
@@ -1687,53 +1700,18 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/forgot-password") {
-    const body = await readBody(request);
-    const username = String(body.username || "").trim();
-    if (username && username !== adminUsername) {
-      return sendJson(response, 200, { ok: true, message: "If the admin account matches, a reset link has been sent." });
-    }
-    const token = createResetToken();
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-    const data = await readDatabase();
-    data.adminPasswordResetTokens = [
-      {
-        tokenHash: tokenHash(token),
-        expiresAt,
-        createdAt: new Date().toISOString(),
-        ip: clientKey(request),
-      },
-      ...(data.adminPasswordResetTokens || []),
-    ].slice(0, 5);
-    await writeDatabase(data);
-    const resetUrl = `${requestOrigin(request)}${adminLoginPath}?reset=${token}`;
-    await sendAdminEmail({
-      subject: "South Diamond admin password reset",
-      text: `Use this link to reset your South Diamond admin password. It expires in 30 minutes.\n\n${resetUrl}`,
-      html: `<p>Use this link to reset your South Diamond admin password. It expires in 30 minutes.</p><p><a href="${resetUrl}">Reset admin password</a></p>`,
+    // Admin forgot-password flow is removed from the login UI. The endpoint is kept
+    // returning 410 Gone so any stale client gets a clear message instead of leaking
+    // that a reset email might still be sent.
+    return sendJson(response, 410, {
+      error: "Admin password reset is no longer available through this page. Update the ADMIN_PASSWORD env var directly.",
     });
-    return sendJson(response, 200, { ok: true, message: "Password reset link sent to your admin email." });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/reset-password") {
-    const body = await readBody(request);
-    const token = String(body.token || "");
-    const password = String(body.password || "");
-    if (!token || password.length < 6) {
-      return sendJson(response, 400, { error: "Use the reset link and enter a password with at least 6 characters." });
-    }
-    const data = await readDatabase();
-    const hash = tokenHash(token);
-    const reset = (data.adminPasswordResetTokens || []).find((item) => item.tokenHash === hash);
-    if (!reset || new Date(reset.expiresAt).getTime() < Date.now()) {
-      return sendJson(response, 400, { error: "This reset link is expired. Request a new reset link." });
-    }
-    data.adminPasswordHash = hashPassword(password);
-    data.adminPasswordResetTokens = (data.adminPasswordResetTokens || []).filter((item) => item.tokenHash !== hash);
-    data.adminSessions = [];
-    addActivity(data, "admin-password-reset", "Admin password was reset by email link", { ip: clientKey(request) });
-    await writeDatabase(data);
-    sessions.clear();
-    return sendJson(response, 200, { ok: true, message: "Admin password reset. You can now log in." });
+    return sendJson(response, 410, {
+      error: "Admin password reset is no longer available. Update the ADMIN_PASSWORD env var directly.",
+    });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/verify-login") {
@@ -1818,6 +1796,382 @@ async function handleApi(request, response, urlPath, url) {
     return sendJson(response, isAdminRequest(request) ? 200 : 401, { loggedIn: isAdminRequest(request) });
   }
 
+  // ====================================================================
+  // Sub-admin endpoints (Chunk C).
+  // Auth model:
+  //   - /api/admin/sub-admin/login      : username+password, no email code.
+  //                                       Sets sd_subadmin_session cookie.
+  //   - /api/admin/sub-admin/logout     : clears the cookie.
+  //   - /api/admin/sub-admin/me         : returns current sub-admin info.
+  //   - /api/admin/sub-admins (GET)     : main admin lists all sub-admins.
+  //   - /api/admin/sub-admins (POST)    : main admin creates a sub-admin.
+  //   - /api/admin/sub-admins/load-points : main admin tops up wallet.
+  //   - /api/admin/sub-admins/disable   : main admin enables/disables.
+  //   - /api/admin/players (POST)       : admin OR sub-admin creates a player.
+  // ====================================================================
+
+  // Sub-admin login — username + password only, no email code.
+  if (request.method === "POST" && urlPath === "/api/admin/sub-admin/login") {
+    const ipKey = clientKey(request);
+    const attemptRecord = subAdminLoginAttempts.get(ipKey);
+    if (attemptRecord?.lockedUntil && Date.now() < attemptRecord.lockedUntil) {
+      const minutes = Math.ceil((attemptRecord.lockedUntil - Date.now()) / 60000);
+      return sendJson(response, 429, {
+        error: `Too many wrong attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`,
+      });
+    }
+    const body = await readBody(request);
+    const username = String(body.username || "").trim().toLowerCase();
+    const password = String(body.password || "");
+    if (!username || !password) {
+      return sendJson(response, 400, { error: "Enter your username and password." });
+    }
+    const data = await readDatabase();
+    const subAdmin = (data.subAdmins || []).find((sa) => sa.username.toLowerCase() === username);
+    if (!subAdmin || subAdmin.disabled || !verifyPassword(password, subAdmin.passwordHash)) {
+      // Record the failed attempt with the same 5-strike lockout used for admin.
+      const record = subAdminLoginAttempts.get(ipKey) || { count: 0, lockedUntil: 0 };
+      record.count += 1;
+      if (record.count >= 5) record.lockedUntil = Date.now() + 5 * 60 * 1000;
+      subAdminLoginAttempts.set(ipKey, record);
+      if (subAdmin?.disabled) {
+        return sendJson(response, 403, { error: "This sub-admin account is disabled. Contact the main admin." });
+      }
+      return sendJson(response, 401, { error: "Wrong username or password." });
+    }
+    subAdminLoginAttempts.delete(ipKey);
+
+    // Issue a session token and persist it so the cookie survives server restarts.
+    const token = `${Date.now()}-${crypto.randomBytes(16).toString("hex")}`;
+    const expiresAtMs = Date.now() + subAdminSessionMaxAge * 1000;
+    subAdminSessions.set(token, { subAdminId: subAdmin.id, expiresAt: expiresAtMs });
+    data.subAdminSessions = [
+      {
+        token,
+        subAdminId: subAdmin.id,
+        createdAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
+        expiresAt: new Date(expiresAtMs).toISOString(),
+        ip: ipKey,
+        userAgent: String(request.headers["user-agent"] || ""),
+      },
+      ...(data.subAdminSessions || []),
+    ].slice(0, 25);
+    subAdmin.lastLoginAt = new Date().toISOString();
+    addActivity(data, "sub-admin-login", `Sub-admin logged in: ${subAdmin.username}`, {
+      subAdminId: subAdmin.id,
+      ip: ipKey,
+    });
+    await writeDatabase(data);
+    response.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Set-Cookie": `sd_subadmin_session=${token}; HttpOnly${secureCookiePart(request)}; SameSite=Lax; Path=/; Max-Age=${subAdminSessionMaxAge}`,
+      "Cache-Control": "no-store",
+    });
+    response.end(JSON.stringify({ ok: true, role: "sub_admin", username: subAdmin.username }));
+    return;
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/sub-admin/logout") {
+    const cookies = parseCookies(request);
+    if (cookies.sd_subadmin_session) subAdminSessions.delete(cookies.sd_subadmin_session);
+    const data = await readDatabase();
+    data.subAdminSessions = (data.subAdminSessions || []).filter(
+      (session) => session.token !== cookies.sd_subadmin_session
+    );
+    await writeDatabase(data);
+    response.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Set-Cookie": "sd_subadmin_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
+      "Cache-Control": "no-store",
+    });
+    response.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  // /api/admin/sub-admin/me — returns the logged-in sub-admin's info (wallet, username, etc.).
+  // Also used by the front-end to detect role so admin.html can render the right UI.
+  if (request.method === "GET" && urlPath === "/api/admin/sub-admin/me") {
+    const subAdminId = getSubAdminId(request);
+    if (!subAdminId) {
+      // If the caller is the main admin, return their info too so the front-end has one endpoint to call.
+      if (isAdminRequest(request)) {
+        return sendJson(response, 200, {
+          role: "admin",
+          username: adminUsername,
+          wallet: null, // admin has no wallet — admin can mint points
+        });
+      }
+      return sendJson(response, 401, { loggedIn: false });
+    }
+    const data = await readDatabase();
+    const subAdmin = (data.subAdmins || []).find((sa) => sa.id === subAdminId);
+    if (!subAdmin) return sendJson(response, 401, { loggedIn: false });
+    return sendJson(response, 200, {
+      role: "sub_admin",
+      id: subAdmin.id,
+      username: subAdmin.username,
+      wallet: subAdmin.wallet,
+      createdAt: subAdmin.createdAt,
+      lastLoginAt: subAdmin.lastLoginAt,
+    });
+  }
+
+  // ---- Main admin manages sub-admins ----
+
+  if (request.method === "GET" && urlPath === "/api/admin/sub-admins") {
+    if (!requireAdmin(request, response)) return;
+    const data = await readDatabase();
+    // Count owned players per sub-admin so admin can see workload at a glance.
+    const playerCountByOwner = new Map();
+    (data.users || []).forEach((u) => {
+      const owner = String(u.parentAdminId || "admin");
+      playerCountByOwner.set(owner, (playerCountByOwner.get(owner) || 0) + 1);
+    });
+    const subAdmins = (data.subAdmins || []).map((sa) => ({
+      id: sa.id,
+      username: sa.username,
+      wallet: sa.wallet,
+      disabled: Boolean(sa.disabled),
+      createdAt: sa.createdAt,
+      lastLoginAt: sa.lastLoginAt,
+      playerCount: playerCountByOwner.get(sa.id) || 0,
+    }));
+    return sendJson(response, 200, { subAdmins });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/sub-admins") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const username = String(body.username || "").trim();
+    const password = String(body.password || "");
+    const startingWallet = Math.max(0, roundPoints(body.startingWallet));
+    if (!/^[a-zA-Z0-9_.-]{3,32}$/.test(username)) {
+      return sendJson(response, 400, {
+        error: "Username must be 3–32 characters: letters, numbers, dot, dash, underscore.",
+      });
+    }
+    if (password.length < 6) {
+      return sendJson(response, 400, { error: "Password must be at least 6 characters." });
+    }
+    const data = await readDatabase();
+    const usernameLower = username.toLowerCase();
+    if ((data.subAdmins || []).some((sa) => sa.username.toLowerCase() === usernameLower)) {
+      return sendJson(response, 409, { error: "A sub-admin with that username already exists." });
+    }
+    if (usernameLower === adminUsername.toLowerCase()) {
+      return sendJson(response, 409, { error: "That username is reserved for the main admin." });
+    }
+    const subAdmin = {
+      id: `sa-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`,
+      username,
+      passwordHash: hashPassword(password),
+      wallet: startingWallet,
+      createdAt: new Date().toISOString(),
+      createdBy: "admin",
+      lastLoginAt: null,
+      disabled: false,
+    };
+    data.subAdmins = [subAdmin, ...(data.subAdmins || [])];
+    addActivity(data, "sub-admin-create", `Created sub-admin: ${username}`, {
+      subAdminId: subAdmin.id,
+      startingWallet,
+    });
+    await writeDatabase(data);
+    return sendJson(response, 201, {
+      subAdmin: {
+        id: subAdmin.id,
+        username: subAdmin.username,
+        wallet: subAdmin.wallet,
+        disabled: false,
+        createdAt: subAdmin.createdAt,
+        lastLoginAt: null,
+        playerCount: 0,
+      },
+    });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/sub-admins/load-points") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const subAdminId = String(body.subAdminId || "");
+    const amount = Number(body.points);
+    if (!subAdminId || !Number.isInteger(amount) || amount <= 0) {
+      return sendJson(response, 400, { error: "Choose a sub-admin and a whole number of points." });
+    }
+    const data = await readDatabase();
+    const subAdmin = (data.subAdmins || []).find((sa) => sa.id === subAdminId);
+    if (!subAdmin) return sendJson(response, 404, { error: "Sub-admin not found." });
+    subAdmin.wallet = roundPoints((subAdmin.wallet || 0) + amount);
+    addActivity(data, "sub-admin-wallet-load", `Loaded ${amount} points to ${subAdmin.username}`, {
+      subAdminId,
+      amount,
+      walletAfter: subAdmin.wallet,
+    });
+    await writeDatabase(data);
+    return sendJson(response, 200, { ok: true, wallet: subAdmin.wallet });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/admin/sub-admins/disable") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const subAdminId = String(body.subAdminId || "");
+    const disabled = Boolean(body.disabled);
+    const data = await readDatabase();
+    const subAdmin = (data.subAdmins || []).find((sa) => sa.id === subAdminId);
+    if (!subAdmin) return sendJson(response, 404, { error: "Sub-admin not found." });
+    subAdmin.disabled = disabled;
+    if (disabled) {
+      // Kick all active sessions for this sub-admin.
+      const remaining = [];
+      (data.subAdminSessions || []).forEach((session) => {
+        if (session.subAdminId === subAdminId) {
+          subAdminSessions.delete(session.token);
+        } else {
+          remaining.push(session);
+        }
+      });
+      data.subAdminSessions = remaining;
+    }
+    addActivity(data, "sub-admin-disable", `${disabled ? "Disabled" : "Enabled"} sub-admin ${subAdmin.username}`, {
+      subAdminId,
+      disabled,
+    });
+    await writeDatabase(data);
+    return sendJson(response, 200, { ok: true, disabled });
+  }
+
+  // Reset a sub-admin's password (admin only).
+  if (request.method === "POST" && urlPath === "/api/admin/sub-admins/reset-password") {
+    if (!requireAdmin(request, response)) return;
+    const body = await readBody(request);
+    const subAdminId = String(body.subAdminId || "");
+    const newPassword = String(body.password || "");
+    if (!subAdminId || newPassword.length < 6) {
+      return sendJson(response, 400, { error: "Choose a sub-admin and a password (min 6 characters)." });
+    }
+    const data = await readDatabase();
+    const subAdmin = (data.subAdmins || []).find((sa) => sa.id === subAdminId);
+    if (!subAdmin) return sendJson(response, 404, { error: "Sub-admin not found." });
+    subAdmin.passwordHash = hashPassword(newPassword);
+    // Kick existing sessions so the new password takes effect immediately.
+    (data.subAdminSessions || [])
+      .filter((s) => s.subAdminId === subAdminId)
+      .forEach((s) => subAdminSessions.delete(s.token));
+    data.subAdminSessions = (data.subAdminSessions || []).filter((s) => s.subAdminId !== subAdminId);
+    addActivity(data, "sub-admin-password-reset", `Reset password for sub-admin ${subAdmin.username}`, {
+      subAdminId,
+    });
+    await writeDatabase(data);
+    return sendJson(response, 200, { ok: true });
+  }
+
+  // Create a new player account.
+  // Admin or sub-admin can call this. The created player's parentAdminId is set
+  // to the caller's id (so sub-admin's players belong to them automatically).
+  if (request.method === "POST" && urlPath === "/api/admin/players") {
+    const op = requireOperator(request, response);
+    if (!op) return;
+    const body = await readBody(request);
+    const username = String(body.username || "").trim();
+    const password = String(body.password || "");
+    const email = String(body.email || "").trim().toLowerCase();
+    const startingPoints = Math.max(0, roundPoints(body.startingPoints));
+    if (!/^[a-zA-Z0-9_.-]{3,32}$/.test(username)) {
+      return sendJson(response, 400, {
+        error: "Player username must be 3–32 characters: letters, numbers, dot, dash, underscore.",
+      });
+    }
+    if (password.length < 6) {
+      return sendJson(response, 400, { error: "Player password must be at least 6 characters." });
+    }
+    const data = await readDatabase();
+    const usernameLower = username.toLowerCase();
+    if ((data.users || []).some((u) => String(u.username || "").toLowerCase() === usernameLower)) {
+      return sendJson(response, 409, { error: "A player with that username already exists." });
+    }
+    if (email && (data.users || []).some((u) => String(u.email || "").toLowerCase() === email)) {
+      return sendJson(response, 409, { error: "A player with that email already exists." });
+    }
+
+    // If a sub-admin is creating the player and they're giving starting points,
+    // deduct from their wallet immediately (same rule as adding points later).
+    let subAdminRecord = null;
+    if (op.role === "sub_admin") {
+      subAdminRecord = (data.subAdmins || []).find((sa) => sa.id === op.id);
+      if (!subAdminRecord) return sendJson(response, 401, { error: "Sub-admin session is invalid." });
+      if (subAdminRecord.disabled) return sendJson(response, 403, { error: "This sub-admin account is disabled." });
+      if (startingPoints > 0 && (subAdminRecord.wallet || 0) < startingPoints) {
+        return sendJson(response, 400, {
+          error: "Not enough points in your wallet. Contact the main admin to load more.",
+        });
+      }
+    }
+
+    const newUser = {
+      id: `user-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`,
+      username,
+      passwordHash: hashPassword(password),
+      email: email || null,
+      points: startingPoints,
+      isVip: false,
+      adminNote: "",
+      parentAdminId: op.id, // admin id is "admin"; sub-admin id is their sa-... id
+      createdAt: new Date().toISOString(),
+      createdBy: op.role === "admin" ? "admin" : `subAdmin:${op.id}`,
+      chatId: null,
+      referralCode: createReferralCode({ username, email }),
+      referredBy: null,
+      spinLastAt: null,
+      playerSessionTokens: [],
+    };
+    data.users = [newUser, ...(data.users || [])];
+
+    if (op.role === "sub_admin" && startingPoints > 0 && subAdminRecord) {
+      subAdminRecord.wallet = roundPoints((subAdminRecord.wallet || 0) - startingPoints);
+    }
+
+    // Log activity. Admins create with "admin-player-create"; sub-admins with "sub-admin-player-create".
+    addActivity(
+      data,
+      op.role === "admin" ? "admin-player-create" : "sub-admin-player-create",
+      `${op.role === "admin" ? "Admin" : `Sub-admin ${subAdminRecord?.username || op.id}`} created player ${username}`,
+      {
+        userId: newUser.id,
+        username,
+        parentAdminId: op.id,
+        startingPoints,
+      }
+    );
+    if (startingPoints > 0) {
+      const transaction = createPointTransaction(
+        newUser,
+        "add",
+        startingPoints,
+        op.role === "admin" ? "Initial points (admin)" : `Initial points (sub-admin ${subAdminRecord?.username || op.id})`,
+        newUser.createdAt
+      );
+      data.pointTransactions.unshift(transaction);
+    }
+    await writeDatabase(data);
+
+    return sendJson(response, 201, {
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        points: newUser.points,
+        parentAdminId: newUser.parentAdminId,
+        createdAt: newUser.createdAt,
+      },
+      subAdminWallet: subAdminRecord ? subAdminRecord.wallet : null,
+    });
+  }
+
+  // ====================================================================
+  // End sub-admin endpoints (Chunk C).
+  // ====================================================================
+
   if (request.method === "GET" && urlPath === "/api/admin/storage") {
     if (!requireAdmin(request, response)) return;
     const data = await readDatabase();
@@ -1829,9 +2183,14 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/users") {
-    if (!requireAdmin(request, response)) return;
+    // Admin sees every player. Sub-admin sees only the players they created.
+    const op = requireOperator(request, response);
+    if (!op) return;
     const data = await readDatabase();
-    return sendJson(response, 200, { users: data.users.map(sanitizeUser) });
+    const users = op.role === "admin"
+      ? data.users
+      : data.users.filter((u) => String(u.parentAdminId) === String(op.id));
+    return sendJson(response, 200, { users: users.map(sanitizeUser) });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/user-chat") {
@@ -2012,7 +2371,10 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/points") {
-    if (!requireAdmin(request, response)) return;
+    // Allow both admin and sub-admin. Sub-admins are scoped to their own players
+    // and their wallet is debited/credited automatically.
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const userId = String(body.userId || "");
     const action = String(body.action || "");
@@ -2025,19 +2387,47 @@ async function handleApi(request, response, urlPath, url) {
     const data = await readDatabase();
     const user = data.users.find((item) => item.id === userId);
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
+
+    // Ownership check: sub-admin can only touch their own players.
+    if (!operatorOwnsPlayer(op, user)) {
+      return sendJson(response, 403, { error: "You do not have access to this player." });
+    }
+
     user.points = Number.isFinite(Number(user.points)) ? Number(user.points) : 0;
 
     if (action === "redeem" && user.points < amount) {
       return sendJson(response, 400, { error: "Player does not have enough available points." });
     }
 
+    // Sub-admin wallet enforcement.
+    //   - "add": debit wallet by amount. Block if not enough points.
+    //   - "redeem": credit wallet by amount (the points come back to them).
+    // Admin has no wallet — admin can mint points freely.
+    let subAdminRecord = null;
+    if (op.role === "sub_admin") {
+      subAdminRecord = (data.subAdmins || []).find((sa) => sa.id === op.id);
+      if (!subAdminRecord) return sendJson(response, 401, { error: "Sub-admin session is invalid." });
+      if (subAdminRecord.disabled) return sendJson(response, 403, { error: "This sub-admin account is disabled." });
+      if (action === "add" && (subAdminRecord.wallet || 0) < amount) {
+        return sendJson(response, 400, {
+          error: "Not enough points in your wallet. Contact the main admin to load more.",
+        });
+      }
+    }
+
     user.points = action === "add" ? user.points + amount : user.points - amount;
+    if (op.role === "sub_admin" && subAdminRecord) {
+      subAdminRecord.wallet = roundPoints(
+        (subAdminRecord.wallet || 0) + (action === "add" ? -amount : amount)
+      );
+    }
+
     const transaction = {
       id: `points-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       userId: user.id,
       username: user.username,
       type: action,
-      source: "admin",
+      source: op.role === "admin" ? "admin" : `subAdmin:${op.id}`,
       points: amount,
       balanceAfter: user.points,
       note,
@@ -2047,14 +2437,23 @@ async function handleApi(request, response, urlPath, url) {
     addActivity(
       data,
       action === "add" ? "points-add" : "points-redeem",
-      `${action === "add" ? "Added" : "Redeemed"} ${amount} points for ${user.username}`,
-      { userId: user.id, username: user.username, points: amount, balanceAfter: user.points }
+      `${op.role === "admin" ? "Admin" : `Sub-admin ${subAdminRecord?.username || op.id}`} ${action === "add" ? "added" : "redeemed"} ${amount} points for ${user.username}`,
+      {
+        userId: user.id,
+        username: user.username,
+        points: amount,
+        balanceAfter: user.points,
+        operator: op.role,
+        operatorId: op.id,
+        subAdminWalletAfter: subAdminRecord ? subAdminRecord.wallet : null,
+      }
     );
     await writeDatabase(data);
     return sendJson(response, 200, {
       user: sanitizeUser(user),
       transaction: sanitizePointTransaction(transaction),
       transactions: data.pointTransactions.map(sanitizePointTransaction),
+      subAdminWallet: subAdminRecord ? subAdminRecord.wallet : null,
     });
   }
 
@@ -2119,7 +2518,8 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/reset-player-password") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const userId = String(body.userId || "");
     const password = String(body.password || "");
@@ -2130,34 +2530,45 @@ async function handleApi(request, response, urlPath, url) {
     const data = await readDatabase();
     const user = data.users.find((item) => item.id === userId);
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    if (!operatorOwnsPlayer(op, user)) {
+      return sendJson(response, 403, { error: "You do not have access to this player." });
+    }
 
     user.passwordHash = hashPassword(password);
-    addActivity(data, "password-reset", `Reset password for ${user.username}`, { userId: user.id, username: user.username });
+    addActivity(data, "password-reset", `Reset password for ${user.username}`, { userId: user.id, username: user.username, operator: op.role });
     await writeDatabase(data);
     return sendJson(response, 200, { user: sanitizeUser(user) });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/user-note") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const userId = String(body.userId || "");
     const note = String(body.note || "").trim().slice(0, 1000);
     const data = await readDatabase();
     const user = data.users.find((item) => item.id === userId);
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    if (!operatorOwnsPlayer(op, user)) {
+      return sendJson(response, 403, { error: "You do not have access to this player." });
+    }
     user.adminNote = note;
-    addActivity(data, "player-note", `Updated notes for ${user.username}`, { userId: user.id, username: user.username });
+    addActivity(data, "player-note", `Updated notes for ${user.username}`, { userId: user.id, username: user.username, operator: op.role });
     await writeDatabase(data);
     return sendJson(response, 200, { user: sanitizeUser(user) });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/player-vip") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const userId = String(body.userId || "");
     const data = await readDatabase();
     const user = data.users.find((item) => item.id === userId);
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    if (!operatorOwnsPlayer(op, user)) {
+      return sendJson(response, 403, { error: "You do not have access to this player." });
+    }
     user.isVip = Boolean(body.isVip);
     const chat = data.chats.find((item) => item.id === user.chatId || item.userId === user.id);
     if (chat) chat.name = user.username;
@@ -2171,11 +2582,15 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/player-game-history") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const userId = String(url.searchParams.get("userId") || "");
     const data = await readDatabase();
     const user = data.users.find((item) => item.id === userId);
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    if (!operatorOwnsPlayer(op, user)) {
+      return sendJson(response, 403, { error: "You do not have access to this player." });
+    }
     const historyById = new Map();
     [...(data.gameHistory || []), ...(data.slotPayout?.spins || [])].forEach((spin) => {
       if (spin?.userId !== user.id || !spin.id) return;
@@ -2196,11 +2611,15 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/player-points-history") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const userId = String(url.searchParams.get("userId") || "");
     const data = await readDatabase();
     const user = data.users.find((item) => item.id === userId);
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    if (!operatorOwnsPlayer(op, user)) {
+      return sendJson(response, 403, { error: "You do not have access to this player." });
+    }
     const transactions = (data.pointTransactions || [])
       .filter((transaction) => transaction.userId === user.id)
       .filter(isAdminPointTransaction)
@@ -2538,101 +2957,27 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/player/signup") {
-    const body = await readBody(request);
-    const username = String(body.username || "").trim();
-    const phone = String(body.phone || "").trim();
-    const parsedDateOfBirth = parseDateOfBirth(body.dateOfBirth);
-    const email = String(body.email || "").trim().toLowerCase();
-    const password = String(body.password || "");
-    const referralCode = normalizeReferralCode(body.referralCode);
-
-    if (!username || !phone || !parsedDateOfBirth || !email || !password) {
-      return sendJson(response, 400, { error: "Username, phone number, date of birth, email, and password are required." });
-    }
-    if (!isAtLeast18(parsedDateOfBirth.value)) {
-      return sendJson(response, 403, { error: "You must be 18 or older to create a South Diamond account." });
-    }
-    if (password.length < 6) {
-      return sendJson(response, 400, { error: "Password must be at least 6 characters." });
-    }
-
-    const data = await readDatabase();
-    if (data.users.some((user) => user.email === email)) {
-      return sendJson(response, 409, { error: "An account with this email already exists." });
-    }
-
-    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
-    const referrer = referralCode
-      ? data.users.find((item) => normalizeReferralCode(item.referralCode) === referralCode && item.email !== email)
-      : null;
-    const user = {
-      id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      username,
-      phone,
-      email,
-      dateOfBirth: parsedDateOfBirth.value,
-      points: signupBonusPoints,
-      isVip: false,
-      passwordHash: hashPassword(password),
-      createdAt: new Date().toISOString(),
-      lastLoginAt: new Date().toISOString(),
-      lastActiveAt: new Date().toISOString(),
-      playerSessionTokens: [token],
-      chatId: null,
-      referredBy: referrer?.id || null,
-    };
-    user.referralCode = createReferralCode(user);
-    data.users.unshift(user);
-    addActivity(data, "signup", `New player registered: ${user.username}`, { userId: user.id, username: user.username, email: user.email });
-    const signupBonusTransaction = createPointTransaction(user, "add", signupBonusPoints, "Signup bonus - free starter points", user.createdAt);
-    data.pointTransactions.unshift(signupBonusTransaction);
-    addActivity(data, "signup-bonus", `Added ${signupBonusPoints} signup bonus points to ${user.username}`, {
-      userId: user.id,
-      username: user.username,
-      points: signupBonusPoints,
+    // Public self-signup is removed. New players are created by admin or sub-admin
+    // via /api/admin/players. Returning 410 Gone so any old client gets a clear message.
+    return sendJson(response, 410, {
+      error: "Public signup is no longer available. Contact South Diamond to get a login.",
     });
-    if (referrer) {
-      referrer.points = (Number(referrer.points) || 0) + referralBonusPoints;
-      const referralTransaction = {
-        id: `pt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        userId: referrer.id,
-        username: referrer.username,
-        type: "add",
-        points: referralBonusPoints,
-        balanceAfter: referrer.points,
-        note: `Referral bonus for inviting ${user.username}`,
-        createdAt: new Date().toISOString(),
-      };
-      data.pointTransactions.unshift(referralTransaction);
-      addActivity(data, "referral-bonus", `Added ${referralBonusPoints} referral points to ${referrer.username}`, {
-        userId: referrer.id,
-        username: referrer.username,
-        referredUserId: user.id,
-        referredUsername: user.username,
-        points: referralBonusPoints,
-      });
-    }
-    await writeDatabase(data);
-
-    playerSessions.set(token, user.id);
-    response.writeHead(200, {
-      "Content-Type": "application/json; charset=utf-8",
-      "Set-Cookie": `sd_player_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${playerSessionMaxAge}`,
-      "Cache-Control": "no-store",
-    });
-    response.end(JSON.stringify({ user: sanitizeUser(user) }));
-    return;
   }
 
   if (request.method === "POST" && urlPath === "/api/player/login") {
     const body = await readBody(request);
-    const email = String(body.email || "").trim().toLowerCase();
+    // Allow login via email OR username so admin-created accounts (which may not have email) work.
+    const identifier = String(body.email || body.username || "").trim().toLowerCase();
     const password = String(body.password || "");
     const data = await readDatabase();
-    const user = data.users.find((item) => item.email === email);
+    const user = data.users.find(
+      (item) =>
+        (item.email && String(item.email).toLowerCase() === identifier) ||
+        (item.username && String(item.username).toLowerCase() === identifier)
+    );
 
     if (!user || !verifyPassword(password, user.passwordHash)) {
-      return sendJson(response, 401, { error: "Wrong email or password." });
+      return sendJson(response, 401, { error: "Wrong username/email or password." });
     }
 
     user.lastLoginAt = new Date().toISOString();
@@ -2641,12 +2986,45 @@ async function handleApi(request, response, urlPath, url) {
     const token = `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
     user.playerSessionTokens = Array.isArray(user.playerSessionTokens) ? user.playerSessionTokens : [];
     user.playerSessionTokens = [...new Set([...user.playerSessionTokens, token])].slice(-8);
+
+    // Stitch guest chat: if the caller had been chatting as a guest, merge those
+    // messages into the player's chat thread so the conversation continues seamlessly.
+    const cookies = parseCookies(request);
+    const guestId = cookies.sd_guest_id;
+    if (guestId) {
+      const guestChat = (data.guestChats || []).find((c) => c.guestId === guestId);
+      if (guestChat && guestChat.messages?.length) {
+        const playerChat = ensurePlayerChatThread(data, user);
+        // Prepend the guest messages so the chronological order is preserved.
+        playerChat.messages = [
+          ...guestChat.messages.map((m) => ({ ...m, fromGuest: true })),
+          ...(playerChat.messages || []),
+        ];
+        playerChat.unreadForAdmin =
+          (Number(playerChat.unreadForAdmin) || 0) + (Number(guestChat.unreadForAdmin) || 0);
+        moveChatToTop(data.chats, playerChat.id);
+        // Remove the guest thread now that it has been stitched.
+        data.guestChats = (data.guestChats || []).filter((c) => c.guestId !== guestId);
+        addActivity(data, "guest-chat-stitch", `Merged guest chat into ${user.username}'s thread`, {
+          userId: user.id,
+          username: user.username,
+          guestId,
+          messageCount: guestChat.messages.length,
+        });
+      }
+    }
+
     await writeDatabase(data);
 
     playerSessions.set(token, user.id);
+    const cookieParts = [
+      `sd_player_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${playerSessionMaxAge}`,
+    ];
+    // Clear the guest cookie after stitching so subsequent requests use the player session.
+    if (guestId) cookieParts.push("sd_guest_id=; SameSite=Lax; Path=/; Max-Age=0");
     response.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8",
-      "Set-Cookie": `sd_player_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${playerSessionMaxAge}`,
+      "Set-Cookie": cookieParts,
       "Cache-Control": "no-store",
     });
     response.end(JSON.stringify({ user: sanitizeUser(user) }));
@@ -2711,20 +3089,11 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/player/reset-password") {
-    const body = await readBody(request);
-    const email = String(body.email || "").trim().toLowerCase();
-    const password = String(body.password || "");
-    if (!email || password.length < 6) {
-      return sendJson(response, 400, { error: "Enter your email and a new password with at least 6 characters." });
-    }
-
-    const data = await readDatabase();
-    const user = data.users.find((item) => item.email === email);
-    if (!user) return sendJson(response, 404, { error: "No account was found for that email." });
-
-    user.passwordHash = hashPassword(password);
-    await writeDatabase(data);
-    return sendJson(response, 200, { ok: true });
+    // Public self-serve password reset is removed. Admins and sub-admins reset their
+    // own players' passwords via /api/admin/reset-player-password instead.
+    return sendJson(response, 410, {
+      error: "Self-serve password reset is no longer available. Contact your operator.",
+    });
   }
 
   if (request.method === "POST" && urlPath === "/api/player/profile") {
@@ -2784,17 +3153,38 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/chats") {
-    if (!requireAdmin(request, response)) return;
-    return sendJson(response, 200, { chats: (await readDatabase()).chats });
+    // Admin sees: all player chats + guest chats. Sub-admin sees: only chats of their players.
+    const op = requireOperator(request, response);
+    if (!op) return;
+    const data = await readDatabase();
+    if (op.role === "admin") {
+      const guestChats = (data.guestChats || []).map((c) => ({ ...c, isGuest: true }));
+      return sendJson(response, 200, { chats: [...guestChats, ...data.chats] });
+    }
+    const scoped = (data.chats || []).filter((chat) => operatorOwnsChat(op, chat, data));
+    return sendJson(response, 200, { chats: scoped });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/chats/read") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const threadId = String(body.threadId || "");
     const data = await readDatabase();
-    const chat = data.chats.find((item) => item.id === threadId);
+    // Try player chats first, then guest chats (admin only).
+    let chat = data.chats.find((item) => item.id === threadId);
+    let isGuest = false;
+    if (!chat) {
+      chat = (data.guestChats || []).find((item) => item.id === threadId);
+      isGuest = true;
+    }
     if (!chat) return sendJson(response, 404, { error: "Chat was not found." });
+    if (isGuest && op.role !== "admin") {
+      return sendJson(response, 403, { error: "You do not have access to this chat." });
+    }
+    if (!isGuest && !operatorOwnsChat(op, chat, data)) {
+      return sendJson(response, 403, { error: "You do not have access to this chat." });
+    }
     chat.unreadForAdmin = 0;
     chat.lastReadByAdminAt = new Date().toISOString();
     await writeDatabase(data);
@@ -2802,7 +3192,8 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/payment-status") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const threadId = String(body.threadId || "");
     const messageId = String(body.messageId || "");
@@ -2813,12 +3204,80 @@ async function handleApi(request, response, urlPath, url) {
     const data = await readDatabase();
     const chat = data.chats.find((item) => item.id === threadId);
     if (!chat) return sendJson(response, 404, { error: "Chat was not found." });
+    if (!operatorOwnsChat(op, chat, data)) {
+      return sendJson(response, 403, { error: "You do not have access to this chat." });
+    }
     const message = (chat.messages || []).find((item) => item.id === messageId && item.imageUrl);
     if (!message) return sendJson(response, 404, { error: "Payment screenshot was not found." });
     message.paymentStatus = status;
-    addActivity(data, "payment-status", `Marked ${chat.name}'s payment ${status}`, { threadId, messageId, status, username: chat.name });
+    addActivity(data, "payment-status", `Marked ${chat.name}'s payment ${status}`, { threadId, messageId, status, username: chat.name, operator: op.role });
     await writeDatabase(data);
     return sendJson(response, 200, { chat });
+  }
+
+  // GET /api/chats/guest-message — returns the current guest's chat thread (if any).
+  // Used by the front-end to poll for operator replies when the user isn't logged in.
+  if (request.method === "GET" && urlPath === "/api/chats/guest-message") {
+    const cookies = parseCookies(request);
+    const guestId = cookies.sd_guest_id;
+    if (!guestId) return sendJson(response, 200, { chat: null });
+    const data = await readDatabase();
+    const chat = (data.guestChats || []).find((c) => c.guestId === guestId);
+    return sendJson(response, 200, { chat: chat || null });
+  }
+
+  // Guest chat — anyone (logged in or not) can send a message. Identified by
+  // sd_guest_id cookie. These threads land on the MAIN ADMIN's desk only.
+  // When a guest later logs in as a player, /api/player/login stitches the messages
+  // into their player thread (see player login below).
+  if (request.method === "POST" && urlPath === "/api/chats/guest-message") {
+    const body = await readBody(request);
+    const text = String(body.text || "").trim().slice(0, 2000);
+    const name = String(body.name || "").trim().slice(0, 60) || "Guest";
+    if (!text) return sendJson(response, 400, { error: "Message is required." });
+
+    // Get or create a stable guest id. Comes from cookie if present.
+    const cookies = parseCookies(request);
+    let guestId = cookies.sd_guest_id;
+    let setCookie = null;
+    if (!guestId || !/^[a-zA-Z0-9-]{6,80}$/.test(guestId)) {
+      guestId = `g-${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
+      setCookie = `sd_guest_id=${guestId}; SameSite=Lax; Path=/; Max-Age=${60 * 60 * 24 * 30}`;
+    }
+
+    const data = await readDatabase();
+    let chat = (data.guestChats || []).find((c) => c.guestId === guestId);
+    if (!chat) {
+      chat = {
+        id: `guest-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`,
+        guestId,
+        name,
+        unreadForAdmin: 0,
+        lastReadByAdminAt: null,
+        createdAt: new Date().toISOString(),
+        messages: [],
+      };
+      data.guestChats = [chat, ...(data.guestChats || [])];
+    } else if (name && name !== "Guest" && chat.name === "Guest") {
+      chat.name = name;
+    }
+    chat.messages.push({
+      id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      author: "player",
+      text,
+      createdAt: new Date().toISOString(),
+    });
+    chat.unreadForAdmin = (Number(chat.unreadForAdmin) || 0) + 1;
+    await writeDatabase(data);
+
+    const headers = {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+    };
+    if (setCookie) headers["Set-Cookie"] = setCookie;
+    response.writeHead(200, headers);
+    response.end(JSON.stringify({ chat }));
+    return;
   }
 
   if (request.method === "POST" && urlPath === "/api/chats/player-message") {
@@ -2888,25 +3347,39 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/chats/operator-message") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const text = String(body.text || "").trim();
     if (!text || !body.threadId) return sendJson(response, 400, { error: "Thread and message are required." });
 
     const data = await readDatabase();
-    const chat = data.chats.find((item) => item.id === body.threadId);
+    // Try player chats first, then guest chats (admin only).
+    let chat = data.chats.find((item) => item.id === body.threadId);
+    let isGuest = false;
+    if (!chat) {
+      chat = (data.guestChats || []).find((item) => item.id === body.threadId);
+      isGuest = true;
+    }
     if (!chat) return sendJson(response, 404, { error: "Chat was not found." });
+    if (isGuest && op.role !== "admin") {
+      return sendJson(response, 403, { error: "You do not have access to this chat." });
+    }
+    if (!isGuest && !operatorOwnsChat(op, chat, data)) {
+      return sendJson(response, 403, { error: "You do not have access to this chat." });
+    }
 
     chat.messages.push({ id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, author: "operator", text, createdAt: new Date().toISOString() });
     chat.unreadForAdmin = 0;
     chat.lastReadByAdminAt = new Date().toISOString();
-    addActivity(data, "chat-reply", `Replied to ${chat.name}`, { threadId: chat.id, username: chat.name });
+    addActivity(data, "chat-reply", `${op.role === "admin" ? "Admin" : "Sub-admin"} replied to ${chat.name}`, { threadId: chat.id, username: chat.name, operator: op.role });
     await writeDatabase(data);
     return sendJson(response, 200, { chat, chats: data.chats });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/broadcast") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const text = String(body.message || "").trim().slice(0, 1000);
     const userIds = Array.isArray(body.userIds) ? [...new Set(body.userIds.map((id) => String(id)))] : [];
@@ -2914,7 +3387,10 @@ async function handleApi(request, response, urlPath, url) {
     if (!userIds.length) return sendJson(response, 400, { error: "Choose at least one player." });
 
     const data = await readDatabase();
-    const selectedUsers = data.users.filter((user) => userIds.includes(user.id));
+    // Sub-admin may only broadcast to their own players.
+    const selectedUsers = data.users.filter(
+      (user) => userIds.includes(user.id) && operatorOwnsPlayer(op, user)
+    );
     if (!selectedUsers.length) return sendJson(response, 404, { error: "No matching players were found." });
 
     const createdAt = new Date().toISOString();
@@ -2939,17 +3415,31 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "DELETE" && urlPath === "/api/chats") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const threadId = String(body.threadId || "");
     if (!threadId) return sendJson(response, 400, { error: "Choose a chat to delete." });
 
     const data = await readDatabase();
-    data.chats = data.chats.filter((chat) => chat.id !== threadId);
-    data.users = data.users.map((user) => (user.chatId === threadId ? { ...user, chatId: null } : user));
-    addActivity(data, "chat-delete", "Deleted a selected chat", { threadId });
+    const chat = data.chats.find((c) => c.id === threadId);
+    const guestChat = chat ? null : (data.guestChats || []).find((c) => c.id === threadId);
+    if (!chat && !guestChat) return sendJson(response, 404, { error: "Chat was not found." });
+    if (chat && !operatorOwnsChat(op, chat, data)) {
+      return sendJson(response, 403, { error: "You do not have access to this chat." });
+    }
+    if (guestChat && op.role !== "admin") {
+      return sendJson(response, 403, { error: "Only the main admin can delete guest chats." });
+    }
+    if (chat) {
+      data.chats = data.chats.filter((c) => c.id !== threadId);
+      data.users = data.users.map((user) => (user.chatId === threadId ? { ...user, chatId: null } : user));
+    } else if (guestChat) {
+      data.guestChats = (data.guestChats || []).filter((c) => c.id !== threadId);
+    }
+    addActivity(data, "chat-delete", "Deleted a selected chat", { threadId, operator: op.role });
     await writeDatabase(data);
-    return sendJson(response, 200, { chats: data.chats });
+    return sendJson(response, 200, { chats: data.chats, guestChats: data.guestChats });
   }
 
   return sendJson(response, 404, { error: "API route was not found." });
@@ -3012,38 +3502,78 @@ async function handleRequest(request, response) {
       return;
     }
 
-    // /admin.html and /login.html should never be served directly; the user must come in
-    // via /admin9493, /admin, or /login9493. /admin-messages.html same idea.
-    if (["/admin.html", "/admin-messages.html", "/login.html"].includes(url.pathname)) {
+    // Block direct access to the raw HTML files; the user must come in via the routed URLs.
+    if (["/admin.html", "/admin-messages.html", "/login.html", "/sub-admin-login.html"].includes(url.pathname)) {
       response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
       response.end("Not found");
       return;
     }
 
-    // /admin alias: redirect logged-in admins/sub-admins to /admin9493 (the actual panel),
-    // anyone else to the shared login page.
+    // /admin = sub-admin's URL.
+    //   - logged-in sub-admin: serve the panel HTML (client JS will role-scope it)
+    //   - logged-in main admin: send them to their own URL (/admin9493)
+    //   - not logged in: serve the sub-admin login page
     if (adminAliasPaths.includes(url.pathname)) {
-      if (isAdminRequest(request) || isSubAdminRequest(request)) {
-        response.writeHead(302, { Location: adminPath });
-      } else {
-        response.writeHead(302, { Location: adminLoginPath });
+      if (isSubAdminRequest(request)) {
+        const panelPath = path.join(root, "admin.html");
+        if (fs.existsSync(panelPath)) {
+          serveFile(response, panelPath);
+          return;
+        }
       }
-      response.end();
+      if (isAdminRequest(request)) {
+        response.writeHead(302, { Location: adminPath });
+        response.end();
+        return;
+      }
+      const subLoginPath = path.join(root, "sub-admin-login.html");
+      if (fs.existsSync(subLoginPath)) {
+        serveFile(response, subLoginPath);
+        return;
+      }
+      response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end("Not found");
       return;
     }
 
-    // /admin9493 and /messages9493 require an operator (admin OR sub-admin) login.
-    if ((url.pathname === adminPath || url.pathname === adminMessagesPath) && !isAdminRequest(request) && !isSubAdminRequest(request)) {
+    // /admin9493 = main admin's URL.
+    //   - logged-in main admin: fall through to serve admin.html (default routing handles it)
+    //   - logged-in sub-admin: send them to /admin (their URL); they should not see admin9493
+    //   - not logged in: send to /login9493 for the main admin login form
+    if (url.pathname === adminPath) {
+      if (isSubAdminRequest(request) && !isAdminRequest(request)) {
+        response.writeHead(302, { Location: "/admin" });
+        response.end();
+        return;
+      }
+      if (!isAdminRequest(request)) {
+        response.writeHead(302, { Location: adminLoginPath });
+        response.end();
+        return;
+      }
+    }
+
+    // /messages9493 stays admin-only (the dedicated admin chat desk).
+    if (url.pathname === adminMessagesPath && !isAdminRequest(request)) {
       response.writeHead(302, { Location: adminLoginPath });
       response.end();
       return;
     }
 
-    // If already logged in (as either admin or sub-admin) and visiting the login page, bounce to the panel.
-    if (url.pathname === adminLoginPath && (isAdminRequest(request) || isSubAdminRequest(request))) {
-      response.writeHead(302, { Location: adminPath });
-      response.end();
-      return;
+    // /login9493 = main admin login form.
+    //   - logged-in main admin: bounce to /admin9493
+    //   - logged-in sub-admin: bounce to /admin (their URL); they should never use the admin login
+    if (url.pathname === adminLoginPath) {
+      if (isAdminRequest(request)) {
+        response.writeHead(302, { Location: adminPath });
+        response.end();
+        return;
+      }
+      if (isSubAdminRequest(request)) {
+        response.writeHead(302, { Location: "/admin" });
+        response.end();
+        return;
+      }
     }
 
     const filePath = publicFilePath(url.pathname);

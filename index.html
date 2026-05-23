@@ -30,9 +30,9 @@
           <span>Get Free</span>
           <strong>5 Points</strong>
           <span>After</span>
-          <strong>Signup!</strong>
+          <strong>Login!</strong>
         </p>
-        <a href="#signup">Sign Up</a>
+        <a href="#login">Log In</a>
       </div>
       <div class="promo-track" aria-hidden="true">
         <span class="promo-icon">SD</span>
@@ -40,9 +40,9 @@
           <span>Get Free</span>
           <strong>5 Points</strong>
           <span>After</span>
-          <strong>Signup!</strong>
+          <strong>Login!</strong>
         </p>
-        <a href="#signup">Sign Up</a>
+        <a href="#login">Log In</a>
       </div>
     </aside>
 
@@ -51,7 +51,7 @@
         <span class="brand-mark"></span>
         <span>South Diamond</span>
       </a>
-      <a class="header-referral-pill" href="#signup" data-referral-nav>Referral</a>
+      <a class="header-referral-pill" href="#login" data-referral-nav>Referral</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
         <span></span>
         <span></span>
@@ -62,7 +62,7 @@
         <a href="#games">Games</a>
         <a href="#bonus">Bonus</a>
         <a href="#how">How It Works</a>
-        <a href="#signup" data-referral-nav>Referral</a>
+        <a href="#login" data-referral-nav>Referral</a>
         <a class="nav-payment-button is-hidden" href="#bonus" data-player-only>Payment</a>
         <a class="nav-points-button is-hidden" href="#profile" data-player-only data-profile-open aria-label="Open profile and view available points">
           <span>Available Points</span>
@@ -100,25 +100,25 @@
           <p class="eyebrow">Online casino-style games, rewards, and live support</p>
           <h1>South Diamond</h1>
           <p class="hero-copy">
-            Sign up at the top, enter the lobby, choose your favorite online game room, and message support when you need help getting started.
+            Log in with your South Diamond account, enter the lobby, choose your favorite online game room, and message support when you need help getting started.
           </p>
           <div class="opening-game-showcase" aria-label="Featured online casino-style games">
-            <a class="opening-game-card opening-game-card-main" href="#signup" data-lobby-card>
+            <a class="opening-game-card opening-game-card-main" href="#login" data-lobby-card>
               <span>Slots</span>
               <strong>777</strong>
               <small>Daily bonus rooms</small>
             </a>
-            <a class="opening-game-card" href="#signup" data-lobby-card>
+            <a class="opening-game-card" href="#login" data-lobby-card>
               <span>Fish Tables</span>
               <strong>Juwa</strong>
               <small>Fast arcade action</small>
             </a>
-            <a class="opening-game-card" href="#signup" data-lobby-card>
+            <a class="opening-game-card" href="#login" data-lobby-card>
               <span>Game Rooms</span>
               <strong>Vault</strong>
               <small>Game Vault links</small>
             </a>
-            <a class="opening-game-card" href="#signup" data-lobby-card>
+            <a class="opening-game-card" href="#login" data-lobby-card>
               <span>VIP Lobby</span>
               <strong>Orion</strong>
               <small>Support chat ready</small>
@@ -131,7 +131,7 @@
           </div>
           <p class="fine-print">For entertainment. No purchase necessary. 18+ only.</p>
         </div>
-        <section class="player-auth" id="signup" data-player-auth aria-label="Player account">
+        <section class="player-auth" id="login" data-player-auth aria-label="Player account">
           <div class="login-card player-auth-card">
             <a class="brand auth-logo" href="#top" aria-label="South Diamond home">
               <span class="brand-mark"></span>
@@ -143,40 +143,16 @@
             <p>Log in to unlock games, payment links, points, and support chat.</p>
             </div>
             <form class="login-form auth-panel is-active" data-player-login>
-              <label for="login-email">Email</label>
-              <input id="login-email" name="email" type="email" autocomplete="email" required />
+              <label for="login-email">Username or email</label>
+              <input id="login-email" name="email" type="text" autocomplete="username" required />
               <label for="login-password-player">Password</label>
               <input id="login-password-player" name="password" type="password" autocomplete="current-password" required />
               <button class="button primary" type="submit">Log In</button>
             </form>
-            <div class="auth-tabs auth-secondary-actions" role="tablist" aria-label="Player account forms">
-              <button type="button" data-auth-tab="signup">Create Account</button>
-              <button class="is-active" type="button" data-auth-tab="login">Back to Login</button>
-              <button type="button" data-auth-tab="reset">Forgot Password</button>
-            </div>
-            <form class="login-form auth-panel" data-player-signup>
-              <label for="signup-username">Username</label>
-              <input id="signup-username" name="username" type="text" autocomplete="username" required />
-              <label for="signup-phone">Phone number</label>
-              <input id="signup-phone" name="phone" type="tel" autocomplete="tel" required />
-              <label for="signup-date-of-birth">Date of birth</label>
-              <input id="signup-date-of-birth" name="dateOfBirth" type="date" required />
-              <label for="signup-email">Email</label>
-              <input id="signup-email" name="email" type="email" autocomplete="email" required />
-              <label for="signup-password">Password</label>
-              <input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
-              <input name="referralCode" type="hidden" data-referral-code-input />
-              <p class="referral-signup-note is-hidden" data-referral-signup-note></p>
-              <button class="button primary" type="submit">Create Account</button>
-            </form>
-            <form class="login-form auth-panel" data-player-reset>
-              <label for="reset-email">Email</label>
-              <input id="reset-email" name="email" type="email" autocomplete="email" required />
-              <label for="reset-password">New password</label>
-              <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
-              <button class="button primary" type="submit">Reset Password</button>
-            </form>
             <p class="login-error" data-player-auth-message role="alert"></p>
+            <p class="auth-help" style="margin-top:1rem;font-size:0.85rem;color:rgba(255,255,255,0.6);text-align:center;">
+              Don't have a login yet? Contact South Diamond support &mdash; new accounts are created by our team.
+            </p>
           </div>
         </section>
       </section>
@@ -207,7 +183,7 @@
             South Diamond brings your favorite online gaming apps together in one clean lobby: Juwa, Game Vault, Orion Stars, Golden Dragon, Ultra Panda, Fire Kirin, Panda Master, and more.
           </p>
           <div class="hero-actions">
-            <a class="button primary" href="#signup">Play Now</a>
+            <a class="button primary" href="#login">Play Now</a>
             <a class="button secondary" href="#games">Explore Games</a>
             <button class="button secondary" type="button" data-spin-trigger>Spin Bonus</button>
           </div>
@@ -358,27 +334,27 @@
               <span>Open the Golden Dragon mobile portal.</span>
               <a class="game-link" href="http://www.playgd.mobi" target="_blank" rel="noopener">Open Link</a>
             </article>
-            <a class="portal-game-tile fish dragon-conqueror" href="#signup" data-lobby-card>
+            <a class="portal-game-tile fish dragon-conqueror" href="#login" data-lobby-card>
               <span>Fish</span>
               <strong>Dragon Conqueror</strong>
               <small>Message support to enter</small>
             </a>
-            <a class="portal-game-tile fish ocean-monster alt" href="#signup" data-lobby-card>
+            <a class="portal-game-tile fish ocean-monster alt" href="#login" data-lobby-card>
               <span>Fish</span>
               <strong>Ocean Monster</strong>
               <small>Fast fish-table action</small>
             </a>
-            <a class="portal-game-tile sevens diamond-777" href="#signup" data-lobby-card>
+            <a class="portal-game-tile sevens diamond-777" href="#login" data-lobby-card>
               <span>777</span>
               <strong>Diamond 777</strong>
               <small>Classic slot energy</small>
             </a>
-            <a class="portal-game-tile sevens lucky-777 alt" href="#signup" data-lobby-card>
+            <a class="portal-game-tile sevens lucky-777 alt" href="#login" data-lobby-card>
               <span>777</span>
               <strong>Lucky 777</strong>
               <small>Bright bonus rounds</small>
             </a>
-            <a class="portal-game-tile sevens glow" href="#signup" data-lobby-card>
+            <a class="portal-game-tile sevens glow" href="#login" data-lobby-card>
               <span>777</span>
               <strong>Royal Spin</strong>
               <small>Jackpot-style play</small>
@@ -524,7 +500,7 @@
           </div>
           <div class="bonus-card">
             <span>Starter Pack</span>
-            <a class="sticky-offer-banner" href="#signup" aria-label="Claim South Diamond offer">
+            <a class="sticky-offer-banner" href="#login" aria-label="Claim South Diamond offer">
               <span class="offer-badge-top">Special</span>
               <span class="offer-badge-offer">Offer</span>
               <span class="offer-badge-coins"><strong>50</strong> Coins</span>
@@ -547,7 +523,7 @@
               <div class="payment-choice"><strong>$50</strong><a href="https://buy.stripe.com/14A14n0R0cBqgnE7pp63K0f" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="50">Tierlock</button></div>
               <div class="payment-choice"><strong>$100</strong><a href="https://buy.stripe.com/9B6bJ12Z8ati7R8eRR63K0n" target="_blank" rel="noopener">Stripe</a><button type="button" data-tierlock-amount="100">Tierlock</button></div>
             </div>
-            <p class="locked-note" data-guest-only>Sign up or log in at the top to unlock payment and screenshot upload.</p>
+            <p class="locked-note" data-guest-only>Log in at the top to unlock payment and screenshot upload. Need an account? Contact South Diamond support.</p>
           </div>
         </div>
       </section>
@@ -560,8 +536,8 @@
           </div>
           <ol class="steps">
             <li>
-              <span>Create Account</span>
-              <p>Set up your profile and confirm you are eligible to play.</p>
+              <span>Get Login</span>
+              <p>Contact South Diamond support or an operator to create your player login.</p>
             </li>
             <li>
               <span>Collect Coins</span>
@@ -639,7 +615,7 @@
             <h2>Your seat is waiting.</h2>
             <p>Launch the lobby, claim your starter pack, and make your next game night feel a little more golden.</p>
           </div>
-          <a class="button primary" href="#signup">Enter Lobby</a>
+          <a class="button primary" href="#login">Enter Lobby</a>
         </div>
       </section>
     </main>

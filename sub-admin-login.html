@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>South Diamond — Sub-admin Login</title>
+    <meta name="description" content="South Diamond sub-admin login." />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Distinct visual treatment for sub-admin login so it's obvious which page you're on. */
+      .sub-admin-body {
+        background: radial-gradient(ellipse at top, #0a3d2c 0%, #051712 60%, #000 100%);
+        min-height: 100vh;
+      }
+      .sub-admin-card {
+        background: linear-gradient(180deg, rgba(20, 60, 45, 0.92), rgba(8, 24, 18, 0.96));
+        border: 1px solid rgba(80, 200, 150, 0.25);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(120, 220, 170, 0.15);
+        color: #e6fff4;
+      }
+      .sub-admin-card .brand { color: #7be4b0; }
+      .sub-admin-card .brand-mark {
+        background: linear-gradient(135deg, #7be4b0, #2d8a64);
+      }
+      .sub-admin-card .section-kicker { color: #7be4b0; letter-spacing: 0.18em; }
+      .sub-admin-card h1 { color: #ffffff; }
+      .sub-admin-card label { color: #b7e6cf; }
+      .sub-admin-card input {
+        background: rgba(8, 24, 18, 0.85);
+        border: 1px solid rgba(120, 220, 170, 0.3);
+        color: #ffffff;
+      }
+      .sub-admin-card input:focus {
+        border-color: #7be4b0;
+        outline: 2px solid rgba(123, 228, 176, 0.35);
+      }
+      .sub-admin-card .button.primary {
+        background: linear-gradient(135deg, #2d8a64, #15523c);
+        color: #ffffff;
+        border: 1px solid rgba(123, 228, 176, 0.6);
+      }
+      .sub-admin-card .button.primary:hover {
+        background: linear-gradient(135deg, #379b73, #1c6549);
+      }
+      .sub-admin-card .login-error { color: #ffb4b4; }
+      .sub-admin-card .footer-note {
+        margin-top: 1.5rem;
+        font-size: 0.78rem;
+        color: rgba(183, 230, 207, 0.7);
+        text-align: center;
+      }
+      .sub-admin-card .footer-note a {
+        color: #7be4b0;
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="admin-body sub-admin-body">
+    <main class="login-main">
+      <section class="login-card sub-admin-card">
+        <a class="brand" href="/admin" aria-label="South Diamond sub-admin login">
+          <span class="brand-mark"></span>
+          <span>South Diamond</span>
+        </a>
+        <div>
+          <p class="section-kicker">Sub-admin login</p>
+          <h1>Operator desk</h1>
+          <p>Sign in to manage your players and points.</p>
+        </div>
+        <form class="login-form" data-sub-admin-login-form>
+          <label for="sub-admin-username">Sub-admin username</label>
+          <input id="sub-admin-username" data-sub-admin-username type="text" autocomplete="username" required />
+          <label for="sub-admin-password">Password</label>
+          <input id="sub-admin-password" data-sub-admin-password type="password" autocomplete="current-password" required />
+          <button class="button primary" type="submit" data-sub-admin-submit>Log In</button>
+          <p class="login-error" data-sub-admin-error role="alert"></p>
+        </form>
+        <p class="footer-note">
+          Main admin? Use <a href="/admin9493">the admin login</a>.<br>
+          Need a sub-admin account? Contact your main admin.
+        </p>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>

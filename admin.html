@@ -37,6 +37,9 @@
         <span class="admin-nav-label">Content</span>
         <button type="button" data-admin-panel-button="broadcast"><span>BC</span>Broadcast</button>
         <button type="button" data-admin-panel-button="agents"><span>AL</span>Agent Links</button>
+        <span class="admin-nav-label" data-admin-only>Operators</span>
+        <button type="button" data-admin-panel-button="subadmins" data-admin-only><span>SA</span>Sub-Admins</button>
+        <button type="button" data-admin-panel-button="createplayer"><span>NP</span>New Player</button>
       </nav>
     </header>
 
@@ -54,7 +57,7 @@
             <p class="section-kicker">Operator desk</p>
             <h1>South Diamond dashboard.</h1>
             <p class="admin-copy">
-              Track player signups, active accounts, support chats, payment screenshots, and game-room agent links from one private portal.
+              Track player registrations, active accounts, support chats, payment screenshots, and game-room agent links from one private portal.
             </p>
           </div>
           <section class="admin-control-center" aria-label="Admin control center">
@@ -333,6 +336,64 @@
                     <a href="https://pos.goldendragoncity.com/pos/2264799" target="_blank" rel="noopener">GD</a>
                   </div>
                 </section>
+              </section>
+
+              <!-- Sub-admin management (main admin only) -->
+              <section class="admin-control-panel" data-admin-panel="subadmins" data-admin-only>
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>Sub-Admins</strong>
+                  </div>
+                  <small>Create and fund operator accounts</small>
+                </div>
+                <div style="padding:1rem;">
+                  <form data-create-subadmin-form style="display:grid;gap:0.6rem;max-width:520px;">
+                    <h3 style="margin:0 0 0.25rem;font-size:1rem;">Create sub-admin</h3>
+                    <input data-sa-username name="username" placeholder="Username (e.g. agent_dan)" required minlength="3" maxlength="32" />
+                    <input data-sa-password name="password" type="password" placeholder="Password (min 6 chars)" required minlength="6" />
+                    <input data-sa-wallet name="startingWallet" type="number" min="0" step="1" placeholder="Starting wallet points (optional)" />
+                    <button class="button primary" type="submit">Create sub-admin</button>
+                    <p class="login-error" data-sa-create-status role="alert" style="min-height:1.2em;"></p>
+                  </form>
+                  <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;">Existing sub-admins</h3>
+                  <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                    <thead>
+                      <tr style="text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <th style="padding:0.5rem 0.4rem;">Username</th>
+                        <th style="padding:0.5rem 0.4rem;text-align:right;">Wallet</th>
+                        <th style="padding:0.5rem 0.4rem;text-align:right;">Players</th>
+                        <th style="padding:0.5rem 0.4rem;">Status</th>
+                        <th style="padding:0.5rem 0.4rem;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody data-subadmin-list>
+                      <tr><td colspan="5" style="padding:0.6rem 0.4rem;opacity:0.6;">Loading...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- Player creation (both admin and sub-admin) -->
+              <section class="admin-control-panel" data-admin-panel="createplayer">
+                <div class="chat-topbar">
+                  <div>
+                    <span class="status-dot"></span>
+                    <strong>New Player</strong>
+                  </div>
+                  <small data-create-player-context>Create a player account</small>
+                </div>
+                <div style="padding:1rem;">
+                  <form data-create-player-form style="display:grid;gap:0.6rem;max-width:520px;">
+                    <input data-cp-username name="username" placeholder="Player username" required minlength="3" maxlength="32" />
+                    <input data-cp-password name="password" type="password" placeholder="Player password (min 6 chars)" required minlength="6" />
+                    <input data-cp-email name="email" type="email" placeholder="Player email (optional)" />
+                    <input data-cp-points name="startingPoints" type="number" min="0" step="1" placeholder="Starting points (optional)" />
+                    <p data-cp-wallet-note style="margin:0;font-size:0.8rem;opacity:0.7;"></p>
+                    <button class="button primary" type="submit">Create player</button>
+                    <p class="login-error" data-cp-status role="alert" style="min-height:1.2em;"></p>
+                  </form>
+                </div>
               </section>
             </div>
           </section>

@@ -10,7 +10,7 @@ const guestPromoHtml = `
   <span>Get Free</span>
   <strong>5 Points</strong>
   <span>After</span>
-  <strong>Signup!</strong>
+  <strong>Login!</strong>
 `;
 const playerPromoHtml = `
   <span>Get</span>
@@ -100,8 +100,8 @@ function updatePromoBanner(isLoggedIn = false) {
     const link = track.querySelector("a");
     if (message) message.innerHTML = isLoggedIn ? playerPromoHtml : guestPromoHtml;
     if (link) {
-      link.textContent = isLoggedIn ? "Payment" : "Sign Up";
-      link.href = isLoggedIn ? "#bonus" : "#signup";
+      link.textContent = isLoggedIn ? "Payment" : "Log In";
+      link.href = isLoggedIn ? "#bonus" : "#login";
     }
   });
 }
@@ -286,10 +286,7 @@ const playerOnlyItems = document.querySelectorAll("[data-player-only]");
 const guestOnlyItems = document.querySelectorAll("[data-guest-only]");
 const authTabs = document.querySelectorAll("[data-auth-tab]");
 const authPanels = document.querySelectorAll(".auth-panel");
-const playerSignup = document.querySelector("[data-player-signup]");
-const signupDateOfBirth = document.querySelector("#signup-date-of-birth");
 const playerLogin = document.querySelector("[data-player-login]");
-const playerReset = document.querySelector("[data-player-reset]");
 const playerAuthMessage = document.querySelector("[data-player-auth-message]");
 const playerNameDisplay = document.querySelector("[data-player-name-display]");
 const playerPointsDisplay = document.querySelectorAll("[data-player-points], [data-player-points-display]");
@@ -328,7 +325,7 @@ const welcomePoints = document.querySelector("[data-welcome-points]");
 const welcomeChat = document.querySelector("[data-welcome-chat]");
 const welcomePayment = document.querySelector("[data-welcome-payment]");
 const referralCodeInput = document.querySelector("[data-referral-code-input]");
-const referralSignupNote = document.querySelector("[data-referral-signup-note]");
+const referralLoginNote = document.querySelector("[data-referral-login-note]");
 const referralLinkInput = document.querySelector("[data-referral-link]");
 const copyReferralButton = document.querySelector("[data-copy-referral]");
 const referralStatus = document.querySelector("[data-referral-status]");
@@ -550,7 +547,7 @@ async function refreshPlayerPointTransactions() {
 
 function openPlayerProfile() {
   if (!currentPlayer) {
-    document.querySelector('[data-auth-tab="signup"]')?.click();
+    document.querySelector('[data-auth-tab="login"]')?.click();
     playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
@@ -568,7 +565,9 @@ function minimizePlayerChat() {
 }
 
 function openPlayerChat() {
-  if (!currentPlayer || !chatWidget || !chatToggle) return false;
+  // Guests (not-logged-in users) can also open the chat. Their messages go to the
+  // guest chat endpoint and land on the main admin's desk.
+  if (!chatWidget || !chatToggle) return false;
   chatWidget.classList.remove("is-hidden", "is-minimized");
   document.body.classList.add("player-chat-open");
   chatToggle.textContent = "Minimize";
@@ -581,7 +580,7 @@ function openPlayerChat() {
 
 async function openPlayerReferral() {
   if (!currentPlayer) {
-    document.querySelector('[data-auth-tab="signup"]')?.click();
+    document.querySelector('[data-auth-tab="login"]')?.click();
     playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
@@ -1219,14 +1218,10 @@ authTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     authTabs.forEach((item) => item.classList.toggle("is-active", item === tab));
     authPanels.forEach((panel) => {
-      const isSignup = panel.matches("[data-player-signup]");
       const isLogin = panel.matches("[data-player-login]");
-      const isReset = panel.matches("[data-player-reset]");
       panel.classList.toggle(
         "is-active",
-        (tab.dataset.authTab === "signup" && isSignup) ||
-          (tab.dataset.authTab === "login" && isLogin) ||
-          (tab.dataset.authTab === "reset" && isReset)
+        tab.dataset.authTab === "login" && isLogin
       );
     });
     setAuthMessage("");
@@ -1256,18 +1251,18 @@ referralNavLinks.forEach((link) => {
 chatWidget?.addEventListener("wheel", (event) => event.stopPropagation(), { passive: true });
 chatWidget?.addEventListener("touchmove", (event) => event.stopPropagation(), { passive: true });
 
-document.querySelectorAll('a[href="#signup"]').forEach((link) => {
+document.querySelectorAll('a[href="#login"]').forEach((link) => {
   link.addEventListener("click", () => {
-    document.querySelector('[data-auth-tab="signup"]')?.click();
+    document.querySelector('[data-auth-tab="login"]')?.click();
   });
 });
 
 if (referralCodeFromUrl && referralCodeInput) {
   referralCodeInput.value = referralCodeFromUrl.trim();
-  document.querySelector('[data-auth-tab="signup"]')?.click();
-  if (referralSignupNote) {
-    referralSignupNote.textContent = "Referral link applied. Create your account to join South Diamond.";
-    referralSignupNote.classList.remove("is-hidden");
+  document.querySelector('[data-auth-tab="login"]')?.click();
+  if (referralLoginNote) {
+    referralLoginNote.textContent = "Referral link applied. Log in or contact South Diamond support to join.";
+    referralLoginNote.classList.remove("is-hidden");
   }
 }
 
@@ -1303,31 +1298,6 @@ function isAdultDate(value) {
   return age >= 18;
 }
 
-if (playerSignup) {
-  playerSignup.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    setAuthMessage("");
-    if (signupDateOfBirth && !isAdultDate(signupDateOfBirth.value)) {
-      alert("Age requirement not met. You must be 18 or older to create a South Diamond account.");
-      signupDateOfBirth.focus();
-      playerAuth?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    try {
-      const data = await api("/api/player/signup", {
-        method: "POST",
-        body: JSON.stringify(formData(playerSignup)),
-      });
-      playerSignup.reset();
-      shouldShowWelcome = false;
-      showPlayerApp(data.user);
-      requestPlayerNotificationPermission();
-    } catch (error) {
-      setAuthMessage(error.message);
-    }
-  });
-}
-
 if (playerLogin) {
   playerLogin.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -1341,23 +1311,6 @@ if (playerLogin) {
       shouldShowWelcome = false;
       showPlayerApp(data.user);
       requestPlayerNotificationPermission();
-    } catch (error) {
-      setAuthMessage(error.message);
-    }
-  });
-}
-
-if (playerReset) {
-  playerReset.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    setAuthMessage("");
-    try {
-      await api("/api/player/reset-password", {
-        method: "POST",
-        body: JSON.stringify(formData(playerReset)),
-      });
-      playerReset.reset();
-      setAuthMessage("Password reset. You can log in with the new password now.", true);
     } catch (error) {
       setAuthMessage(error.message);
     }
@@ -1417,23 +1370,43 @@ if (profileForm) {
 }
 
 async function refreshPlayerChat() {
-  if (!playerMessages || !currentPlayer) return;
-  try {
-    const data = await api("/api/player/me");
-    currentPlayer = data.user;
-    renderProfile(data.user);
-    const chats = await api("/api/player/chat");
-    const messages = chats.chat?.messages || [
-      { author: "operator", text: playerChatWelcomeText },
-    ];
-    const operatorMessages = messages.filter((message) => message.author === "operator");
-    const latestOperatorMessage = operatorMessages[operatorMessages.length - 1];
-    if (!lastPlayerOperatorMessageId) {
-      lastPlayerOperatorMessageId = latestOperatorMessage?.id || "";
-    } else if (latestOperatorMessage?.id && latestOperatorMessage.id !== lastPlayerOperatorMessageId) {
-      lastPlayerOperatorMessageId = latestOperatorMessage.id;
-      notifyPlayerOperatorMessage(latestOperatorMessage);
+  if (!playerMessages) return;
+  // Track login state for the form handler (decides between player vs guest endpoint).
+  window.__sdPlayerLoggedIn = Boolean(currentPlayer);
+
+  if (currentPlayer) {
+    // Authenticated player path — uses /api/player/me + /api/player/chat.
+    try {
+      const data = await api("/api/player/me");
+      currentPlayer = data.user;
+      renderProfile(data.user);
+      const chats = await api("/api/player/chat");
+      const messages = chats.chat?.messages || [
+        { author: "operator", text: playerChatWelcomeText },
+      ];
+      const operatorMessages = messages.filter((message) => message.author === "operator");
+      const latestOperatorMessage = operatorMessages[operatorMessages.length - 1];
+      if (!lastPlayerOperatorMessageId) {
+        lastPlayerOperatorMessageId = latestOperatorMessage?.id || "";
+      } else if (latestOperatorMessage?.id && latestOperatorMessage.id !== lastPlayerOperatorMessageId) {
+        lastPlayerOperatorMessageId = latestOperatorMessage.id;
+        notifyPlayerOperatorMessage(latestOperatorMessage);
+      }
+      renderMessages(playerMessages, messages);
+    } catch {
+      renderMessages(playerMessages, [
+        { author: "operator", text: playerChatWelcomeText },
+      ]);
     }
+    return;
+  }
+
+  // Guest path — uses /api/chats/guest-message (cookie-based).
+  try {
+    const data = await api("/api/chats/guest-message");
+    const messages = data.chat?.messages?.length
+      ? data.chat.messages
+      : [{ author: "operator", text: playerChatWelcomeText }];
     renderMessages(playerMessages, messages);
   } catch {
     renderMessages(playerMessages, [
@@ -1448,8 +1421,13 @@ if (playerForm) {
     const text = playerInput.value.trim();
     if (!text) return;
 
+    // If the player is logged in, use the authenticated endpoint. Otherwise fall back to the
+    // guest endpoint so anyone can chat with support before signing in.
+    const isLoggedIn = Boolean(window.__sdPlayerLoggedIn);
+    const endpoint = isLoggedIn ? "/api/chats/player-message" : "/api/chats/guest-message";
+
     try {
-      const data = await api("/api/chats/player-message", {
+      const data = await api(endpoint, {
         method: "POST",
         body: JSON.stringify({ text }),
       });
@@ -2972,3 +2950,268 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
   if (slotAutoSpinning) stopSlotAutoSpin();
   else startSlotAutoSpin();
 });
+
+// =========================================================================
+// Admin panel role-scoping + sub-admin/player management (Chunk F).
+// Runs on admin.html for either main admin or logged-in sub-admin.
+// =========================================================================
+(function wireAdminRoleScope() {
+  if (!document.querySelector("[data-admin-inbox]")) return; // only on admin.html
+  let currentOperator = null;
+
+  function hideAdminOnly() {
+    document.querySelectorAll("[data-admin-only]").forEach((el) => {
+      el.style.display = "none";
+    });
+  }
+
+  async function loadOperator() {
+    try {
+      const response = await fetch("/api/admin/sub-admin/me", { credentials: "same-origin" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return null;
+      currentOperator = payload;
+      window.__sdOperator = payload;
+      // If sub-admin, hide admin-only UI elements.
+      if (payload.role === "sub_admin") {
+        hideAdminOnly();
+      }
+      // Show wallet badge somewhere visible.
+      const walletNote = document.querySelector("[data-cp-wallet-note]");
+      if (walletNote) {
+        if (payload.role === "sub_admin") {
+          walletNote.textContent = `Your wallet: ${payload.wallet} points. Starting points are deducted from this.`;
+        } else {
+          walletNote.textContent = "Admin mode — points are minted, no wallet limit.";
+        }
+      }
+      const ctxNote = document.querySelector("[data-create-player-context]");
+      if (ctxNote) {
+        ctxNote.textContent =
+          payload.role === "sub_admin"
+            ? "Players you create will belong to you."
+            : "Players you create will be assigned to the main admin.";
+      }
+      return payload;
+    } catch {
+      return null;
+    }
+  }
+
+  async function refreshSubAdminList() {
+    if (!currentOperator || currentOperator.role !== "admin") return;
+    const tbody = document.querySelector("[data-subadmin-list]");
+    if (!tbody) return;
+    try {
+      const response = await fetch("/api/admin/sub-admins", { credentials: "same-origin" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:0.6rem 0.4rem;color:#ffb4b4;">${payload.error || "Could not load sub-admins."}</td></tr>`;
+        return;
+      }
+      const rows = (payload.subAdmins || []).map((sa) => {
+        const status = sa.disabled ? '<span style="color:#ffb4b4;">Disabled</span>' : '<span style="color:#7be4b0;">Active</span>';
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:0.5rem 0.4rem;"><strong>${escapeHtml(sa.username)}</strong></td>
+          <td style="padding:0.5rem 0.4rem;text-align:right;">${sa.wallet}</td>
+          <td style="padding:0.5rem 0.4rem;text-align:right;">${sa.playerCount}</td>
+          <td style="padding:0.5rem 0.4rem;">${status}</td>
+          <td style="padding:0.5rem 0.4rem;display:flex;gap:0.3rem;flex-wrap:wrap;">
+            <button class="game-link" type="button" data-sa-load="${sa.id}">+Pts</button>
+            <button class="game-link" type="button" data-sa-disable="${sa.id}" data-sa-disabled="${sa.disabled ? "1" : "0"}">${sa.disabled ? "Enable" : "Disable"}</button>
+            <button class="game-link" type="button" data-sa-reset="${sa.id}">Reset PW</button>
+          </td>
+        </tr>`;
+      });
+      tbody.innerHTML = rows.join("") || '<tr><td colspan="5" style="padding:0.6rem 0.4rem;opacity:0.6;">No sub-admins yet.</td></tr>';
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="5" style="padding:0.6rem 0.4rem;color:#ffb4b4;">Could not load sub-admins.</td></tr>`;
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    })[c]);
+  }
+
+  // Wire create-sub-admin form.
+  const saForm = document.querySelector("[data-create-subadmin-form]");
+  if (saForm) {
+    saForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const status = document.querySelector("[data-sa-create-status]");
+      if (status) status.textContent = "";
+      const username = document.querySelector("[data-sa-username]")?.value.trim();
+      const password = document.querySelector("[data-sa-password]")?.value;
+      const startingWallet = Number(document.querySelector("[data-sa-wallet]")?.value || 0);
+      try {
+        const response = await fetch("/api/admin/sub-admins", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ username, password, startingWallet }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          if (status) status.textContent = payload.error || "Could not create sub-admin.";
+          return;
+        }
+        if (status) status.style.color = "#7be4b0";
+        if (status) status.textContent = `Sub-admin "${payload.subAdmin.username}" created.`;
+        saForm.reset();
+        refreshSubAdminList();
+      } catch {
+        if (status) status.textContent = "Could not reach the server.";
+      }
+    });
+  }
+
+  // Delegate clicks on sub-admin actions (load points, disable, reset PW).
+  document.addEventListener("click", async (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const loadId = target.getAttribute("data-sa-load");
+    const disableId = target.getAttribute("data-sa-disable");
+    const resetId = target.getAttribute("data-sa-reset");
+    if (loadId) {
+      const amount = prompt("How many points to add to this sub-admin's wallet?");
+      if (!amount) return;
+      const points = Number(amount);
+      if (!Number.isFinite(points) || points <= 0) return alert("Enter a positive number.");
+      const response = await fetch("/api/admin/sub-admins/load-points", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ subAdminId: loadId, points }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return alert(payload.error || "Could not load points.");
+      refreshSubAdminList();
+    } else if (disableId) {
+      const currentlyDisabled = target.getAttribute("data-sa-disabled") === "1";
+      const response = await fetch("/api/admin/sub-admins/disable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ subAdminId: disableId, disabled: !currentlyDisabled }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return alert(payload.error || "Could not change status.");
+      refreshSubAdminList();
+    } else if (resetId) {
+      const newPassword = prompt("New password (min 6 characters):");
+      if (!newPassword) return;
+      if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
+      const response = await fetch("/api/admin/sub-admins/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ subAdminId: resetId, password: newPassword }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return alert(payload.error || "Could not reset password.");
+      alert("Password reset.");
+    }
+  });
+
+  // Wire create-player form.
+  const cpForm = document.querySelector("[data-create-player-form]");
+  if (cpForm) {
+    cpForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const status = document.querySelector("[data-cp-status]");
+      if (status) { status.style.color = ""; status.textContent = ""; }
+      const username = document.querySelector("[data-cp-username]")?.value.trim();
+      const password = document.querySelector("[data-cp-password]")?.value;
+      const email = document.querySelector("[data-cp-email]")?.value.trim();
+      const startingPoints = Number(document.querySelector("[data-cp-points]")?.value || 0);
+      try {
+        const response = await fetch("/api/admin/players", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ username, password, email, startingPoints }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          if (status) status.textContent = payload.error || "Could not create player.";
+          return;
+        }
+        if (status) status.style.color = "#7be4b0";
+        if (status) status.textContent = `Player "${payload.user.username}" created with ${payload.user.points} points.`;
+        cpForm.reset();
+        // Update wallet note if sub-admin.
+        if (currentOperator?.role === "sub_admin" && payload.subAdminWallet != null) {
+          currentOperator.wallet = payload.subAdminWallet;
+          const walletNote = document.querySelector("[data-cp-wallet-note]");
+          if (walletNote) walletNote.textContent = `Your wallet: ${payload.subAdminWallet} points. Starting points are deducted from this.`;
+        }
+      } catch {
+        if (status) status.textContent = "Could not reach the server.";
+      }
+    });
+  }
+
+  // Initial load.
+  (async function init() {
+    const op = await loadOperator();
+    if (op?.role === "admin") refreshSubAdminList();
+  })();
+})();
+
+// =========================================================================
+// Sub-admin login form handler (Chunk C).
+// Only runs when sub-admin-login.html is the current page (form is present).
+// =========================================================================
+(function wireSubAdminLogin() {
+  const form = document.querySelector("[data-sub-admin-login-form]");
+  if (!form) return;
+  const usernameInput = form.querySelector("[data-sub-admin-username]");
+  const passwordInput = form.querySelector("[data-sub-admin-password]");
+  const submitButton = form.querySelector("[data-sub-admin-submit]");
+  const errorEl = form.querySelector("[data-sub-admin-error]");
+
+  function showError(text) {
+    if (errorEl) errorEl.textContent = text || "";
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showError("");
+    const username = (usernameInput?.value || "").trim();
+    const password = passwordInput?.value || "";
+    if (!username || !password) {
+      showError("Enter your username and password.");
+      return;
+    }
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Signing in…";
+    }
+    try {
+      const response = await fetch("/api/admin/sub-admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ username, password }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) {
+        showError(payload.error || "Could not sign in.");
+        return;
+      }
+      // Success — go to the sub-admin URL. The server will serve admin.html
+      // there for logged-in sub-admins; the front-end will scope features by role
+      // once Chunk F lands.
+      window.location.assign("/admin");
+    } catch (error) {
+      showError("Could not reach the server. Check your connection and try again.");
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Log In";
+      }
+    }
+  });
+})();

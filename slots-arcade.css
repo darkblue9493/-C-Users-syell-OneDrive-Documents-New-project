@@ -2978,3 +2978,48 @@ body.is-pseudo-fullscreen .game-view {
     margin: 4px auto;
   }
 }
+
+/* =========================================================================
+   South Diamond — branded reel cell frame.
+   This is a thin overlay applied on top of every reel cell to give all 24
+   arcade games a unified South Diamond look without replacing the per-game
+   symbol artwork. WILD and SCATTER cells get a slightly stronger glow.
+   ========================================================================= */
+.reel .reel-cell::after {
+  /* Replace the original subtle ::after with the South Diamond frame.
+     Same selector, more specific styling. */
+  background: linear-gradient(
+    180deg,
+    rgba(247, 201, 72, 0.06),
+    rgba(247, 201, 72, 0.01) 50%,
+    rgba(214, 51, 132, 0.04)
+  );
+  border: 1px solid rgba(247, 201, 72, 0.22);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 0 6px rgba(247, 201, 72, 0.12);
+}
+
+/* Slightly brighter frame on the landing flash so winning rows still pop. */
+.reel.just-landed .reel-cell::after {
+  border-color: rgba(247, 201, 72, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 0 16px rgba(247, 201, 72, 0.4);
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* WILD symbol gets a slightly stronger glow on every game, regardless of artwork.
+   Targets any image whose filename is wild.png (works across all 24 game folders). */
+.reel .reel-cell img[src*="/wild.png"],
+.pt-symbol-img[src*="/wild.png"],
+.ptm-symbol-img[src*="/wild.png"] {
+  filter: drop-shadow(0 0 6px rgba(247, 201, 72, 0.45));
+}
+/* BONUS/SCATTER same idea — soft pink-gold glow. */
+.reel .reel-cell img[src*="/bonus.png"],
+.pt-symbol-img[src*="/bonus.png"],
+.ptm-symbol-img[src*="/bonus.png"] {
+  filter: drop-shadow(0 0 6px rgba(214, 51, 132, 0.45));
+}
+

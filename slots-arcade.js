@@ -1155,7 +1155,7 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
     flashMessage("Log in to your South Diamond account to play slots.");
     if (redirectOnFail) {
       window.setTimeout(() => {
-        window.location.href = "/#signup";
+        window.location.href = "/#login";
       }, 900);
     }
     return false;

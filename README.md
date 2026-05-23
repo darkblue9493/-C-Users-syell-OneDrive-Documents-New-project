@@ -6,7 +6,7 @@ This project now has:
 - Admin reply desk: `admin.html`
 - Backend API: `server.js`
 - Chat database file: `data/chats.json`
-- Player signup, login, password reset, and registered-player list for admin
+- Player login, admin/sub-admin player creation, operator password resets, and registered-player list for admin
 
 ## Run Locally
 
