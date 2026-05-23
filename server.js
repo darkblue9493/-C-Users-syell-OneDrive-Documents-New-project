@@ -9,7 +9,7 @@ const dataDir = process.env.DATA_DIR || path.join(root, "data");
 const dbPath = path.join(dataDir, "chats.json");
 const uploadDir = path.join(dataDir, "uploads");
 const adminUsername = process.env.ADMIN_USERNAME || "admin";
-const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+const adminPassword = process.env.ADMIN_PASSWORD || "southdiamond";
 const adminPath = "/admin9493";
 const adminMessagesPath = "/messages9493";
 const adminLoginPath = "/login9493";
@@ -21,8 +21,11 @@ const resendApiKey = process.env.RESEND_API_KEY || "";
 const adminLoginEmail = process.env.ADMIN_LOGIN_EMAIL || "";
 const adminFromEmail = process.env.ADMIN_FROM_EMAIL || "";
 const maintenanceMode = String(process.env.MAINTENANCE_MODE || "").toLowerCase() === "true";
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Trim whitespace/newlines that often sneak in when env vars are pasted into
+// Render's dashboard. Without this, a stray "\n" makes fetch throw
+// "is an invalid header value" instead of doing the request.
+const supabaseUrl = (process.env.SUPABASE_URL || "").trim();
+const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 let useSupabase = Boolean(supabaseUrl && supabaseServiceKey);
 const sessions = new Map();
 const subAdminSessions = new Map();
@@ -1368,7 +1371,7 @@ function requireOperator(request, response) {
 // sub-admins and loading points into their wallets.
 function operatorOwnsPlayer(operator, player) {
   if (!operator || !player) return false;
-  return String(player.parentAdminId) === String(operator.id);
+  return String(player.parentAdminId || "admin") === String(operator.id);
 }
 
 // True if the operator may view/modify the given chat thread.
@@ -1391,6 +1394,17 @@ function clientKey(request) {
 function requestOrigin(request) {
   const proto = request.headers["x-forwarded-proto"] || (request.socket.encrypted ? "https" : "http");
   return `${proto}://${request.headers.host}`;
+}
+
+function isLocalRequest(request) {
+  const host = String(request.headers.host || "").toLowerCase().split(":")[0];
+  const remote = String(request.socket.remoteAddress || "");
+  return host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    remote === "::1" ||
+    remote === "127.0.0.1" ||
+    remote === "::ffff:127.0.0.1";
 }
 
 function adminLoginInfo(request) {
@@ -1745,6 +1759,35 @@ function serveFile(response, filePath, statusCode = 200, cacheControl = null) {
   fs.createReadStream(filePath).pipe(response);
 }
 
+async function completeAdminLogin(request, response) {
+  clearAdminLoginAttempts(request);
+  const token = `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  const data = await readDatabase();
+  data.adminSessions = [
+    {
+      token,
+      createdAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + adminSessionMaxAge * 1000).toISOString(),
+      ip: clientKey(request),
+      userAgent: String(request.headers["user-agent"] || ""),
+    },
+    ...(data.adminSessions || []),
+  ].slice(0, 10);
+  addActivity(data, "admin-login", "Admin logged in", { ip: clientKey(request) });
+  await writeDatabase(data);
+  sessions.set(token, Date.now() + adminSessionMaxAge * 1000);
+  if (adminLoginEmail && adminFromEmail && (brevoApiKey || resendApiKey)) {
+    sendAdminLoginAlert(request).catch((error) => console.error("Admin login alert failed:", error.message));
+  }
+  response.writeHead(200, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Set-Cookie": `sd_admin_session=${token}; HttpOnly${secureCookiePart(request)}; SameSite=Lax; Path=/; Max-Age=${adminSessionMaxAge}`,
+    "Cache-Control": "no-store",
+  });
+  response.end(JSON.stringify({ ok: true, redirect: adminPath }));
+}
+
 async function handleApi(request, response, urlPath, url) {
   if (request.method === "GET" && urlPath === "/api/player/slots/live") {
     openSlotLiveStream(request, response);
@@ -1766,6 +1809,11 @@ async function handleApi(request, response, urlPath, url) {
         return sendJson(response, 429, { error: "Too many wrong attempts. Admin login is blocked for 5 minutes." });
       }
       return sendJson(response, 401, { error: "Wrong username or password." });
+    }
+
+    if (isLocalRequest(request) && (!adminLoginEmail || !adminFromEmail || (!brevoApiKey && !resendApiKey))) {
+      await completeAdminLogin(request, response);
+      return;
     }
 
     const code = createAdminCode();
@@ -1819,30 +1867,7 @@ async function handleApi(request, response, urlPath, url) {
     }
 
     pendingAdminLogins.delete(pendingLoginId);
-    clearAdminLoginAttempts(request);
-    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
-    const data = await readDatabase();
-    data.adminSessions = [
-      {
-        token,
-        createdAt: new Date().toISOString(),
-        lastActiveAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + adminSessionMaxAge * 1000).toISOString(),
-        ip: clientKey(request),
-        userAgent: String(request.headers["user-agent"] || ""),
-      },
-      ...(data.adminSessions || []),
-    ].slice(0, 10);
-    addActivity(data, "admin-login", "Admin logged in", { ip: clientKey(request) });
-    await writeDatabase(data);
-    sessions.set(token, Date.now() + adminSessionMaxAge * 1000);
-    sendAdminLoginAlert(request).catch((error) => console.error("Admin login alert failed:", error.message));
-    response.writeHead(200, {
-      "Content-Type": "application/json; charset=utf-8",
-      "Set-Cookie": `sd_admin_session=${token}; HttpOnly${secureCookiePart(request)}; SameSite=Lax; Path=/; Max-Age=${adminSessionMaxAge}`,
-      "Cache-Control": "no-store",
-    });
-    response.end(JSON.stringify({ ok: true }));
+    await completeAdminLogin(request, response);
     return;
   }
 
@@ -1884,8 +1909,11 @@ async function handleApi(request, response, urlPath, url) {
     // Accept either main admin or sub-admin session. Without this, the existing
     // admin.html bootstrap thinks a sub-admin isn't logged in and redirects to
     // /login9493, which the router then sends back to /admin — infinite loop.
-    const isLoggedIn = isAdminRequest(request) || isSubAdminRequest(request);
-    return sendJson(response, isLoggedIn ? 200 : 401, { loggedIn: isLoggedIn });
+    const op = getOperator(request);
+    return sendJson(response, op ? 200 : 401, {
+      loggedIn: Boolean(op),
+      role: op?.role || null,
+    });
   }
 
   // ====================================================================
@@ -3647,8 +3675,7 @@ async function handleRequest(request, response) {
       url.pathname === "/service-worker.js" ||
       url.pathname === "/manifest.webmanifest" ||
       url.pathname === "/admin.webmanifest";
-    // /admin is the public alias for /admin9493 that sub-admins (and admins) use.
-    // Keeping /admin9493 as well so existing bookmarks and the email-code admin flow are unaffected.
+    // /admin is the sub-admin URL. /admin9493 is the main admin URL.
     const adminAliasPaths = ["/admin", "/admin/"];
     const adminPanelPaths = [adminPath, ...adminAliasPaths];
     const isAdminRoute =
@@ -3687,11 +3714,17 @@ async function handleRequest(request, response) {
       return;
     }
 
-    // /admin = stable dashboard URL for both logged-in main admins and sub-admins.
-    //   - logged-in operator: serve the panel HTML (client JS will role-scope it)
+    // /admin is strictly the sub-admin URL.
+    //   - logged-in sub-admin: serve the panel HTML
+    //   - logged-in main admin: send them to /admin9493
     //   - not logged in: serve the sub-admin login page
     if (adminAliasPaths.includes(url.pathname)) {
-      if (isSubAdminRequest(request) || isAdminRequest(request)) {
+      if (isAdminRequest(request)) {
+        response.writeHead(302, { Location: adminPath });
+        response.end();
+        return;
+      }
+      if (isSubAdminRequest(request)) {
         const panelPath = path.join(root, "admin.html");
         if (fs.existsSync(panelPath)) {
           serveFile(response, panelPath);
@@ -3737,7 +3770,7 @@ async function handleRequest(request, response) {
     //   - logged-in sub-admin: bounce to /admin (their URL); they should never use the admin login
     if (url.pathname === adminLoginPath) {
       if (isAdminRequest(request)) {
-        response.writeHead(302, { Location: "/admin" });
+        response.writeHead(302, { Location: adminPath });
         response.end();
         return;
       }

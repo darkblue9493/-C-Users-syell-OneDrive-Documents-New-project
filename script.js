@@ -1808,8 +1808,8 @@ async function requireAdminSession() {
   if (!isAdminPage || !canUseApi) return;
 
   try {
-    await api("/api/admin/me");
-    window.__sdAdminSessionRole = "admin";
+    const data = await api("/api/admin/me");
+    window.__sdAdminSessionRole = data?.role === "sub_admin" ? "sub_admin" : "admin";
     return;
   } catch {
   }
@@ -2317,6 +2317,12 @@ function latestChatTime(chat) {
 
 async function renderAdmin() {
   if (!adminInbox || !adminMessages) return;
+  if (!canUseApi) {
+    const message = "Open the admin portal through http://localhost:3000/admin9493 so it can load saved players and chats.";
+    if (adminUsers) adminUsers.innerHTML = `<div class="admin-player-empty">${message}</div>`;
+    adminMessages.innerHTML = `<article class="message player"><span>Admin portal</span><p>${message}</p></article>`;
+    return;
+  }
   if (adminRenderInFlight) {
     adminRenderQueued = true;
     return;
@@ -2324,15 +2330,26 @@ async function renderAdmin() {
 
   adminRenderInFlight = true;
   try {
+  const safeAdminApi = (path, fallback) => api(path).catch((error) => ({ ...fallback, error: error.message || "Could not load data." }));
   const [chatData, userData, dashboardData, pointsData, activityData, spinData, slotsData] = await Promise.all([
-    api("/api/chats").catch(() => ({ chats: [] })),
-    api("/api/admin/users").catch(() => ({ users: [] })),
-    api("/api/admin/dashboard").catch(() => ({ stats: {} })),
-    api("/api/admin/points").catch(() => ({ transactions: [] })),
-    api("/api/admin/activity").catch(() => ({ activity: [] })),
-    api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
-    api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
+    safeAdminApi("/api/chats", { chats: [] }),
+    safeAdminApi("/api/admin/users", { users: [] }),
+    safeAdminApi("/api/admin/dashboard", { stats: {} }),
+    safeAdminApi("/api/admin/points", { transactions: [] }),
+    safeAdminApi("/api/admin/activity", { activity: [] }),
+    safeAdminApi("/api/admin/spin-wheel", { settings: { limits: {} }, counts: {}, awards: [] }),
+    safeAdminApi("/api/admin/slots-settings", { settings: {}, payout: {}, spins: [] }),
   ]);
+  const loadError = userData.error || dashboardData.error || chatData.error;
+  if (loadError) {
+    const message = loadError === "Operator login is required."
+      ? "Your admin login expired. Please log in again to load players and chats."
+      : loadError;
+    if (adminUsers) adminUsers.innerHTML = `<div class="admin-player-empty">${message}</div>`;
+    adminMessages.innerHTML = `<article class="message player"><span>Admin portal</span><p>${message}</p></article>`;
+    if (adminUserCount) adminUserCount.textContent = "Data unavailable";
+    return;
+  }
   const chats = (chatData.chats || [])
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
     .sort((a, b) => latestChatTime(b) - latestChatTime(a));
@@ -2873,6 +2890,10 @@ if (loginForm) {
             password: loginPassword.value,
           }),
         });
+        if (data.ok && data.redirect) {
+          location.href = data.redirect;
+          return;
+        }
         pendingAdminLoginId = data.pendingLoginId;
         loginCodePanel?.classList.remove("is-hidden");
         loginUsername.disabled = true;
@@ -2892,7 +2913,7 @@ if (loginForm) {
           code: loginCode.value,
         }),
       });
-      location.href = "/admin";
+      location.href = "/admin9493";
     } catch (error) {
       loginError.textContent = error.message;
       loginError.style.color = "";
