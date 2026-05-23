@@ -113,10 +113,362 @@
     "playerDailyPayoutLimit": 8
   },
   "slotPayout": {
-    "date": "2026-05-19",
+    "date": "2026-05-22",
     "paidOut": 0,
     "spins": []
   },
   "uploads": [],
-  "activities": []
+  "activities": [],
+  "gameHistory": [],
+  "arcadeSlotsConfig": {
+    "version": 1,
+    "globalEnabled": true,
+    "defaultBet": 0.25,
+    "jackpotPool": {
+      "grand": 1500,
+      "major": 500,
+      "minor": 100,
+      "mini": 20
+    },
+    "dailyResetUtcHour": 0,
+    "lastModified": 1779494984207,
+    "games": {
+      "wildBuffalo": {
+        "enabled": true,
+        "targetRtp": 0.91,
+        "dailyMaxPayout": 850,
+        "dailyMinPayout": 35,
+        "minBet": 0.05,
+        "maxBet": 8,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "kingKong": {
+        "enabled": true,
+        "targetRtp": 0.92,
+        "dailyMaxPayout": 1200,
+        "dailyMinPayout": 50,
+        "minBet": 0.1,
+        "maxBet": 12,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "triple777": {
+        "enabled": true,
+        "targetRtp": 0.9,
+        "dailyMaxPayout": 700,
+        "dailyMinPayout": 25,
+        "minBet": 0.05,
+        "maxBet": 5,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "blackjack": {
+        "enabled": true,
+        "targetRtp": 0.93,
+        "dailyMaxPayout": 1500,
+        "dailyMinPayout": 75,
+        "minBet": 0.25,
+        "maxBet": 15,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "gorillaGold": {
+        "enabled": true,
+        "targetRtp": 0.92,
+        "dailyMaxPayout": 1100,
+        "dailyMinPayout": 50,
+        "minBet": 0.1,
+        "maxBet": 10,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "goldWolf": {
+        "enabled": true,
+        "targetRtp": 0.91,
+        "dailyMaxPayout": 900,
+        "dailyMinPayout": 40,
+        "minBet": 0.05,
+        "maxBet": 8,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "wildBull": {
+        "enabled": true,
+        "targetRtp": 0.9,
+        "dailyMaxPayout": 650,
+        "dailyMinPayout": 25,
+        "minBet": 0.05,
+        "maxBet": 5,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "dragonEmpress": {
+        "enabled": true,
+        "targetRtp": 0.94,
+        "dailyMaxPayout": 1800,
+        "dailyMinPayout": 90,
+        "minBet": 0.25,
+        "maxBet": 20,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "mammothRush": {
+        "enabled": true,
+        "targetRtp": 0.93,
+        "dailyMaxPayout": 1600,
+        "dailyMinPayout": 80,
+        "minBet": 0.2,
+        "maxBet": 18,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "pharaoh": {
+        "enabled": true,
+        "targetRtp": 0.92,
+        "dailyMaxPayout": 1250,
+        "dailyMinPayout": 60,
+        "minBet": 0.1,
+        "maxBet": 12,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "oceanTreasure": {
+        "enabled": true,
+        "targetRtp": 0.91,
+        "dailyMaxPayout": 950,
+        "dailyMinPayout": 45,
+        "minBet": 0.05,
+        "maxBet": 9,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "vegas7s": {
+        "enabled": true,
+        "targetRtp": 0.9,
+        "dailyMaxPayout": 750,
+        "dailyMinPayout": 30,
+        "minBet": 0.05,
+        "maxBet": 6,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "luckyPanda": {
+        "enabled": true,
+        "targetRtp": 0.92,
+        "dailyMaxPayout": 1000,
+        "dailyMinPayout": 50,
+        "minBet": 0.1,
+        "maxBet": 10,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "lionsPride": {
+        "enabled": true,
+        "targetRtp": 0.93,
+        "dailyMaxPayout": 1400,
+        "dailyMinPayout": 70,
+        "minBet": 0.2,
+        "maxBet": 14,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "piratesTreasure": {
+        "enabled": true,
+        "targetRtp": 0.91,
+        "dailyMaxPayout": 1050,
+        "dailyMinPayout": 50,
+        "minBet": 0.1,
+        "maxBet": 10,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "zeusThunder": {
+        "enabled": true,
+        "targetRtp": 0.94,
+        "dailyMaxPayout": 2000,
+        "dailyMinPayout": 100,
+        "minBet": 0.25,
+        "maxBet": 20,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "cleopatra": {
+        "enabled": true,
+        "targetRtp": 0.93,
+        "dailyMaxPayout": 1550,
+        "dailyMinPayout": 75,
+        "minBet": 0.2,
+        "maxBet": 16,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "frozenRiches": {
+        "enabled": true,
+        "targetRtp": 0.91,
+        "dailyMaxPayout": 900,
+        "dailyMinPayout": 40,
+        "minBet": 0.05,
+        "maxBet": 8,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "galaxyStars": {
+        "enabled": true,
+        "targetRtp": 0.92,
+        "dailyMaxPayout": 1300,
+        "dailyMinPayout": 65,
+        "minBet": 0.1,
+        "maxBet": 12,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "fruitMania": {
+        "enabled": true,
+        "targetRtp": 0.9,
+        "dailyMaxPayout": 600,
+        "dailyMinPayout": 20,
+        "minBet": 0.05,
+        "maxBet": 5,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "vikingGlory": {
+        "enabled": true,
+        "targetRtp": 0.92,
+        "dailyMaxPayout": 1150,
+        "dailyMinPayout": 55,
+        "minBet": 0.1,
+        "maxBet": 11,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "aztecEmpire": {
+        "enabled": true,
+        "targetRtp": 0.93,
+        "dailyMaxPayout": 1450,
+        "dailyMinPayout": 70,
+        "minBet": 0.2,
+        "maxBet": 15,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "halloweenHunt": {
+        "enabled": true,
+        "targetRtp": 0.91,
+        "dailyMaxPayout": 800,
+        "dailyMinPayout": 35,
+        "minBet": 0.05,
+        "maxBet": 7,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      },
+      "luckyCharms": {
+        "enabled": true,
+        "targetRtp": 0.92,
+        "dailyMaxPayout": 1000,
+        "dailyMinPayout": 50,
+        "minBet": 0.1,
+        "maxBet": 10,
+        "jackpotPool": {
+          "grand": 1500,
+          "major": 500,
+          "minor": 100,
+          "mini": 20
+        }
+      }
+    }
+  }
 }
