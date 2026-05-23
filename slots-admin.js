@@ -45,8 +45,11 @@
   let saveTimer = null;
   let saveInFlight = false;
   let saveAgain = false;
+  let initialized = false;
 
   async function init() {
+    if (initialized) return;
+    initialized = true;
     try {
       pendingConfig = await SC.refreshFromServer({ admin: true });
     } catch (error) {
@@ -434,9 +437,21 @@
     el._clearTimer = setTimeout(() => { el.textContent = ""; el.classList.remove("success", "error"); }, duration);
   }
 
+  function initWhenSlotsPanelOpens() {
+    const panel = $('[data-admin-panel="slots"]');
+    if (!panel) return;
+    if (panel.classList.contains("is-active")) {
+      init();
+      return;
+    }
+    document.querySelectorAll('[data-admin-panel-button="slots"]').forEach((button) => {
+      button.addEventListener("click", init, { once: true });
+    });
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", initWhenSlotsPanelOpens);
   } else {
-    init();
+    initWhenSlotsPanelOpens();
   }
 })();

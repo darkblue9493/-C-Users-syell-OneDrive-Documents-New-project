@@ -940,6 +940,19 @@ function scopedSpinFilterForOperator(operator, data) {
   return (spin) => ownedUserIds.has(spin?.userId);
 }
 
+function slotOwnerSpinFilter(ownerId, data) {
+  const id = String(ownerId || "admin");
+  const ownedUserIds = new Set(
+    (data.users || []).filter((user) => String(user.parentAdminId || "admin") === id).map((user) => user.id)
+  );
+  return (spin) => ownedUserIds.has(spin?.userId);
+}
+
+function slotControlSpinFilterForOperator(operator, data) {
+  if (!operator) return null;
+  return slotOwnerSpinFilter(operator.id || "admin", data);
+}
+
 function arcadeConfigForOperator(data, operator) {
   data.arcadeSlotsConfig = normalizeArcadeSlotsConfig(data.arcadeSlotsConfig);
   if (!operator || operator.role === "admin") return data.arcadeSlotsConfig;
@@ -2338,7 +2351,7 @@ async function handleApi(request, response, urlPath, url) {
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
-    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spinFilter = slotControlSpinFilterForOperator(op, data);
     const spins = (data.slotPayout.spins || []).filter((spin) => !spinFilter || spinFilter(spin));
     const scopedConfig = arcadeConfigForOperator(data, op);
     const settings = op.role === "admin"
@@ -2370,7 +2383,7 @@ async function handleApi(request, response, urlPath, url) {
     addActivity(data, "slots-settings", "Updated South Diamond Slots daily payout limit", { ...settings, operator: op.role, operatorId: op.id });
     await writeDatabase(data);
     sendSlotLiveEvent({ type: "slot-settings", settings, operator: op.role, operatorId: op.id });
-    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spinFilter = slotControlSpinFilterForOperator(op, data);
     const spins = (data.slotPayout.spins || []).filter((spin) => !spinFilter || spinFilter(spin));
     return sendJson(response, 200, {
       settings,
@@ -2386,7 +2399,7 @@ async function handleApi(request, response, urlPath, url) {
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
-    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spinFilter = slotControlSpinFilterForOperator(op, data);
     return sendJson(response, 200, {
       config: arcadeConfigForOperator(data, op),
       stats: arcadeSlotsStatsFromPayout(data.slotPayout, spinFilter),
@@ -2426,7 +2439,7 @@ async function handleApi(request, response, urlPath, url) {
       operator: op.role,
       operatorId: op.id,
     });
-    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spinFilter = slotControlSpinFilterForOperator(op, data);
     return sendJson(response, 200, {
       config: nextConfig,
       stats: arcadeSlotsStatsFromPayout(data.slotPayout, spinFilter),
@@ -2440,7 +2453,7 @@ async function handleApi(request, response, urlPath, url) {
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
-    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spinFilter = slotControlSpinFilterForOperator(op, data);
     const spins = (data.slotPayout.spins || []).filter((spin) => !spinFilter || spinFilter(spin));
     return sendJson(response, 200, {
       stats: arcadeSlotsStatsFromPayout(data.slotPayout, spinFilter),
@@ -2455,7 +2468,7 @@ async function handleApi(request, response, urlPath, url) {
     const gameKey = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, body.gameKey) ? String(body.gameKey) : "";
     const data = await readDatabase();
     ensureSlotPayoutToday(data);
-    const spinFilter = scopedSpinFilterForOperator(op, data);
+    const spinFilter = slotControlSpinFilterForOperator(op, data);
     data.slotPayout.spins = (data.slotPayout.spins || []).filter((spin) => {
       const spinGameKey = spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey);
       const isArcadeSpin = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, spinGameKey);
@@ -2836,7 +2849,7 @@ async function handleApi(request, response, urlPath, url) {
     const ownerOp = String(user.parentAdminId || "admin") === "admin"
       ? { role: "admin", id: "admin" }
       : { role: "sub_admin", id: String(user.parentAdminId) };
-    const ownerSpinFilter = scopedSpinFilterForOperator(ownerOp, data);
+    const ownerSpinFilter = slotOwnerSpinFilter(user.parentAdminId || "admin", data);
     const arcadeGameKey = arcadeKeyForLegacySlot(gameKey);
     const arcadeGameConfig = effectiveArcadeConfig.games[arcadeGameKey] || defaultArcadeGameConfig();
     if (!effectiveArcadeConfig.globalEnabled || arcadeGameConfig.enabled === false) {
@@ -2969,7 +2982,7 @@ async function handleApi(request, response, urlPath, url) {
     const ownerOp = String(storedUser.parentAdminId || "admin") === "admin"
       ? { role: "admin", id: "admin" }
       : { role: "sub_admin", id: String(storedUser.parentAdminId) };
-    const ownerSpinFilter = scopedSpinFilterForOperator(ownerOp, data);
+    const ownerSpinFilter = slotOwnerSpinFilter(storedUser.parentAdminId || "admin", data);
     const arcadeGameConfig = effectiveArcadeConfig.games[gameKey];
     if (!effectiveArcadeConfig.globalEnabled || arcadeGameConfig?.enabled === false) {
       return sendJson(response, 403, { error: "This arcade game is currently turned off by admin." });
@@ -3073,7 +3086,7 @@ async function handleApi(request, response, urlPath, url) {
     const ownerOp = storedUser && String(storedUser.parentAdminId || "admin") !== "admin"
       ? { role: "sub_admin", id: String(storedUser.parentAdminId) }
       : { role: "admin", id: "admin" };
-    const ownerSpinFilter = scopedSpinFilterForOperator(ownerOp, data);
+    const ownerSpinFilter = slotOwnerSpinFilter(storedUser?.parentAdminId || "admin", data);
     return sendJson(response, 200, {
       config: effectiveArcadeConfig,
       stats: arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter),

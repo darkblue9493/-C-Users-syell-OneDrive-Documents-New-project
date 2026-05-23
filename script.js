@@ -3250,8 +3250,9 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
     }
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = "Signing in…";
+      submitButton.textContent = "Signing in...";
     }
+    showError("Checking login...");
     try {
       const response = await fetch("/api/admin/sub-admin/login", {
         method: "POST",
@@ -3264,6 +3265,7 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
         showError(payload.error || "Could not sign in.");
         return;
       }
+      showError("Login accepted. Opening dashboard...");
       // Success — go to the sub-admin URL. The server will serve admin.html
       // there for logged-in sub-admins; the front-end will scope features by role
       // once Chunk F lands.
