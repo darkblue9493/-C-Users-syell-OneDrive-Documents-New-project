@@ -1513,7 +1513,12 @@ function publicFilePath(urlPath) {
     "/manifest.webmanifest",
     "/admin.webmanifest",
   ]);
-  if (!routeMap[cleanPath] && !allowedPublicFiles.has(cleanPath) && !cleanPath.startsWith("/assets/")) {
+  const isAssetPath =
+    cleanPath.startsWith("/assets/") ||
+    cleanPath.startsWith("/assets-1/") ||
+    cleanPath.startsWith("/assets-2/") ||
+    cleanPath.startsWith("/assets-3/");
+  if (!routeMap[cleanPath] && !allowedPublicFiles.has(cleanPath) && !isAssetPath) {
     return null;
   }
   const filePath = path.join(root, routeMap[cleanPath] || cleanPath.replace(/^\/+/, ""));
@@ -2850,14 +2855,11 @@ async function handleRequest(request, response) {
       return;
     }
 
-    if (url.pathname === "/slots-arcade.html" && !(await getPlayerUser(request))) {
-      response.writeHead(302, { Location: "/#signup" });
-      response.end();
-      return;
-    }
-
     const isPublicAsset =
       url.pathname.startsWith("/assets/") ||
+      url.pathname.startsWith("/assets-1/") ||
+      url.pathname.startsWith("/assets-2/") ||
+      url.pathname.startsWith("/assets-3/") ||
       url.pathname === "/styles.css" ||
       url.pathname === "/script.js" ||
       url.pathname === "/slots-arcade.html" ||

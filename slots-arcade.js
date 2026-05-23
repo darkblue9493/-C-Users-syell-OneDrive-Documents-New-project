@@ -52,6 +52,9 @@ function emojiSym(emoji, label) {
 function svgSym(key, label) {
   return { type: "svg", icon: SVG[key], label: label || "" };
 }
+function imageSym(src, label) {
+  return { type: "image", src, label: label || "" };
+}
 
 
 // ============================================================
@@ -1024,6 +1027,33 @@ const GENERATED_SYMBOL_SETS = {
   luckyCharms: [["WILD","wild.png","WILD","wild"],["SCATTER","bonus.png","BONUS","scatter"],["S1","clover.png","CLOVER"],["S2","clover_2.png","CLOVER"],["S3","horseshoe.png","HORSESHOE"],["S4","pot.png","GOLD POT"],["S5","crown.png","CROWN"],["S6","green_gem.png","EMERALD"]],
 };
 
+const GENERATED_SYMBOL_PACKS = {
+  wildBuffalo: "assets-1",
+  kingKong: "assets-1",
+  triple777: "assets-1",
+  blackjack: "assets-1",
+  gorillaGold: "assets-1",
+  goldWolf: "assets-1",
+  wildBull: "assets-1",
+  dragonEmpress: "assets-1",
+  mammothRush: "assets-2",
+  pharaoh: "assets-2",
+  oceanTreasure: "assets-2",
+  vegas7s: "assets-2",
+  luckyPanda: "assets-2",
+  lionsPride: "assets-2",
+  piratesTreasure: "assets-2",
+  zeusThunder: "assets-2",
+  cleopatra: "assets-3",
+  frozenRiches: "assets-3",
+  galaxyStars: "assets-3",
+  fruitMania: "assets-3",
+  vikingGlory: "assets-3",
+  aztecEmpire: "assets-3",
+  halloweenHunt: "assets-3",
+  luckyCharms: "assets-3",
+};
+
 function generatedSymbol(gameKey, entry, index) {
   const [key, file, label, role] = entry;
   const isWild = role === "wild";
@@ -1039,7 +1069,7 @@ function generatedSymbol(gameKey, entry, index) {
     [0,0,0,4,12,40],
   ];
   return {
-    ...imageSym(`${ASSET_BASE}generated/${gameKey}/${file}`, label),
+    ...imageSym(`${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}`, label),
     weight: isWild ? 3 : isScatter ? 2 : index < 4 ? 7 : index < 6 ? 10 : 14,
     pay: payoutTiers[index] || payoutTiers[payoutTiers.length - 1],
     ...(isWild ? { wild: true } : {}),
@@ -2218,11 +2248,12 @@ function bindEvents() {
 // ============================================================
 async function bootstrap() {
   loadState();
-  if (!(await refreshPlayerPoints({ redirectOnFail: true }))) {
-    return;
-  }
-  await refreshArcadeControls();
   renderLobby();
+  await refreshPlayerPoints({ redirectOnFail: false });
+  try {
+    await refreshArcadeControls();
+    renderLobby();
+  } catch (err) {}
   updateDisplays();
   bindEvents();
   startJackpotTicker();
