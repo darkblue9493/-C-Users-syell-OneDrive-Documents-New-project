@@ -148,9 +148,6 @@ async function api(path, options = {}) {
     ...options,
   }).finally(() => clearTimeout(timeout));
   const data = await response.json().catch(() => ({}));
-  if (!response.ok && response.status === 401 && isAdminPage) {
-    location.href = "/login9493";
-  }
   if (!response.ok) {
     const error = new Error(data.error || "Something went wrong.");
     Object.assign(error, data);
@@ -2327,14 +2324,19 @@ async function renderAdmin() {
 
   adminRenderInFlight = true;
   try {
+  const isSubAdminSession = window.__sdAdminSessionRole === "sub_admin";
   const [chatData, userData, dashboardData, pointsData, activityData, spinData, slotsData] = await Promise.all([
     api("/api/chats").catch(() => ({ chats: [] })),
     api("/api/admin/users").catch(() => ({ users: [] })),
     api("/api/admin/dashboard").catch(() => ({ stats: {} })),
     api("/api/admin/points").catch(() => ({ transactions: [] })),
     api("/api/admin/activity").catch(() => ({ activity: [] })),
-    api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
-    api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
+    isSubAdminSession
+      ? Promise.resolve({ settings: { limits: {} }, counts: {}, awards: [] })
+      : api("/api/admin/spin-wheel").catch(() => ({ settings: { limits: {} }, counts: {}, awards: [] })),
+    isSubAdminSession
+      ? Promise.resolve({ settings: {}, payout: {}, spins: [] })
+      : api("/api/admin/slots-settings").catch(() => ({ settings: {}, payout: {}, spins: [] })),
   ]);
   const chats = (chatData.chats || [])
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
