@@ -21,16 +21,16 @@
         <small>Admin Portal</small>
       </a>
       <nav class="site-nav admin-nav">
-        <span class="admin-nav-label">Dashboard</span>
-        <button class="is-active" type="button" data-admin-panel-button="overview"><span>OV</span>Overview</button>
-        <button type="button" data-admin-panel-button="activity"><span>LA</span>Live Activity</button>
+        <span class="admin-nav-label" data-admin-only>Dashboard</span>
+        <button class="is-active" type="button" data-admin-panel-button="overview" data-admin-only><span>OV</span>Overview</button>
+        <button type="button" data-admin-panel-button="activity" data-admin-only><span>LA</span>Live Activity</button>
         <span class="admin-nav-label">Players</span>
         <button type="button" data-admin-panel-button="players"><span>AP</span>All Players</button>
-        <button type="button" data-admin-panel-button="vip"><span>VIP</span>VIP Players</button>
+        <button type="button" data-admin-panel-button="vip" data-admin-only><span>VIP</span>VIP Players</button>
         <button type="button" data-admin-panel-button="add"><span>AD</span>Add Points</button>
         <button type="button" data-admin-panel-button="redeem"><span>RD</span>Redeem Points</button>
-        <button type="button" data-admin-panel-button="spin"><span>SW</span>Spin Wheel</button>
-        <button type="button" data-admin-panel-button="slots"><span>SL</span>Slots Control</button>
+        <button type="button" data-admin-panel-button="spin" data-admin-only><span>SW</span>Spin Wheel</button>
+        <button type="button" data-admin-panel-button="slots" data-admin-only><span>SL</span>Slots Control</button>
         <span class="admin-nav-label">Payments</span>
         <button type="button" data-admin-panel-button="transactions"><span>TR</span>Transactions</button>
         <button type="button" data-admin-chat-jump><span>MS</span>Messages <b class="admin-unread-badge is-hidden" data-chat-unread-count>0</b></button>
@@ -62,7 +62,7 @@
           </div>
           <section class="admin-control-center" aria-label="Admin control center">
             <div class="admin-control-panels">
-              <section class="admin-control-panel is-active" data-admin-panel="overview">
+              <section class="admin-control-panel is-active" data-admin-panel="overview" data-admin-only>
                 <div class="chat-topbar">
                   <div>
                     <span class="status-dot"></span>
@@ -110,7 +110,7 @@
                 <div class="registered-list" data-admin-users></div>
               </section>
 
-              <section class="admin-control-panel" data-admin-panel="vip">
+              <section class="admin-control-panel" data-admin-panel="vip" data-admin-only>
                 <div class="chat-topbar">
                   <div>
                     <span class="status-dot"></span>
@@ -170,7 +170,7 @@
                 <div class="points-action-list" data-points-redeem-list></div>
               </section>
 
-              <section class="admin-control-panel" data-admin-panel="spin">
+              <section class="admin-control-panel" data-admin-panel="spin" data-admin-only>
                 <div class="chat-topbar">
                   <div>
                     <span class="status-dot"></span>
@@ -206,7 +206,7 @@
                 </div>
               </section>
 
-              <section class="admin-control-panel" data-admin-panel="slots">
+              <section class="admin-control-panel" data-admin-panel="slots" data-admin-only>
                 <div class="chat-topbar">
                   <div>
                     <span class="status-dot"></span>
@@ -272,7 +272,7 @@
                 </div>
               </section>
 
-              <section class="admin-control-panel" data-admin-panel="activity">
+              <section class="admin-control-panel" data-admin-panel="activity" data-admin-only>
                 <div class="chat-topbar">
                   <div>
                     <span class="status-dot"></span>

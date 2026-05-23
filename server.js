@@ -1801,7 +1801,11 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/me") {
-    return sendJson(response, isAdminRequest(request) ? 200 : 401, { loggedIn: isAdminRequest(request) });
+    // Accept either main admin or sub-admin session. Without this, the existing
+    // admin.html bootstrap thinks a sub-admin isn't logged in and redirects to
+    // /login9493, which the router then sends back to /admin — infinite loop.
+    const isLoggedIn = isAdminRequest(request) || isSubAdminRequest(request);
+    return sendJson(response, isLoggedIn ? 200 : 401, { loggedIn: isLoggedIn });
   }
 
   // ====================================================================
@@ -2202,12 +2206,16 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/user-chat") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const body = await readBody(request);
     const userId = String(body.userId || "");
     const data = await readDatabase();
     const user = data.users.find((item) => item.id === userId);
     if (!user) return sendJson(response, 404, { error: "Player was not found." });
+    if (!operatorOwnsPlayer(op, user)) {
+      return sendJson(response, 403, { error: "You do not have access to this player." });
+    }
 
     let chat = data.chats.find((item) => item.id === user.chatId) || data.chats.find((item) => item.userId === user.id);
     if (!chat) {
@@ -2231,18 +2239,39 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/points") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const data = await readDatabase();
+    // Sub-admin sees only transactions for the players they own.
+    const ownedUserIds = new Set(
+      (data.users || []).filter((u) => operatorOwnsPlayer(op, u)).map((u) => u.id)
+    );
+    const transactions = (data.pointTransactions || []).filter(
+      (t) => op.role === "admin" || ownedUserIds.has(t.userId)
+    );
     return sendJson(response, 200, {
-      transactions: data.pointTransactions.map(sanitizePointTransaction),
+      transactions: transactions.map(sanitizePointTransaction),
     });
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/activity") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const data = await readDatabase();
+    // Sub-admin sees only activity related to their own players or their own actions.
+    const ownedUserIds = new Set(
+      (data.users || []).filter((u) => operatorOwnsPlayer(op, u)).map((u) => u.id)
+    );
+    const activity = (data.activityLog || []).filter((entry) => {
+      if (op.role === "admin") return true;
+      const meta = entry.meta || {};
+      if (meta.userId && ownedUserIds.has(meta.userId)) return true;
+      if (meta.operatorId && String(meta.operatorId) === String(op.id)) return true;
+      if (meta.subAdminId && String(meta.subAdminId) === String(op.id)) return true;
+      return false;
+    });
     return sendJson(response, 200, {
-      activity: (data.activityLog || []).map(sanitizeActivity),
+      activity: activity.map(sanitizeActivity),
     });
   }
 
@@ -2494,15 +2523,22 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/dashboard") {
-    if (!requireAdmin(request, response)) return;
+    const op = requireOperator(request, response);
+    if (!op) return;
     const data = await readDatabase();
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const activeSince = Date.now() - 24 * 60 * 60 * 1000;
-    const users = data.users || [];
-    const chats = data.chats || [];
+    // Sub-admin sees only their own players and chats. Admin sees everything.
+    const allUsers = data.users || [];
+    const users = op.role === "admin" ? allUsers : allUsers.filter((u) => operatorOwnsPlayer(op, u));
+    const ownedUserIds = new Set(users.map((u) => u.id));
+    const allChats = data.chats || [];
+    const chats = op.role === "admin" ? allChats : allChats.filter((c) => c.userId && ownedUserIds.has(c.userId));
     const messages = chats.flatMap((chat) => chat.messages || []);
-    const adminPointTransactions = (data.pointTransactions || []).filter(isAdminPointTransaction);
+    const adminPointTransactions = (data.pointTransactions || [])
+      .filter(isAdminPointTransaction)
+      .filter((t) => op.role === "admin" || ownedUserIds.has(t.userId));
     return sendJson(response, 200, {
       stats: {
         totalUsers: users.length,

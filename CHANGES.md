@@ -1,5 +1,31 @@
 # South Diamond — Sub-Admin + Guest Chat Update
 
+> **HOTFIX (after first deploy):** Earlier build had two bugs that made the
+> sub-admin page loop on load and show the full admin UI. Both fixed:
+>
+> 1. `/api/admin/me` now accepts sub-admin sessions (was 401-ing → redirect loop).
+> 2. `/api/admin/dashboard`, `/api/admin/activity`, `/api/admin/points` (GET)
+>    now accept sub-admin sessions and return data scoped to their players.
+> 3. Admin-only nav buttons + panels (Overview, Live Activity, VIP, Spin Wheel,
+>    Slots Control, Sub-Admins) are now marked `data-admin-only` and hidden
+>    from sub-admin view by `script.js`.
+> 4. When a sub-admin lands on the panel, the active tab is auto-switched to
+>    "All Players" (which is their players, scoped). A "Sub-admin" badge is
+>    shown in the topbar so role is unambiguous.
+>
+> **What a sub-admin can do now (per Sri's spec):**
+> create players, view their own players list, view those players' game
+> + transaction history, add/redeem points (deducts/credits their wallet),
+> chat with their own players, broadcast to their own players.
+>
+> **What a sub-admin still cannot do (deferred — needs separate work):**
+> control slot RTP/payout per their players. The Slots Control panel is
+> currently a GLOBAL config that would affect every sub-admin's players if
+> a sub-admin edited it. Hidden from sub-admin until per-sub-admin slot
+> overrides are built. The schema field (`subAdminSlotsConfig`) is reserved
+> for this future work.
+
+
 This change set adds the sub-admin hierarchy, removes public signup, allows
 chat before login, and rebrands the slot reel frames. Apply by copying these
 files into your git repo and committing.
@@ -136,7 +162,7 @@ not delivered in this update:
 
 - **Per-sub-admin slot config overrides.** The schema field (`subAdminSlotsConfig`) is reserved but no endpoints read/write it, and the player spin endpoint uses the global config only. If you want sub-admins to control slot RTP per their players, this is the next chunk of work.
 - **Real-time polling for guest chats from the operator desk.** Admin sees guest chats when they refresh, but no SSE/socket push.
-- **`/api/admin/users.csv`, `/api/admin/dashboard`, `/api/admin/activity`** — these are still admin-only (not scoped to sub-admin's players). Sub-admins won't see CSV exports or the global dashboard. Functional but not exposed in the sub-admin's UI.
+- **`/api/admin/users.csv`** — CSV export is still main-admin-only. The dashboard, activity, points, player list, chats, and broadcast endpoints are now sub-admin-aware and scoped to that sub-admin's players.
 - **Sub-admin player history view in the UI.** The endpoints work (`/api/admin/player-game-history`, `/api/admin/player-points-history`); the existing player-detail UI in admin.html will work for a sub-admin's players, but I didn't add a dedicated "your players" list view — the existing "All Players" panel filters to their players via the scoped `/api/admin/users` endpoint.
 
 ## Default admin credentials reminder

@@ -2986,7 +2986,29 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
   function hideAdminOnly() {
     document.querySelectorAll("[data-admin-only]").forEach((el) => {
       el.style.display = "none";
+      el.setAttribute("aria-hidden", "true");
+      // If the hidden element is the currently active button/panel, deactivate it
+      // so the layout doesn't try to render an empty overview.
+      el.classList.remove("is-active");
     });
+    // Activate the All Players panel as the default for sub-admins (they always
+    // have access to it; the server filters it to their own players).
+    const defaultButton = document.querySelector('[data-admin-panel-button="players"]:not([data-admin-only])');
+    const defaultPanel = document.querySelector('[data-admin-panel="players"]:not([data-admin-only])');
+    if (defaultButton) defaultButton.classList.add("is-active");
+    if (defaultPanel) defaultPanel.classList.add("is-active");
+    // Update the page title to match.
+    const adminTitle = document.querySelector("[data-admin-title]");
+    if (adminTitle) adminTitle.textContent = "Your players";
+    // Add a sub-admin badge at the top so it's clear which role is logged in.
+    const topbar = document.querySelector(".admin-topbar-actions");
+    if (topbar && !document.querySelector("[data-subadmin-badge]")) {
+      const badge = document.createElement("span");
+      badge.setAttribute("data-subadmin-badge", "");
+      badge.style.cssText = "padding:0.3rem 0.7rem;background:rgba(123,228,176,0.15);color:#7be4b0;border:1px solid rgba(123,228,176,0.4);border-radius:4px;font-size:0.8rem;font-weight:600;";
+      badge.textContent = "Sub-admin";
+      topbar.prepend(badge);
+    }
   }
 
   async function loadOperator() {
