@@ -1648,11 +1648,19 @@ function publicFilePath(urlPath) {
   return resolved;
 }
 
-function serveFile(response, filePath, statusCode = 200, cacheControl = "no-store") {
+function serveFile(response, filePath, statusCode = 200, cacheControl = null) {
   const extension = path.extname(filePath).toLowerCase();
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  const staticImageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+  const isVersionedImageAsset =
+    staticImageExtensions.has(extension) &&
+    (normalizedPath.includes("/assets/") ||
+      normalizedPath.includes("/assets-1/") ||
+      normalizedPath.includes("/assets-2/") ||
+      normalizedPath.includes("/assets-3/"));
   response.writeHead(statusCode, {
     "Content-Type": mimeTypes[extension] || "application/octet-stream",
-    "Cache-Control": cacheControl,
+    "Cache-Control": cacheControl || (isVersionedImageAsset ? "public, max-age=31536000, immutable" : "no-store"),
   });
   fs.createReadStream(filePath).pipe(response);
 }

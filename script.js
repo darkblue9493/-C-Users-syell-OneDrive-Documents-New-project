@@ -1812,15 +1812,31 @@ async function requireAdminSession() {
 
   try {
     await api("/api/admin/me");
+    return;
   } catch {
-    location.href = "/login9493";
   }
+
+  try {
+    const response = await fetch("/api/admin/sub-admin/me", { credentials: "same-origin" });
+    if (!response.ok) throw new Error("Sub-admin login is required.");
+    const data = await response.json().catch(() => ({}));
+    if (data?.loggedIn === false) throw new Error("Sub-admin login is required.");
+    return;
+  } catch {
+  }
+
+  location.href = isSubAdminRoute() ? "/admin" : "/login9493";
 }
 
 async function logoutAdmin(reason = "") {
-  await api("/api/admin/logout", { method: "POST" }).catch(() => {});
+  const subAdminRoute = isSubAdminRoute();
+  await api(subAdminRoute ? "/api/admin/sub-admin/logout" : "/api/admin/logout", { method: "POST" }).catch(() => {});
   const suffix = reason ? `?reason=${encodeURIComponent(reason)}` : "";
-  location.href = `/login9493${suffix}`;
+  location.href = `${subAdminRoute ? "/admin" : "/login9493"}${suffix}`;
+}
+
+function isSubAdminRoute() {
+  return location.pathname === "/admin" || location.pathname === "/admin/";
 }
 
 function markAdminActivity() {
