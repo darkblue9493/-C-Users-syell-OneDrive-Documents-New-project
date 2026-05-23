@@ -27,21 +27,10 @@
           <div class="admin-code-panel is-hidden" data-admin-code-panel>
             <label for="login-code">Email security code</label>
             <input id="login-code" data-login-code type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit code" />
-            <small>Check your admin email for the login code.</small>
+            <small>Check your admin email for the login code. (Sub-admins log in directly without a code.)</small>
           </div>
-          <button class="button primary" type="submit" data-login-submit>Send Code</button>
+          <button class="button primary" type="submit" data-login-submit>Log In</button>
           <p class="login-error" data-login-error role="alert"></p>
-        </form>
-        <div class="admin-login-actions">
-          <button class="link-button" type="button" data-admin-forgot-button>Forgot admin password?</button>
-          <p class="login-error" data-admin-forgot-status role="alert"></p>
-        </div>
-        <form class="login-form admin-reset-password-panel is-hidden" data-admin-reset-password-form>
-          <p class="section-kicker">Reset admin password</p>
-          <label for="admin-new-password">New password</label>
-          <input id="admin-new-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
-          <button class="button primary" type="submit">Reset Password</button>
-          <p class="login-error" data-admin-reset-status role="alert"></p>
         </form>
       </section>
     </main>

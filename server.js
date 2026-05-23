@@ -25,15 +25,21 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const useSupabase = Boolean(supabaseUrl && supabaseServiceKey);
 const sessions = new Map();
+const subAdminSessions = new Map();
 const playerSessions = new Map();
 const adminLoginAttempts = new Map();
+const subAdminLoginAttempts = new Map();
 const pendingAdminLogins = new Map();
+const subAdminSessionMaxAge = 60 * 60 * 8; // sub-admins: 8 hours per login
 const slotLiveClients = new Set();
 const maxJsonBodyBytes = 8_000_000;
 const playerSessionMaxAge = 60 * 60 * 24 * 400;
 const adminSessionMaxAge = 60 * 60 * 2;
-const signupBonusPoints = 5;
-const referralBonusPoints = 10;
+// Public self-signup has been removed. Players are now created by admin or sub-admin only,
+// so no automatic signup/referral bonuses are awarded. Set these back to a positive number
+// if you ever re-enable public signup.
+const signupBonusPoints = 0;
+const referralBonusPoints = 0;
 const spinCooldownMs = 24 * 60 * 60 * 1000;
 const defaultSpinLimits = {
   10: 1,
@@ -399,7 +405,10 @@ const starterChats = [];
 function starterDatabase() {
   return {
     chats: starterChats,
+    guestChats: [],
     users: [],
+    subAdmins: [],
+    subAdminSessions: [],
     pointTransactions: [],
     activityLog: [],
     adminSessions: [],
@@ -409,6 +418,9 @@ function starterDatabase() {
     spinWheel: { date: currentSpinDateKey(), awards: [] },
     slotSettings: { ...defaultSlotSettings },
     arcadeSlotsConfig: defaultArcadeSlotsConfig(),
+    // Per-sub-admin overrides of arcadeSlotsConfig. Keyed by sub-admin id.
+    // { [subAdminId]: { games: { gameId: { ...overrides } } } }
+    subAdminSlotsConfig: {},
     slotPayout: { date: currentSpinDateKey(), paidOut: 0, spins: [] },
     gameHistory: [],
   };
@@ -417,7 +429,13 @@ function starterDatabase() {
 function normalizeDatabase(data) {
   const normalized = data && typeof data === "object" ? data : starterDatabase();
   if (!Array.isArray(normalized.chats)) normalized.chats = [];
+  if (!Array.isArray(normalized.guestChats)) normalized.guestChats = [];
   if (!Array.isArray(normalized.users)) normalized.users = [];
+  if (!Array.isArray(normalized.subAdmins)) normalized.subAdmins = [];
+  if (!Array.isArray(normalized.subAdminSessions)) normalized.subAdminSessions = [];
+  if (!normalized.subAdminSlotsConfig || typeof normalized.subAdminSlotsConfig !== "object") {
+    normalized.subAdminSlotsConfig = {};
+  }
   if (!Array.isArray(normalized.pointTransactions)) normalized.pointTransactions = [];
   if (!Array.isArray(normalized.activityLog)) normalized.activityLog = [];
   if (!Array.isArray(normalized.gameHistory)) normalized.gameHistory = [];
@@ -446,12 +464,53 @@ function normalizeDatabase(data) {
     referralCode: normalizeReferralCode(user.referralCode) || createReferralCode(user),
     referredBy: user.referredBy || null,
     spinLastAt: user.spinLastAt || null,
+    // Every existing player belongs to the main admin until reassigned.
+    // New players created via /api/admin/players will get the creator's id here.
+    parentAdminId: user.parentAdminId || "admin",
     playerSessionTokens: Array.isArray(user.playerSessionTokens)
       ? user.playerSessionTokens
       : user.playerSessionToken
         ? [user.playerSessionToken]
         : [],
   }));
+
+  // Normalize sub-admin records and prune expired sessions.
+  normalized.subAdmins = normalized.subAdmins
+    .filter((sa) => sa && sa.id && sa.username && sa.passwordHash)
+    .map((sa) => ({
+      id: String(sa.id),
+      username: String(sa.username),
+      passwordHash: String(sa.passwordHash),
+      wallet: Math.max(0, roundPoints(sa.wallet)),
+      createdAt: sa.createdAt || new Date().toISOString(),
+      createdBy: sa.createdBy || "admin",
+      lastLoginAt: sa.lastLoginAt || null,
+      disabled: Boolean(sa.disabled),
+    }));
+  normalized.subAdminSessions = normalized.subAdminSessions.filter((session) => {
+    const expiresAt = session?.expiresAt ? new Date(session.expiresAt).getTime() : 0;
+    return session?.token && session?.subAdminId && expiresAt > now;
+  });
+
+  // Normalize guest chat threads (pre-login chats keyed by sd_guest_id cookie).
+  normalized.guestChats = normalized.guestChats
+    .filter((chat) => chat && chat.id && chat.guestId)
+    .map((chat) => ({
+      id: String(chat.id),
+      guestId: String(chat.guestId),
+      name: chat.name || "Guest",
+      unreadForAdmin: Number.isFinite(Number(chat.unreadForAdmin)) ? Number(chat.unreadForAdmin) : 0,
+      lastReadByAdminAt: chat.lastReadByAdminAt || null,
+      createdAt: chat.createdAt || new Date().toISOString(),
+      messages: Array.isArray(chat.messages)
+        ? chat.messages.map((message, index) => ({
+            ...message,
+            id:
+              message.id ||
+              `msg-${chat.id}-${index}-${String(message.createdAt || "old").replace(/[^a-z0-9]/gi, "")}`,
+          }))
+        : [],
+    }));
   normalized.chats = normalized.chats
     .filter((chat) => !["demo-maya", "demo-andre"].includes(chat.id))
     .map((chat) => ({
@@ -475,6 +534,13 @@ function loadAdminSessions(data) {
   (data.adminSessions || []).forEach((session) => {
     const expiresAt = session?.expiresAt ? new Date(session.expiresAt).getTime() : 0;
     if (session?.token && expiresAt > Date.now()) sessions.set(session.token, expiresAt);
+  });
+  subAdminSessions.clear();
+  (data.subAdminSessions || []).forEach((session) => {
+    const expiresAt = session?.expiresAt ? new Date(session.expiresAt).getTime() : 0;
+    if (session?.token && session?.subAdminId && expiresAt > Date.now()) {
+      subAdminSessions.set(session.token, { subAdminId: session.subAdminId, expiresAt });
+    }
   });
 }
 
@@ -1182,6 +1248,48 @@ function isAdminRequest(request) {
     return false;
   }
   return true;
+}
+
+// Returns the sub-admin id if the request carries a valid sub-admin session, else null.
+function getSubAdminId(request) {
+  const cookies = parseCookies(request);
+  const token = cookies.sd_subadmin_session;
+  if (!token) return null;
+  const entry = subAdminSessions.get(token);
+  if (!entry) return null;
+  if (entry.expiresAt <= Date.now()) {
+    subAdminSessions.delete(token);
+    return null;
+  }
+  return entry.subAdminId;
+}
+
+function isSubAdminRequest(request) {
+  return Boolean(getSubAdminId(request));
+}
+
+// Returns { role: "admin" | "sub_admin", id }
+// "admin" id is the literal string "admin" (matches parentAdminId on legacy players).
+function getOperator(request) {
+  if (isAdminRequest(request)) return { role: "admin", id: "admin" };
+  const subAdminId = getSubAdminId(request);
+  if (subAdminId) return { role: "sub_admin", id: subAdminId };
+  return null;
+}
+
+function requireOperator(request, response) {
+  const op = getOperator(request);
+  if (op) return op;
+  sendJson(response, 401, { error: "Operator login is required." });
+  return null;
+}
+
+// True if the operator may view/modify the given player record.
+// Admin can touch any player; sub-admin can only touch their own.
+function operatorOwnsPlayer(operator, player) {
+  if (!operator || !player) return false;
+  if (operator.role === "admin") return true;
+  return String(player.parentAdminId) === String(operator.id);
 }
 
 function clientKey(request) {
@@ -2871,7 +2979,14 @@ async function handleRequest(request, response) {
       url.pathname === "/service-worker.js" ||
       url.pathname === "/manifest.webmanifest" ||
       url.pathname === "/admin.webmanifest";
-    const isAdminRoute = url.pathname === adminPath || url.pathname === adminMessagesPath || url.pathname === adminLoginPath;
+    // /admin is the public alias for /admin9493 that sub-admins (and admins) use.
+    // Keeping /admin9493 as well so existing bookmarks and the email-code admin flow are unaffected.
+    const adminAliasPaths = ["/admin", "/admin/"];
+    const adminPanelPaths = [adminPath, ...adminAliasPaths];
+    const isAdminRoute =
+      adminPanelPaths.includes(url.pathname) ||
+      url.pathname === adminMessagesPath ||
+      url.pathname === adminLoginPath;
     if (maintenanceMode && !isAdminRoute && !isPublicAsset && !url.pathname.startsWith("/uploads/")) {
       const maintenancePath = publicFilePath("/maintenance.html");
       if (maintenancePath && fs.existsSync(maintenancePath)) {
@@ -2897,19 +3012,35 @@ async function handleRequest(request, response) {
       return;
     }
 
-    if (["/admin", "/admin.html", "/admin-messages.html", "/login.html"].includes(url.pathname)) {
+    // /admin.html and /login.html should never be served directly; the user must come in
+    // via /admin9493, /admin, or /login9493. /admin-messages.html same idea.
+    if (["/admin.html", "/admin-messages.html", "/login.html"].includes(url.pathname)) {
       response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
       response.end("Not found");
       return;
     }
 
-    if ((url.pathname === adminPath || url.pathname === adminMessagesPath) && !isAdminRequest(request)) {
+    // /admin alias: redirect logged-in admins/sub-admins to /admin9493 (the actual panel),
+    // anyone else to the shared login page.
+    if (adminAliasPaths.includes(url.pathname)) {
+      if (isAdminRequest(request) || isSubAdminRequest(request)) {
+        response.writeHead(302, { Location: adminPath });
+      } else {
+        response.writeHead(302, { Location: adminLoginPath });
+      }
+      response.end();
+      return;
+    }
+
+    // /admin9493 and /messages9493 require an operator (admin OR sub-admin) login.
+    if ((url.pathname === adminPath || url.pathname === adminMessagesPath) && !isAdminRequest(request) && !isSubAdminRequest(request)) {
       response.writeHead(302, { Location: adminLoginPath });
       response.end();
       return;
     }
 
-    if (url.pathname === adminLoginPath && isAdminRequest(request)) {
+    // If already logged in (as either admin or sub-admin) and visiting the login page, bounce to the panel.
+    if (url.pathname === adminLoginPath && (isAdminRequest(request) || isSubAdminRequest(request))) {
       response.writeHead(302, { Location: adminPath });
       response.end();
       return;
