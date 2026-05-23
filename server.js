@@ -1325,10 +1325,13 @@ function requireOperator(request, response) {
 }
 
 // True if the operator may view/modify the given player record.
-// Admin can touch any player; sub-admin can only touch their own.
+// STRICT ISOLATION: both admin and sub-admin can only see players they OWN.
+//   - admin owns players with parentAdminId === "admin"
+//   - sub-admin owns players with parentAdminId === their id
+// Each operator runs their own tenant; main admin's only extra power is creating
+// sub-admins and loading points into their wallets.
 function operatorOwnsPlayer(operator, player) {
   if (!operator || !player) return false;
-  if (operator.role === "admin") return true;
   return String(player.parentAdminId) === String(operator.id);
 }
 
@@ -1673,6 +1676,7 @@ function publicFilePath(urlPath) {
     "/admin.webmanifest",
     // Sub-admin login page (served by request handler at /admin, not directly)
     "/sub-admin-login.html",
+    "/sub-admin-login.js",
   ]);
   const isAssetPath =
     cleanPath.startsWith("/assets/") ||
@@ -2235,13 +2239,12 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/users") {
-    // Admin sees every player. Sub-admin sees only the players they created.
+    // STRICT ISOLATION: every operator (admin or sub-admin) sees only the players
+    // they own. Admin no longer sees sub-admins' players.
     const op = requireOperator(request, response);
     if (!op) return;
     const data = await readDatabase();
-    const users = op.role === "admin"
-      ? data.users
-      : data.users.filter((u) => String(u.parentAdminId) === String(op.id));
+    const users = (data.users || []).filter((u) => operatorOwnsPlayer(op, u));
     return sendJson(response, 200, { users: users.map(sanitizeUser) });
   }
 
@@ -2282,13 +2285,11 @@ async function handleApi(request, response, urlPath, url) {
     const op = requireOperator(request, response);
     if (!op) return;
     const data = await readDatabase();
-    // Sub-admin sees only transactions for the players they own.
+    // STRICT ISOLATION: only transactions for players the caller owns.
     const ownedUserIds = new Set(
       (data.users || []).filter((u) => operatorOwnsPlayer(op, u)).map((u) => u.id)
     );
-    const transactions = (data.pointTransactions || []).filter(
-      (t) => op.role === "admin" || ownedUserIds.has(t.userId)
-    );
+    const transactions = (data.pointTransactions || []).filter((t) => ownedUserIds.has(t.userId));
     return sendJson(response, 200, {
       transactions: transactions.map(sanitizePointTransaction),
     });
@@ -2298,16 +2299,19 @@ async function handleApi(request, response, urlPath, url) {
     const op = requireOperator(request, response);
     if (!op) return;
     const data = await readDatabase();
-    // Sub-admin sees only activity related to their own players or their own actions.
+    // STRICT ISOLATION: each operator sees only activity on their own players
+    // (plus their own operator-level events: sub-admin creation, wallet loads, etc.
+    // for the main admin).
     const ownedUserIds = new Set(
       (data.users || []).filter((u) => operatorOwnsPlayer(op, u)).map((u) => u.id)
     );
     const activity = (data.activityLog || []).filter((entry) => {
-      if (op.role === "admin") return true;
       const meta = entry.meta || {};
       if (meta.userId && ownedUserIds.has(meta.userId)) return true;
       if (meta.operatorId && String(meta.operatorId) === String(op.id)) return true;
       if (meta.subAdminId && String(meta.subAdminId) === String(op.id)) return true;
+      // Main admin still sees operator-level events (sub-admin lifecycle, wallet loads).
+      if (op.role === "admin" && /^sub-admin/.test(entry.type || "")) return true;
       return false;
     });
     return sendJson(response, 200, {
@@ -2608,16 +2612,16 @@ async function handleApi(request, response, urlPath, url) {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const activeSince = Date.now() - 24 * 60 * 60 * 1000;
-    // Sub-admin sees only their own players and chats. Admin sees everything.
-    const allUsers = data.users || [];
-    const users = op.role === "admin" ? allUsers : allUsers.filter((u) => operatorOwnsPlayer(op, u));
+    // STRICT ISOLATION: every operator sees only the players + chats + transactions
+    // they own. Slot activity from a sub-admin's players no longer shows on the main
+    // admin's dashboard.
+    const users = (data.users || []).filter((u) => operatorOwnsPlayer(op, u));
     const ownedUserIds = new Set(users.map((u) => u.id));
-    const allChats = data.chats || [];
-    const chats = op.role === "admin" ? allChats : allChats.filter((c) => c.userId && ownedUserIds.has(c.userId));
+    const chats = (data.chats || []).filter((c) => c.userId && ownedUserIds.has(c.userId));
     const messages = chats.flatMap((chat) => chat.messages || []);
     const adminPointTransactions = (data.pointTransactions || [])
       .filter(isAdminPointTransaction)
-      .filter((t) => op.role === "admin" || ownedUserIds.has(t.userId));
+      .filter((t) => ownedUserIds.has(t.userId));
     return sendJson(response, 200, {
       stats: {
         totalUsers: users.length,
@@ -3290,15 +3294,16 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/chats") {
-    // Admin sees: all player chats + guest chats. Sub-admin sees: only chats of their players.
+    // STRICT ISOLATION: each operator sees only chats from THEIR OWN players.
+    // Main admin additionally sees guest (pre-login) chats; sub-admins do not.
     const op = requireOperator(request, response);
     if (!op) return;
     const data = await readDatabase();
+    const scoped = (data.chats || []).filter((chat) => operatorOwnsChat(op, chat, data));
     if (op.role === "admin") {
       const guestChats = (data.guestChats || []).map((c) => ({ ...c, isGuest: true }));
-      return sendJson(response, 200, { chats: [...guestChats, ...data.chats] });
+      return sendJson(response, 200, { chats: [...guestChats, ...scoped] });
     }
-    const scoped = (data.chats || []).filter((chat) => operatorOwnsChat(op, chat, data));
     return sendJson(response, 200, { chats: scoped });
   }
 
