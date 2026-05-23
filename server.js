@@ -1661,6 +1661,7 @@ async function handleApi(request, response, urlPath, url) {
     ].slice(0, 10);
     addActivity(data, "admin-login", "Admin logged in", { ip: clientKey(request) });
     await writeDatabase(data);
+    sessions.set(token, Date.now() + adminSessionMaxAge * 1000);
     sendAdminLoginAlert(request).catch((error) => console.error("Admin login alert failed:", error.message));
     response.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8",
