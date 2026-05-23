@@ -23,7 +23,7 @@ const adminFromEmail = process.env.ADMIN_FROM_EMAIL || "";
 const maintenanceMode = String(process.env.MAINTENANCE_MODE || "").toLowerCase() === "true";
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const useSupabase = Boolean(supabaseUrl && supabaseServiceKey);
+let useSupabase = Boolean(supabaseUrl && supabaseServiceKey);
 const sessions = new Map();
 const subAdminSessions = new Map();
 const playerSessions = new Map();
@@ -594,38 +594,66 @@ function ensureLocalStorage() {
 }
 
 async function supabaseRequest(pathname, options = {}) {
-  const response = await fetch(`${supabaseUrl}/rest/v1${pathname}`, {
-    ...options,
-    headers: {
-      apikey: supabaseServiceKey,
-      Authorization: `Bearer ${supabaseServiceKey}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Supabase request failed.");
+  // 6-second timeout so a hanging Supabase doesn't block startup until Render's
+  // "no open ports detected" timer kills the process.
+  const controller = new AbortController();
+  const timeoutMs = Number(process.env.SUPABASE_TIMEOUT_MS) || 6000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${supabaseUrl}/rest/v1${pathname}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        apikey: supabaseServiceKey,
+        Authorization: `Bearer ${supabaseServiceKey}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Supabase request failed.");
+    }
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`Supabase request timed out after ${timeoutMs}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  const text = await response.text();
-  return text ? JSON.parse(text) : null;
+}
+
+function disableSupabaseFallback(error) {
+  if (!useSupabase) return;
+  useSupabase = false;
+  console.warn(
+    "Supabase unavailable; falling back to local JSON storage:",
+    error?.message || error
+  );
 }
 
 async function ensureDatabase() {
   ensureLocalStorage();
   if (useSupabase) {
-    const rows = await supabaseRequest("/app_state?id=eq.main&select=id");
-    if (!rows.length) {
-      const localData = fs.existsSync(dbPath)
-        ? normalizeDatabase(JSON.parse(fs.readFileSync(dbPath, "utf8")))
-        : starterDatabase();
-      await supabaseRequest("/app_state", {
-        method: "POST",
-        headers: { Prefer: "return=representation" },
-        body: JSON.stringify({ id: "main", data: localData }),
-      });
+    try {
+      const rows = await supabaseRequest("/app_state?id=eq.main&select=id");
+      if (!rows.length) {
+        const localData = fs.existsSync(dbPath)
+          ? normalizeDatabase(JSON.parse(fs.readFileSync(dbPath, "utf8")))
+          : starterDatabase();
+        await supabaseRequest("/app_state", {
+          method: "POST",
+          headers: { Prefer: "return=representation" },
+          body: JSON.stringify({ id: "main", data: localData }),
+        });
+      }
+      return;
+    } catch (error) {
+      disableSupabaseFallback(error);
     }
-    return;
   }
 
   if (!fs.existsSync(dbPath)) {
@@ -651,10 +679,14 @@ async function ensureDatabase() {
 async function readDatabase() {
   await ensureDatabase();
   if (useSupabase) {
-    const rows = await supabaseRequest("/app_state?id=eq.main&select=data");
-    const data = normalizeDatabase(rows[0]?.data || starterDatabase());
-    loadAdminSessions(data);
-    return data;
+    try {
+      const rows = await supabaseRequest("/app_state?id=eq.main&select=data");
+      const data = normalizeDatabase(rows[0]?.data || starterDatabase());
+      loadAdminSessions(data);
+      return data;
+    } catch (error) {
+      disableSupabaseFallback(error);
+    }
   }
 
   const data = normalizeDatabase(JSON.parse(fs.readFileSync(dbPath, "utf8")));
@@ -667,12 +699,16 @@ async function writeDatabase(data) {
   const normalized = normalizeDatabase(data);
   loadAdminSessions(normalized);
   if (useSupabase) {
-    await supabaseRequest("/app_state?on_conflict=id", {
-      method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
-      body: JSON.stringify({ id: "main", data: normalized, updated_at: new Date().toISOString() }),
-    });
-    return;
+    try {
+      await supabaseRequest("/app_state?on_conflict=id", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+        body: JSON.stringify({ id: "main", data: normalized, updated_at: new Date().toISOString() }),
+      });
+      return;
+    } catch (error) {
+      disableSupabaseFallback(error);
+    }
   }
 
   fs.writeFileSync(dbPath, JSON.stringify(normalized, null, 2));
@@ -3733,6 +3769,8 @@ ensureDatabase()
     });
   })
   .catch((error) => {
-    console.error("South Diamond could not start:", error.message);
-    process.exit(1);
+    console.error("South Diamond database warmup failed; starting anyway:", error.message);
+    http.createServer(handleRequest).listen(port, () => {
+      console.log(`South Diamond server running at http://localhost:${port}`);
+    });
   });
