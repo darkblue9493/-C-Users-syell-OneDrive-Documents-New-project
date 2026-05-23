@@ -55,6 +55,19 @@ function svgSym(key, label) {
 function imageSym(src, label) {
   return { type: "image", src, label: label || "" };
 }
+function symbolIconHtml(sym, className = "pt-symbol-img") {
+  if (!sym) return "";
+  if (sym.type === "svg") return sym.icon;
+  if (sym.type === "image") {
+    const label = sym.label || "Symbol";
+    return `<img class="${className}" src="${sym.src}" alt="${label}" loading="eager" draggable="false" />`;
+  }
+  return `<span class="pt-emoji">${sym.icon || sym.label || ""}</span>`;
+}
+function topSymbolPay(sym, topIdx) {
+  const pays = Array.isArray(sym?.pay) ? sym.pay : [];
+  return pays[topIdx] || Math.max(0, ...pays.filter((pay) => Number.isFinite(pay)));
+}
 
 
 // ============================================================
@@ -1069,7 +1082,7 @@ function generatedSymbol(gameKey, entry, index) {
     [0,0,0,4,12,40],
   ];
   return {
-    ...imageSym(`/${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}`, label),
+    ...imageSym(`/${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}?v=29`, label),
     weight: isWild ? 3 : isScatter ? 2 : index < 4 ? 7 : index < 6 ? 10 : 14,
     pay: payoutTiers[index] || payoutTiers[payoutTiers.length - 1],
     ...(isWild ? { wild: true } : {}),
@@ -1666,8 +1679,8 @@ function renderCharacterPaytable(game, root) {
   const html = order.slice(0, 8).map(symKey => {
     const sym = game.symbols[symKey];
     if (!sym) return "";
-    const pay = sym.pay[topIdx] || 0;
-    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
+    const pay = topSymbolPay(sym, topIdx);
+    const iconHtml = symbolIconHtml(sym);
     return `<div class="char-pt"><div class="char-pt-icon">${iconHtml}</div><div class="char-pt-value">${pay}</div></div>`;
   }).join("");
   const bar = document.createElement("div");
@@ -1689,8 +1702,8 @@ function renderPaytable(game) {
     if (!sym) return "";
     // Top payout (5 of a kind or 3 for 3-reel)
     const topIdx = game.reels === 3 ? 2 : 4;
-    const pay = sym.pay[topIdx] || 0;
-    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
+    const pay = topSymbolPay(sym, topIdx);
+    const iconHtml = symbolIconHtml(sym);
     return `
       <div class="pt-row">
         <div class="pt-icon">${iconHtml}</div>
@@ -2093,7 +2106,7 @@ function openPaytableModal() {
   const allSymbols = Object.keys(game.symbols).sort((a, b) => Math.max(...game.symbols[b].pay) - Math.max(...game.symbols[a].pay));
   grid.innerHTML = allSymbols.map((symKey) => {
     const sym = game.symbols[symKey];
-    const iconHtml = sym.type === "svg" ? sym.icon : `<span class="pt-emoji">${sym.icon}</span>`;
+    const iconHtml = symbolIconHtml(sym, "ptm-symbol-img");
     const pays = sym.pay || [];
     const tier = sym.wild ? "WILD" : sym.scatter ? "BONUS" : "";
     return `
@@ -2211,8 +2224,8 @@ function bindEvents() {
       renderGameView(tile.dataset.game);
       return;
     }
-    if (e.target.closest("[data-back-button]")) { backToLobby(); return; }
-    if (e.target.closest("[data-arcade-home]")) { backToLobby(); return; }
+    if (e.target.closest("[data-back-button]")) { e.preventDefault(); backToLobby(); return; }
+    if (e.target.closest("[data-arcade-home]")) { e.preventDefault(); backToLobby(); return; }
     if (e.target.closest("[data-spin-btn]")) { Audio.resume(); spinGame(); return; }
     if (e.target.closest("[data-bet-up]")) { changeBet(+1); return; }
     if (e.target.closest("[data-bet-down]")) { changeBet(-1); return; }

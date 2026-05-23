@@ -1,4 +1,4 @@
-const CACHE_NAME = "south-diamond-app-v28";
+const CACHE_NAME = "south-diamond-app-v29";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
