@@ -1812,6 +1812,7 @@ async function requireAdminSession() {
 
   try {
     await api("/api/admin/me");
+    window.__sdAdminSessionRole = "admin";
     return;
   } catch {
   }
@@ -1821,6 +1822,7 @@ async function requireAdminSession() {
     if (!response.ok) throw new Error("Sub-admin login is required.");
     const data = await response.json().catch(() => ({}));
     if (data?.loggedIn === false) throw new Error("Sub-admin login is required.");
+    window.__sdAdminSessionRole = data?.role === "admin" ? "admin" : "sub_admin";
     return;
   } catch {
   }
@@ -1829,10 +1831,10 @@ async function requireAdminSession() {
 }
 
 async function logoutAdmin(reason = "") {
-  const subAdminRoute = isSubAdminRoute();
-  await api(subAdminRoute ? "/api/admin/sub-admin/logout" : "/api/admin/logout", { method: "POST" }).catch(() => {});
+  const subAdminSession = window.__sdAdminSessionRole === "sub_admin";
+  await api(subAdminSession ? "/api/admin/sub-admin/logout" : "/api/admin/logout", { method: "POST" }).catch(() => {});
   const suffix = reason ? `?reason=${encodeURIComponent(reason)}` : "";
-  location.href = `${subAdminRoute ? "/admin" : "/login9493"}${suffix}`;
+  location.href = `${subAdminSession ? "/admin" : "/login9493"}${suffix}`;
 }
 
 function isSubAdminRoute() {
@@ -1856,7 +1858,9 @@ function setupAdminIdleLogout() {
     }
     if (!document.hidden && Date.now() - adminLastKeepAliveAt >= adminKeepAliveMs) {
       adminLastKeepAliveAt = Date.now();
-      await api("/api/admin/keepalive", { method: "POST" }).catch(() => {});
+      if (window.__sdAdminSessionRole === "admin") {
+        await api("/api/admin/keepalive", { method: "POST" }).catch(() => {});
+      }
     }
   }, 60 * 1000);
 }
@@ -2740,8 +2744,12 @@ if (adminInbox && adminForm) {
   });
 
   setInterval(() => {
-    if (!document.hidden) renderAdmin();
-  }, 3500);
+    const isWorking =
+      document.activeElement?.matches("input, textarea, select, button") ||
+      document.activeElement?.closest("form") ||
+      playerModal?.classList.contains("is-open");
+    if (!document.hidden && !isWorking) renderAdmin();
+  }, 30000);
 }
 
 closePlayerModal?.addEventListener("click", closeAdminPlayerModal);
@@ -2887,7 +2895,7 @@ if (loginForm) {
           code: loginCode.value,
         }),
       });
-      location.href = "/admin9493";
+      location.href = "/admin";
     } catch (error) {
       loginError.textContent = error.message;
       loginError.style.color = "";

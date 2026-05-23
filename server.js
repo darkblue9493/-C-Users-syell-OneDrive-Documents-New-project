@@ -3517,22 +3517,16 @@ async function handleRequest(request, response) {
       return;
     }
 
-    // /admin = sub-admin's URL.
-    //   - logged-in sub-admin: serve the panel HTML (client JS will role-scope it)
-    //   - logged-in main admin: send them to their own URL (/admin9493)
+    // /admin = stable dashboard URL for both logged-in main admins and sub-admins.
+    //   - logged-in operator: serve the panel HTML (client JS will role-scope it)
     //   - not logged in: serve the sub-admin login page
     if (adminAliasPaths.includes(url.pathname)) {
-      if (isSubAdminRequest(request)) {
+      if (isSubAdminRequest(request) || isAdminRequest(request)) {
         const panelPath = path.join(root, "admin.html");
         if (fs.existsSync(panelPath)) {
           serveFile(response, panelPath);
           return;
         }
-      }
-      if (isAdminRequest(request)) {
-        response.writeHead(302, { Location: adminPath });
-        response.end();
-        return;
       }
       const subLoginPath = path.join(root, "sub-admin-login.html");
       if (fs.existsSync(subLoginPath)) {
@@ -3573,7 +3567,7 @@ async function handleRequest(request, response) {
     //   - logged-in sub-admin: bounce to /admin (their URL); they should never use the admin login
     if (url.pathname === adminLoginPath) {
       if (isAdminRequest(request)) {
-        response.writeHead(302, { Location: adminPath });
+        response.writeHead(302, { Location: "/admin" });
         response.end();
         return;
       }
