@@ -962,7 +962,7 @@ const GAME_ORDER = [
 //   - {gameKey}-bg.jpg     -> in-game background scene (1920x1080)
 // ============================================================
 const ASSET_BASE = "assets/slots/";
-const ASSET_VERSION = "v=20260524-wildbuffalo-fulltile";
+const ASSET_VERSION = "v=20260524-kingkong-game-bg";
 const ASSET_KEYS = GAME_ORDER;
 const ASSET_CACHE = {};
 
@@ -988,7 +988,7 @@ function applyTileArt(tileEl, gameKey) {
       const bg = tileEl.querySelector(".tile-bg");
       if (bg) bg.style.backgroundImage = `url('${thumbUrl}')`;
       const art = tileEl.querySelector(".tile-mascot-art");
-      if (art) art.innerHTML = "";
+      if (art) art.innerHTML = `<img src="${thumbUrl}" alt="" loading="lazy" />`;
     }
   });
 }

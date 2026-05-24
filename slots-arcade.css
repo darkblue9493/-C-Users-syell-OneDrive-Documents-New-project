@@ -1416,14 +1416,35 @@ button { font-family: inherit; cursor: pointer; }
   background-size: cover !important;
   background-position: center bottom !important;
   background-repeat: no-repeat !important;
+  filter: blur(10px) saturate(1.12) brightness(.82);
+  transform: scale(1.08);
 }
-.lobby-tile.has-full-tile-art .tile-mascot-art,
 .lobby-tile.has-full-tile-art .tile-decor,
 .lobby-tile.has-full-tile-art .tile-info {
   display: none !important;
 }
+.lobby-tile.has-full-tile-art .tile-mascot-art {
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none !important;
+  z-index: 3;
+  filter: none;
+}
+.lobby-tile.has-full-tile-art .tile-mascot-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+.lobby-tile.has-full-tile-art:hover .tile-mascot-art {
+  transform: none !important;
+}
 .lobby-tile.has-full-tile-art .tile-shine {
-  opacity: .45;
+  opacity: .25;
 }
 .lobby-tile .tile-mascot { display: none !important; } /* old emoji mascot - hide */
 .lobby-tile .tile-mascot-art {
