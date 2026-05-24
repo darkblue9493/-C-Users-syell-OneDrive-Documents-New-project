@@ -2044,7 +2044,7 @@ blockquote {
   top: 220px;
   right: 22px;
   bottom: 22px;
-  z-index: 40;
+  z-index: 90;
   width: min(420px, calc(100vw - 32px));
   max-height: none;
   display: flex;
@@ -2058,6 +2058,11 @@ blockquote {
 .floating-player-chat.is-minimized {
   top: auto;
   width: min(300px, calc(100vw - 32px));
+}
+
+body:not(.is-player-logged-in) .floating-player-chat.is-minimized {
+  top: 154px;
+  bottom: auto;
 }
 
 .floating-player-chat.is-minimized .chat-messages,
@@ -4984,6 +4989,13 @@ body.is-player-logged-in [data-guest-only] {
 
   .floating-player-chat.is-minimized {
     top: auto;
+  }
+
+  body:not(.is-player-logged-in) .floating-player-chat.is-minimized {
+    top: 126px;
+    right: 12px;
+    bottom: auto;
+    width: min(260px, calc(100vw - 24px));
   }
 
   .floating-player-chat .chat-messages {
