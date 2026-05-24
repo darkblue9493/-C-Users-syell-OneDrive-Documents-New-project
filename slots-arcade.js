@@ -962,7 +962,7 @@ const GAME_ORDER = [
 //   - {gameKey}-bg.jpg     -> in-game background scene (1920x1080)
 // ============================================================
 const ASSET_BASE = "assets/slots/";
-const ASSET_VERSION = "v=20260524-wildbuffalo";
+const ASSET_VERSION = "v=20260524-wildbuffalo-fulltile";
 const ASSET_KEYS = GAME_ORDER;
 const ASSET_CACHE = {};
 
@@ -984,15 +984,11 @@ function applyTileArt(tileEl, gameKey) {
   const thumbUrl = versionedAssetUrl(`${ASSET_BASE}${gameKey}-thumb.png`);
   checkAssetExists(thumbUrl).then((exists) => {
     if (exists) {
-      const art = tileEl.querySelector(".tile-mascot-art");
-      if (art) art.innerHTML = `<img src="${thumbUrl}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block;" />`;
+      tileEl.classList.add("has-full-tile-art");
       const bg = tileEl.querySelector(".tile-bg");
-      if (bg) {
-        const bgUrl = versionedAssetUrl(`${ASSET_BASE}${gameKey}-bg.jpg`);
-        checkAssetExists(bgUrl).then((bgExists) => {
-          if (bgExists) bg.style.backgroundImage = `url('${bgUrl}')`;
-        });
-      }
+      if (bg) bg.style.backgroundImage = `url('${thumbUrl}')`;
+      const art = tileEl.querySelector(".tile-mascot-art");
+      if (art) art.innerHTML = "";
     }
   });
 }

@@ -1412,6 +1412,19 @@ button { font-family: inherit; cursor: pointer; }
 .lobby-tile .tile-bg {
   z-index: 0;
 }
+.lobby-tile.has-full-tile-art .tile-bg {
+  background-size: cover !important;
+  background-position: center bottom !important;
+  background-repeat: no-repeat !important;
+}
+.lobby-tile.has-full-tile-art .tile-mascot-art,
+.lobby-tile.has-full-tile-art .tile-decor,
+.lobby-tile.has-full-tile-art .tile-info {
+  display: none !important;
+}
+.lobby-tile.has-full-tile-art .tile-shine {
+  opacity: .45;
+}
 .lobby-tile .tile-mascot { display: none !important; } /* old emoji mascot - hide */
 .lobby-tile .tile-mascot-art {
   position: absolute;
