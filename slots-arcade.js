@@ -64,9 +64,12 @@ function symbolIconHtml(sym, className = "pt-symbol-img") {
   }
   return `<span class="pt-emoji">${sym.icon || sym.label || ""}</span>`;
 }
-function topSymbolPay(sym, topIdx) {
+function symbolPayForCount(sym, count) {
   const pays = Array.isArray(sym?.pay) ? sym.pay : [];
-  return pays[topIdx] || Math.max(0, ...pays.filter((pay) => Number.isFinite(pay)));
+  return pays[count] || pays[count - 1] || 0;
+}
+function topSymbolPay(sym, count) {
+  return symbolPayForCount(sym, count) || Math.max(0, ...((sym?.pay || []).filter((pay) => Number.isFinite(pay))));
 }
 
 
@@ -1082,7 +1085,7 @@ function generatedSymbol(gameKey, entry, index) {
     [0,0,0,4,12,40],
   ];
   return {
-    ...imageSym(`${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}?v=31`, label),
+    ...imageSym(`${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}?v=hd1`, label),
     weight: isWild ? 3 : isScatter ? 2 : index < 4 ? 7 : index < 6 ? 10 : 14,
     pay: payoutTiers[index] || payoutTiers[payoutTiers.length - 1],
     ...(isWild ? { wild: true } : {}),
@@ -1354,7 +1357,7 @@ function evaluatePayline(game, grid, payline) {
     else break;
   }
   if (count < 3) return null;
-  const pay = game.symbols[targetSym].pay[count - 1] || game.symbols[targetSym].pay[count];
+  const pay = symbolPayForCount(game.symbols[targetSym], count);
   if (!pay) return null;
   return { symbol: targetSym, count, pay, positions: payline.slice(0, count) };
 }
@@ -1373,7 +1376,7 @@ function evaluateScatters(game, grid) {
   if (count < 3) return null;
   const scatterSym = Object.keys(game.symbols).find(k => game.symbols[k].scatter);
   if (!scatterSym) return null;
-  const pay = game.symbols[scatterSym].pay[count - 1] || 0;
+  const pay = symbolPayForCount(game.symbols[scatterSym], count);
   if (!pay) return null;
   return { symbol: scatterSym, count, pay, positions };
 }
@@ -1677,11 +1680,10 @@ async function renderGameView(gameKey) {
 
 function renderCharacterPaytable(game, root) {
   const order = game.paytableOrder || Object.keys(game.symbols).slice(0, 8);
-  const topIdx = game.reels === 3 ? 2 : 4;
   const html = order.slice(0, 8).map(symKey => {
     const sym = game.symbols[symKey];
     if (!sym) return "";
-    const pay = topSymbolPay(sym, topIdx);
+    const pay = topSymbolPay(sym, game.reels);
     const iconHtml = symbolIconHtml(sym);
     return `<div class="char-pt"><div class="char-pt-icon">${iconHtml}</div><div class="char-pt-value">${pay}</div></div>`;
   }).join("");
@@ -1703,8 +1705,7 @@ function renderPaytable(game) {
     const sym = game.symbols[symKey];
     if (!sym) return "";
     // Top payout (5 of a kind or 3 for 3-reel)
-    const topIdx = game.reels === 3 ? 2 : 4;
-    const pay = topSymbolPay(sym, topIdx);
+    const pay = topSymbolPay(sym, game.reels);
     const iconHtml = symbolIconHtml(sym);
     return `
       <div class="pt-row">
@@ -2109,13 +2110,19 @@ function openPaytableModal() {
   grid.innerHTML = allSymbols.map((symKey) => {
     const sym = game.symbols[symKey];
     const iconHtml = symbolIconHtml(sym, "ptm-symbol-img");
-    const pays = sym.pay || [];
+    const payoutCounts = Array.from({ length: Math.max(0, game.reels - 2) }, (_, index) => index + 3);
     const tier = sym.wild ? "WILD" : sym.scatter ? "BONUS" : "";
+    const payoutHtml = payoutCounts
+      .map((count) => {
+        const pay = symbolPayForCount(sym, count);
+        return pay ? `<span><b>${count}x</b> ${pay}</span>` : "";
+      })
+      .join("");
     return `
       <div class="ptm-symbol-row ${sym.wild ? "is-wild" : ""} ${sym.scatter ? "is-scatter" : ""}">
         <div class="ptm-sym-icon">${iconHtml}</div>
         <div class="ptm-sym-label"><strong>${sym.label || symKey}</strong>${tier ? `<span class="ptm-tier">${tier}</span>` : ""}</div>
-        <div class="ptm-payouts">${pays[2] ? `<span><b>3x</b> ${pays[2]}</span>` : ""}${pays[3] ? `<span><b>4x</b> ${pays[3]}</span>` : ""}${pays[4] ? `<span><b>5x</b> ${pays[4]}</span>` : ""}${pays[5] ? `<span><b>6x</b> ${pays[5]}</span>` : ""}</div>
+        <div class="ptm-payouts">${payoutHtml}</div>
       </div>
     `;
   }).join("");

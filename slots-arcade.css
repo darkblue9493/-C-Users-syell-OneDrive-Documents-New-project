@@ -638,6 +638,7 @@ button { font-family: inherit; cursor: pointer; }
   width: 28px;
   height: 28px;
   object-fit: contain;
+  image-rendering: auto;
 }
 .pt-emoji { font-size: 1.4rem; line-height: 1; filter: drop-shadow(0 2px 0 rgba(0,0,0,.6)); }
 .pt-value {
@@ -713,25 +714,33 @@ button { font-family: inherit; cursor: pointer; }
 .sym-cell {
   display: grid;
   place-items: center;
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   position: relative;
 }
 .sym-inner {
-  width: 80%; height: 80%;
-  display: grid; place-items: center;
+  width: 88%;
+  height: 88%;
+  display: grid;
+  place-items: center;
   filter: drop-shadow(0 2px 0 rgba(0,0,0,.6));
 }
 .sym-cell.sym-image .sym-inner {
-  width: 96%;
-  height: 96%;
+  width: 98%;
+  height: 98%;
 }
 .sym-cell.sym-svg .sym-inner svg { display: block; width: 100%; height: auto; max-height: 100%; }
 .sym-cell.sym-image .sym-inner img {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   user-select: none;
+  image-rendering: auto;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 .sym-cell.sym-emoji .sym-inner {
   font-size: 2.6rem;
@@ -1202,7 +1211,7 @@ button { font-family: inherit; cursor: pointer; }
   display: grid;
   place-items: center;
   aspect-ratio: auto !important;
-  padding: 4px;
+  padding: 2px;
   position: relative;
   border-radius: 0;
   background: transparent;
@@ -2178,6 +2187,7 @@ button { font-family: inherit; cursor: pointer; }
   width: 52px;
   height: 52px;
   object-fit: contain;
+  image-rendering: auto;
 }
 .ptm-sym-icon .pt-emoji { font-size: 2.4rem; line-height: 1; }
 .ptm-sym-label strong {
@@ -3022,4 +3032,3 @@ body.is-pseudo-fullscreen .game-view {
 .ptm-symbol-img[src*="/bonus.png"] {
   filter: drop-shadow(0 0 6px rgba(214, 51, 132, 0.45));
 }
-

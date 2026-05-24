@@ -1709,6 +1709,7 @@ const slotsAdminDate = document.querySelector("[data-slots-admin-date]");
 const adminPanelButtons = document.querySelectorAll("[data-admin-panel-button]");
 const adminPanels = document.querySelectorAll("[data-admin-panel]");
 const adminChatJumps = document.querySelectorAll("[data-admin-chat-jump]");
+const adminMessagesPanel = document.querySelector("[data-admin-messages-panel]");
 const adminUnreadBadges = document.querySelectorAll("[data-chat-unread-count]");
 const adminRefresh = document.querySelector("[data-admin-refresh]");
 const adminTitle = document.querySelector("[data-admin-title]");
@@ -1772,6 +1773,7 @@ adminPanelButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const panelName = button.dataset.adminPanelButton;
     adminChatJumps.forEach((item) => item.classList.remove("is-active"));
+    adminMessagesPanel?.classList.add("is-hidden");
     adminPanelButtons.forEach((item) => item.classList.toggle("is-active", item === button));
     adminPanels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.adminPanel === panelName));
     if (adminTitle) adminTitle.textContent = adminPanelTitles[panelName] || "Admin Portal";
@@ -1782,6 +1784,8 @@ adminChatJumps.forEach((jump) => {
   jump.addEventListener("click", () => {
     adminPanelButtons.forEach((item) => item.classList.remove("is-active"));
     adminChatJumps.forEach((item) => item.classList.toggle("is-active", item === jump));
+    adminPanels.forEach((panel) => panel.classList.remove("is-active"));
+    adminMessagesPanel?.classList.remove("is-hidden");
     if (adminTitle) adminTitle.textContent = "Messages";
     document.querySelector(".admin-dashboard")?.scrollIntoView({ behavior: "smooth", block: "start" });
     adminInput?.focus();
@@ -2455,6 +2459,11 @@ async function openAdminChatForUser(userId) {
     body: JSON.stringify({ userId }),
   });
   activeAdminThread = data.chat.id;
+  adminMessagesPanel?.classList.remove("is-hidden");
+  adminPanels.forEach((panel) => panel.classList.remove("is-active"));
+  adminPanelButtons.forEach((item) => item.classList.remove("is-active"));
+  adminChatJumps.forEach((item) => item.classList.add("is-active"));
+  if (adminTitle) adminTitle.textContent = "Messages";
   await renderAdmin();
   document.querySelector(".admin-dashboard")?.scrollIntoView({ behavior: "smooth", block: "start" });
   adminInput?.focus();
