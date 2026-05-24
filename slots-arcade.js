@@ -962,7 +962,7 @@ const GAME_ORDER = [
 //   - {gameKey}-bg.jpg     -> in-game background scene (1920x1080)
 // ============================================================
 const ASSET_BASE = "assets/slots/";
-const ASSET_VERSION = "v=20260524-kingkong-game-bg";
+const ASSET_VERSION = "v=20260524-six-lobby-cards";
 const ASSET_KEYS = GAME_ORDER;
 const ASSET_CACHE = {};
 
