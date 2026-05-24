@@ -962,8 +962,13 @@ const GAME_ORDER = [
 //   - {gameKey}-bg.jpg     -> in-game background scene (1920x1080)
 // ============================================================
 const ASSET_BASE = "assets/slots/";
+const ASSET_VERSION = "v=20260524-wildbuffalo";
 const ASSET_KEYS = GAME_ORDER;
 const ASSET_CACHE = {};
+
+function versionedAssetUrl(url) {
+  return `${url}${url.includes("?") ? "&" : "?"}${ASSET_VERSION}`;
+}
 
 function checkAssetExists(url) {
   if (ASSET_CACHE[url] !== undefined) return Promise.resolve(ASSET_CACHE[url]);
@@ -976,14 +981,14 @@ function checkAssetExists(url) {
 }
 
 function applyTileArt(tileEl, gameKey) {
-  const thumbUrl = `${ASSET_BASE}${gameKey}-thumb.png`;
+  const thumbUrl = versionedAssetUrl(`${ASSET_BASE}${gameKey}-thumb.png`);
   checkAssetExists(thumbUrl).then((exists) => {
     if (exists) {
       const art = tileEl.querySelector(".tile-mascot-art");
       if (art) art.innerHTML = `<img src="${thumbUrl}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block;" />`;
       const bg = tileEl.querySelector(".tile-bg");
       if (bg) {
-        const bgUrl = `${ASSET_BASE}${gameKey}-bg.jpg`;
+        const bgUrl = versionedAssetUrl(`${ASSET_BASE}${gameKey}-bg.jpg`);
         checkAssetExists(bgUrl).then((bgExists) => {
           if (bgExists) bg.style.backgroundImage = `url('${bgUrl}')`;
         });
@@ -995,7 +1000,7 @@ function applyTileArt(tileEl, gameKey) {
 function applyGameArt(gameKey, root) {
   if (!root) return;
   // Check for in-game background
-  const bgUrl = `${ASSET_BASE}${gameKey}-bg.jpg`;
+  const bgUrl = versionedAssetUrl(`${ASSET_BASE}${gameKey}-bg.jpg`);
   checkAssetExists(bgUrl).then((exists) => {
     if (exists) {
       root.style.setProperty("--game-bg-image", `url('${bgUrl}')`);
@@ -1003,7 +1008,7 @@ function applyGameArt(gameKey, root) {
     }
   });
   // Check for in-game mascot
-  const mascotUrl = `${ASSET_BASE}${gameKey}-mascot.png`;
+  const mascotUrl = versionedAssetUrl(`${ASSET_BASE}${gameKey}-mascot.png`);
   checkAssetExists(mascotUrl).then((exists) => {
     if (exists) {
       root.style.setProperty("--mascot-bg", `url('${mascotUrl}')`);
