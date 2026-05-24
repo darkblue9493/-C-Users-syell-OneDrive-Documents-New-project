@@ -313,7 +313,6 @@ const uploadNote = document.querySelector("[data-upload-note]");
 const uploadStatus = document.querySelector("[data-upload-status]");
 const chatWidget = document.querySelector("[data-player-chat]");
 const chatToggle = document.querySelector("[data-chat-toggle]");
-const guestChatOpenButtons = document.querySelectorAll("[data-guest-chat-open]");
 const referralNavLinks = document.querySelectorAll("[data-referral-nav]");
 const lobbyCards = document.querySelectorAll("[data-lobby-card]");
 const paymentActions = document.querySelector(".payment-actions");
@@ -464,6 +463,7 @@ function showPlayerAuth() {
       { author: "operator", text: "Create an account or log in at the top of the page to chat with South Diamond support." },
     ]);
   }
+  minimizePlayerChat();
 }
 
 function renderProfile(user) {
@@ -556,6 +556,7 @@ function openPlayerProfile() {
 
 function minimizePlayerChat() {
   if (!chatWidget || !chatToggle) return;
+  chatWidget.classList.remove("is-hidden");
   chatWidget.classList.add("is-minimized");
   document.body.classList.remove("player-chat-open");
   chatToggle.textContent = "Open Chat";
@@ -1583,13 +1584,6 @@ if (chatToggle && chatWidget) {
     }
   });
 }
-
-guestChatOpenButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    openPlayerChat();
-    document.querySelector("#chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-});
 
 lobbyCards.forEach((card) => {
   card.addEventListener("click", (event) => {
