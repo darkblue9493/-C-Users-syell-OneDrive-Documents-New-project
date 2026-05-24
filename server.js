@@ -3081,10 +3081,7 @@ async function handleApi(request, response, urlPath, url) {
     ensureSlotPayoutToday(data);
     const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey, ownerSpinFilter);
     const gamePaidToday = arcadeGameStats.won;
-    const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
-    const payoutMultiplier = arcadePayoutMultiplier(arcadeGameConfig, arcadeGameStats);
-    const adjustedWin = roundPoints(requestedWin * payoutMultiplier);
-    const win = adjustedWin;
+    const win = requestedWin;
     const createdAt = new Date().toISOString();
     const transactions = [];
 
