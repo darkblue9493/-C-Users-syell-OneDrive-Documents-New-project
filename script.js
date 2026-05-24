@@ -313,6 +313,7 @@ const uploadNote = document.querySelector("[data-upload-note]");
 const uploadStatus = document.querySelector("[data-upload-status]");
 const chatWidget = document.querySelector("[data-player-chat]");
 const chatToggle = document.querySelector("[data-chat-toggle]");
+const guestChatOpenButtons = document.querySelectorAll("[data-guest-chat-open]");
 const referralNavLinks = document.querySelectorAll("[data-referral-nav]");
 const lobbyCards = document.querySelectorAll("[data-lobby-card]");
 const paymentActions = document.querySelector(".payment-actions");
@@ -1576,12 +1577,19 @@ if (chatToggle && chatWidget) {
     document.body.classList.toggle("player-chat-open", !isMinimized);
     chatToggle.textContent = isMinimized ? "Open Chat" : "Minimize";
     chatToggle.setAttribute("aria-expanded", String(!isMinimized));
-    if (!isMinimized && currentPlayer) {
+    if (!isMinimized) {
       hasOpenedPlayerChat = true;
       refreshPlayerChat();
     }
   });
 }
+
+guestChatOpenButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    openPlayerChat();
+    document.querySelector("#chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
 
 lobbyCards.forEach((card) => {
   card.addEventListener("click", (event) => {
@@ -1914,6 +1922,7 @@ function createAdminPlayerRow(user) {
     <span class="admin-player-email"></span>
     <span class="admin-player-phone"></span>
     <strong class="admin-player-points"></strong>
+    <span class="admin-player-owner"></span>
     <span class="admin-player-joined"></span>
     <span class="status-pill admin-player-status"></span>
     <div class="admin-player-actions">
@@ -1936,6 +1945,7 @@ function createAdminPlayerRow(user) {
   item.querySelector(".admin-player-email").textContent = user.email;
   item.querySelector(".admin-player-phone").textContent = user.phone || "-";
   item.querySelector(".admin-player-points").textContent = formatPoints(user.points);
+  item.querySelector(".admin-player-owner").textContent = user.ownerName || "Main Admin";
   item.querySelector(".admin-player-joined").textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-";
   item.querySelector(".admin-player-status").textContent = presence.label;
   item.querySelector(".admin-player-status").classList.add(presence.className);
@@ -1966,6 +1976,7 @@ function renderUsers(users) {
     user.createdAt,
     user.lastActiveAt,
     user.adminNote,
+    user.ownerName,
   ]);
   adminUserCount.textContent = `${visibleUsers.length}/${users.length} player${users.length === 1 ? "" : "s"}`;
   adminUsers.innerHTML = "";
@@ -1983,6 +1994,7 @@ function renderUsers(users) {
       <span>Email</span>
       <span>Phone</span>
       <span>Points</span>
+      <span>Sub Admin</span>
       <span>Joined</span>
       <span>Status</span>
       <span>Actions</span>
@@ -2002,6 +2014,7 @@ function renderVipUsers(users) {
     user.phone,
     user.points,
     user.createdAt,
+    user.ownerName,
   ]);
   if (adminVipCount) adminVipCount.textContent = `${visibleUsers.length}/${vipUsers.length} VIP player${vipUsers.length === 1 ? "" : "s"}`;
   adminVipUsers.innerHTML = "";
@@ -2017,6 +2030,7 @@ function renderVipUsers(users) {
       <span>Email</span>
       <span>Phone</span>
       <span>Points</span>
+      <span>Sub Admin</span>
       <span>Joined</span>
       <span>Status</span>
       <span>Actions</span>
@@ -2173,6 +2187,7 @@ function renderPointTransactions(transactions = []) {
     transaction.balanceAfter,
     transaction.note,
     transaction.createdAt,
+    transaction.ownerName,
   ]);
   pointsCount.textContent = `${visibleTransactions.length}/${transactions.length} transaction${transactions.length === 1 ? "" : "s"}`;
   pointsTransactions.innerHTML = "";
@@ -2190,7 +2205,8 @@ function renderPointTransactions(transactions = []) {
       <small></small>
     `;
     item.querySelector("strong").textContent = transaction.username || "Player";
-    item.querySelector("span").textContent = transaction.note || (transaction.type === "add" ? "Points added" : "Points redeemed");
+    const owner = transaction.ownerName ? ` | ${transaction.ownerName}` : "";
+    item.querySelector("span").textContent = `${transaction.note || (transaction.type === "add" ? "Points added" : "Points redeemed")}${owner}`;
     item.querySelector("b").textContent = `${transaction.type === "add" ? "+" : "-"}${formatPoints(transaction.points)}`;
     item.querySelector("small").textContent = `${new Date(transaction.createdAt).toLocaleString()} | Balance ${formatPoints(transaction.balanceAfter)}`;
     pointsTransactions.appendChild(item);
@@ -2315,7 +2331,7 @@ function latestChatTime(chat) {
   return lastMessage?.createdAt ? new Date(lastMessage.createdAt).getTime() : 0;
 }
 
-async function renderAdmin() {
+async function renderAdmin(options = {}) {
   if (!adminInbox || !adminMessages) return;
   if (!canUseApi) {
     const message = "Open the admin portal through http://localhost:3000/admin9493 so it can load saved players and chats.";
@@ -2364,7 +2380,7 @@ async function renderAdmin() {
       document.activeElement?.closest("[data-slots-settings-form]") ||
       document.activeElement?.closest("[data-player-modal]")
   );
-  if (!isPlayerFormActive) {
+  if (!isPlayerFormActive || options.forceLists) {
     renderUsers(users);
   } else if (adminUserCount) {
     adminUserCount.textContent = `${users.length} player${users.length === 1 ? "" : "s"}`;
@@ -2404,7 +2420,7 @@ async function renderAdmin() {
     button.dataset.threadId = chat.id;
     button.innerHTML = `<span class="inbox-player-name"><span class="inbox-avatar"></span><i class="player-presence-dot"></i><b></b><em class="inbox-unread is-hidden"></em></span><small></small>`;
     setPresenceDot(button.querySelector(".player-presence-dot"), presence);
-    button.querySelector("b").textContent = chat.name;
+    button.querySelector("b").textContent = chatUser?.ownerName ? `${chat.name} (${chatUser.ownerName})` : chat.name;
     button.querySelector(".inbox-avatar").textContent = String(chat.name || "P").trim().slice(0, 1).toUpperCase();
     const unread = Number(chat.unreadForAdmin) || 0;
     const unreadBadge = button.querySelector(".inbox-unread");
@@ -2426,7 +2442,7 @@ async function renderAdmin() {
 
   const selectedUser = users.find((user) => user.id === selected.userId || user.chatId === selected.id);
   setPresenceDot(adminChatStatus, playerPresence(selectedUser || { createdAt: 0 }));
-  adminName.textContent = selected.name;
+  adminName.textContent = selectedUser?.ownerName ? `${selected.name} (${selectedUser.ownerName})` : selected.name;
   adminName.classList.toggle("is-vip-name", Boolean(selectedUser?.isVip));
   adminMessages.dataset.messageScope = selected.id;
   renderMessages(adminMessages, selected.messages);
@@ -2574,7 +2590,7 @@ if (adminInbox && adminForm) {
       submitter.disabled = true;
       submitter.textContent = action === "add" ? "Adding" : "Redeeming";
       try {
-        await api("/api/admin/points", {
+        const payload = await api("/api/admin/points", {
           method: "POST",
           body: JSON.stringify({
             userId: form.dataset.userId,
@@ -2584,7 +2600,11 @@ if (adminInbox && adminForm) {
           }),
         });
         form.reset();
-        await renderAdmin();
+        if (window.__sdUpdateSubAdminWallet && payload.subAdminWallet != null) {
+          window.__sdUpdateSubAdminWallet(payload.subAdminWallet);
+        }
+        submitter.blur();
+        await renderAdmin({ forceLists: true });
       } catch (error) {
         alert(error.message);
       } finally {
@@ -2795,7 +2815,7 @@ modalPointsForm?.addEventListener("submit", async (event) => {
     submitter.textContent = action === "add" ? "Adding" : "Redeeming";
   }
   try {
-    await api("/api/admin/points", {
+    const payload = await api("/api/admin/points", {
       method: "POST",
       body: JSON.stringify({
         userId: activeModalUserId,
@@ -2805,7 +2825,11 @@ modalPointsForm?.addEventListener("submit", async (event) => {
       }),
     });
     modalPointsForm.reset();
-    await renderAdmin();
+    if (window.__sdUpdateSubAdminWallet && payload.subAdminWallet != null) {
+      window.__sdUpdateSubAdminWallet(payload.subAdminWallet);
+    }
+    submitter?.blur();
+    await renderAdmin({ forceLists: true });
     openAdminPlayerModal(activeModalUserId);
   } catch (error) {
     alert(error.message);
@@ -3001,7 +3025,7 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
   if (!document.querySelector("[data-admin-inbox]")) return; // only on admin.html
   let currentOperator = null;
 
-  function hideAdminOnly() {
+  function hideAdminOnly(operator = currentOperator) {
     document.querySelectorAll("[data-admin-only]").forEach((el) => {
       el.style.display = "none";
       el.setAttribute("aria-hidden", "true");
@@ -3018,13 +3042,13 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
     // Update the page title to match.
     const adminTitle = document.querySelector("[data-admin-title]");
     if (adminTitle) adminTitle.textContent = "Your players";
-    // Add a sub-admin badge at the top so it's clear which role is logged in.
+    // Add the logged-in sub-admin name at the top.
     const topbar = document.querySelector(".admin-topbar-actions");
     if (topbar && !document.querySelector("[data-subadmin-badge]")) {
       const badge = document.createElement("span");
       badge.setAttribute("data-subadmin-badge", "");
       badge.style.cssText = "padding:0.3rem 0.7rem;background:rgba(123,228,176,0.15);color:#7be4b0;border:1px solid rgba(123,228,176,0.4);border-radius:4px;font-size:0.8rem;font-weight:600;";
-      badge.textContent = "Sub-admin";
+      badge.textContent = operator?.username || operator?.id || "Sub-admin";
       topbar.prepend(badge);
     }
   }
@@ -3047,6 +3071,7 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
     badge.textContent = walletText;
     topbar.prepend(badge);
   }
+  window.__sdUpdateSubAdminWallet = updateSubAdminWallet;
 
   async function loadOperator() {
     try {
@@ -3057,7 +3082,7 @@ if (slotAutoBtn) slotAutoBtn.addEventListener("click", () => {
       window.__sdOperator = payload;
       // If sub-admin, hide admin-only UI elements.
       if (payload.role === "sub_admin") {
-        hideAdminOnly();
+        hideAdminOnly(payload);
       }
       // Show wallet badge somewhere visible.
       const walletNote = document.querySelector("[data-cp-wallet-note]");

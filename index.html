@@ -153,6 +153,7 @@
             <p class="auth-help" style="margin-top:1rem;font-size:0.85rem;color:rgba(255,255,255,0.6);text-align:center;">
               Don't have a login yet? Contact South Diamond support &mdash; new accounts are created by our team.
             </p>
+            <button class="button secondary" type="button" data-guest-chat-open>Chat before login</button>
           </div>
         </section>
       </section>
@@ -583,7 +584,7 @@
               </a>
             </div>
           </div>
-          <div class="chat-window floating-player-chat is-hidden" aria-label="South Diamond player chat" data-player-only data-player-chat>
+          <div class="chat-window floating-player-chat is-hidden" aria-label="South Diamond player chat" data-player-chat>
             <div class="chat-topbar">
               <div>
                 <span class="status-dot"></span>
@@ -592,7 +593,7 @@
               <button class="chat-widget-toggle" type="button" data-chat-toggle aria-expanded="true">Minimize</button>
             </div>
             <div class="chat-messages" data-player-messages aria-live="polite"></div>
-            <form class="chat-form player-chat-form is-hidden" data-player-only data-player-form>
+            <form class="chat-form player-chat-form" data-player-form>
               <label class="sr-only" for="player-message">Message</label>
               <input id="player-message" data-player-input type="text" placeholder="Type your message..." autocomplete="off" />
               <label class="chat-attach-button" for="payment-screenshot" aria-label="Attach image or file" title="Attach image or file">+</label>

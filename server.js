@@ -1364,14 +1364,18 @@ function requireOperator(request, response) {
 }
 
 // True if the operator may view/modify the given player record.
-// STRICT ISOLATION: both admin and sub-admin can only see players they OWN.
-//   - admin owns players with parentAdminId === "admin"
-//   - sub-admin owns players with parentAdminId === their id
-// Each operator runs their own tenant; main admin's only extra power is creating
-// sub-admins and loading points into their wallets.
+// Main admin can see every player. Sub-admins can only see players they created.
 function operatorOwnsPlayer(operator, player) {
   if (!operator || !player) return false;
+  if (operator.role === "admin") return true;
   return String(player.parentAdminId || "admin") === String(operator.id);
+}
+
+function ownerNameForUser(data, user) {
+  const ownerId = String(user?.parentAdminId || "admin");
+  if (ownerId === "admin") return "Main Admin";
+  const subAdmin = (data?.subAdmins || []).find((sa) => String(sa.id) === ownerId);
+  return subAdmin?.username || ownerId;
 }
 
 // True if the operator may view/modify the given chat thread.
@@ -1570,7 +1574,8 @@ function isAtLeast18(dateOfBirth) {
   return age >= 18;
 }
 
-function sanitizePointTransaction(transaction) {
+function sanitizePointTransaction(transaction, data = null) {
+  const ownerUser = data ? (data.users || []).find((user) => user.id === transaction.userId) : null;
   return {
     id: transaction.id,
     userId: transaction.userId,
@@ -1581,6 +1586,7 @@ function sanitizePointTransaction(transaction) {
     balanceAfter: roundPoints(transaction.balanceAfter),
     note: transaction.note || "",
     createdAt: transaction.createdAt,
+    ownerName: ownerUser ? ownerNameForUser(data, ownerUser) : transaction.ownerName || "",
   };
 }
 
@@ -1628,7 +1634,7 @@ function sanitizeActivity(item) {
   };
 }
 
-function sanitizeUser(user) {
+function sanitizeUser(user, data = null) {
   if (!user) return null;
   return {
     id: user.id,
@@ -1647,6 +1653,8 @@ function sanitizeUser(user) {
     referralCode: user.referralCode || createReferralCode(user),
     referredBy: user.referredBy || null,
     spinLastAt: user.spinLastAt || null,
+    parentAdminId: user.parentAdminId || "admin",
+    ownerName: data ? ownerNameForUser(data, user) : user.ownerName || "",
   };
 }
 
@@ -2303,13 +2311,11 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/users") {
-    // STRICT ISOLATION: every operator (admin or sub-admin) sees only the players
-    // they own. Admin no longer sees sub-admins' players.
     const op = requireOperator(request, response);
     if (!op) return;
     const data = await readDatabase();
     const users = (data.users || []).filter((u) => operatorOwnsPlayer(op, u));
-    return sendJson(response, 200, { users: users.map(sanitizeUser) });
+    return sendJson(response, 200, { users: users.map((user) => sanitizeUser(user, data)) });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/user-chat") {
@@ -2355,13 +2361,13 @@ async function handleApi(request, response, urlPath, url) {
     );
     const transactions = (data.pointTransactions || []).filter((t) => ownedUserIds.has(t.userId));
     return sendJson(response, 200, {
-      transactions: transactions.map(sanitizePointTransaction),
+      transactions: transactions.map((transaction) => sanitizePointTransaction(transaction, data)),
     });
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/activity") {
-    const op = requireOperator(request, response);
-    if (!op) return;
+    if (!requireAdmin(request, response)) return;
+    const op = { role: "admin", id: "admin" };
     const data = await readDatabase();
     // STRICT ISOLATION: each operator sees only activity on their own players
     // (plus their own operator-level events: sub-admin creation, wallet loads, etc.
@@ -2414,8 +2420,8 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/slots-settings") {
-    const op = requireOperator(request, response);
-    if (!op) return;
+    if (!requireAdmin(request, response)) return;
+    const op = { role: "admin", id: "admin" };
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
@@ -2434,8 +2440,8 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/slots-settings") {
-    const op = requireOperator(request, response);
-    if (!op) return;
+    if (!requireAdmin(request, response)) return;
+    const op = { role: "admin", id: "admin" };
     const body = await readBody(request);
     const data = await readDatabase();
     ensureSlotPayoutToday(data);
@@ -2462,8 +2468,8 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/slots-arcade-config") {
-    const op = requireOperator(request, response);
-    if (!op) return;
+    if (!requireAdmin(request, response)) return;
+    const op = { role: "admin", id: "admin" };
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
@@ -2476,8 +2482,8 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/slots-arcade-config") {
-    const op = requireOperator(request, response);
-    if (!op) return;
+    if (!requireAdmin(request, response)) return;
+    const op = { role: "admin", id: "admin" };
     const body = await readBody(request);
     const data = await readDatabase();
     const nextConfig = normalizeArcadeSlotsConfig(body.config || body);
@@ -2516,8 +2522,8 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/slots-arcade-stats") {
-    const op = requireOperator(request, response);
-    if (!op) return;
+    if (!requireAdmin(request, response)) return;
+    const op = { role: "admin", id: "admin" };
     const data = await readDatabase();
     const resetToday = ensureSlotPayoutToday(data);
     if (resetToday) await writeDatabase(data);
@@ -2530,8 +2536,8 @@ async function handleApi(request, response, urlPath, url) {
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/slots-arcade-stats/reset") {
-    const op = requireOperator(request, response);
-    if (!op) return;
+    if (!requireAdmin(request, response)) return;
+    const op = { role: "admin", id: "admin" };
     const body = await readBody(request);
     const gameKey = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, body.gameKey) ? String(body.gameKey) : "";
     const data = await readDatabase();
@@ -2633,10 +2639,15 @@ async function handleApi(request, response, urlPath, url) {
       }
     );
     await writeDatabase(data);
+    const scopedTransactionUserIds = new Set(
+      (data.users || []).filter((item) => operatorOwnsPlayer(op, item)).map((item) => item.id)
+    );
     return sendJson(response, 200, {
-      user: sanitizeUser(user),
-      transaction: sanitizePointTransaction(transaction),
-      transactions: data.pointTransactions.map(sanitizePointTransaction),
+      user: sanitizeUser(user, data),
+      transaction: sanitizePointTransaction(transaction, data),
+      transactions: data.pointTransactions
+        .filter((item) => scopedTransactionUserIds.has(item.userId))
+        .map((item) => sanitizePointTransaction(item, data)),
       subAdminWallet: subAdminRecord ? subAdminRecord.wallet : null,
     });
   }
@@ -2647,9 +2658,10 @@ async function handleApi(request, response, urlPath, url) {
     }
     const data = await readDatabase();
     const rows = [
-      ["Username", "VIP", "Phone", "Date of Birth", "Email", "Available Points", "Joined", "Last Login", "Chat ID"],
+      ["Username", "Sub Admin", "VIP", "Phone", "Date of Birth", "Email", "Available Points", "Joined", "Last Login", "Chat ID"],
       ...data.users.map((user) => [
         user.username,
+        ownerNameForUser(data, user),
         user.isVip ? "Yes" : "No",
         user.phone,
         user.dateOfBirth || "",

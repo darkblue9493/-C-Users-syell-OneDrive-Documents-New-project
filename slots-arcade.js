@@ -1568,7 +1568,9 @@ function renderSymbolHtml(symKey, game, opts = {}) {
 async function renderGameView(gameKey) {
   const game = GAMES[gameKey];
   if (!game) return;
-  await refreshArcadeControls();
+  refreshArcadeControls().then(() => {
+    if (State.activeGame === gameKey) applyAdminGameControls(gameKey, { force: true });
+  }).catch(() => {});
   if (!isAdminGameEnabled(gameKey)) {
     State.activeGame = gameKey;
     $("[data-lobby-view]").classList.add("hidden");
@@ -2225,7 +2227,12 @@ function bindEvents() {
       return;
     }
     if (e.target.closest("[data-back-button]")) { e.preventDefault(); backToLobby(); return; }
-    if (e.target.closest("[data-arcade-home]")) { e.preventDefault(); backToLobby(); return; }
+    if (e.target.closest("[data-arcade-home]")) {
+      e.preventDefault();
+      if (State.activeGame) backToLobby();
+      else window.location.href = "/";
+      return;
+    }
     if (e.target.closest("[data-spin-btn]")) { Audio.resume(); spinGame(); return; }
     if (e.target.closest("[data-bet-up]")) { changeBet(+1); return; }
     if (e.target.closest("[data-bet-down]")) { changeBet(-1); return; }

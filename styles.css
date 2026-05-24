@@ -5740,13 +5740,13 @@ body.is-player-logged-in [data-guest-only] {
 }
 
 .admin-player-table {
-  min-width: 1120px;
+  min-width: 1240px;
 }
 
 .admin-player-table-head,
 .admin-player-row {
   display: grid;
-  grid-template-columns: minmax(170px, 1.1fr) minmax(210px, 1.25fr) minmax(110px, 0.7fr) minmax(90px, 0.45fr) minmax(120px, 0.65fr) minmax(110px, 0.6fr) minmax(350px, 1.6fr);
+  grid-template-columns: minmax(170px, 1.1fr) minmax(210px, 1.2fr) minmax(110px, 0.65fr) minmax(90px, 0.45fr) minmax(120px, 0.7fr) minmax(120px, 0.65fr) minmax(110px, 0.6fr) minmax(350px, 1.55fr);
   align-items: center;
   gap: 18px;
 }
@@ -5777,6 +5777,7 @@ body.is-player-logged-in [data-guest-only] {
 
 .admin-player-email,
 .admin-player-phone,
+.admin-player-owner,
 .admin-player-joined {
   color: #9d927e;
 }
