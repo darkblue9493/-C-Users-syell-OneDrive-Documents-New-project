@@ -1520,63 +1520,44 @@ p {
 }
 
 .south-slots-media {
-  min-height: 260px;
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.82)),
-    url("assets/games/Diamond%20777.png") center / cover no-repeat,
-    radial-gradient(circle at 50% 18%, rgba(10, 227, 255, 0.34), transparent 22%),
-    radial-gradient(circle at 25% 24%, rgba(255, 223, 139, 0.46), transparent 16%),
-    radial-gradient(circle at 70% 42%, rgba(31, 181, 107, 0.24), transparent 24%),
-    linear-gradient(135deg, #081b3c, #080808 70%);
-  box-shadow: inset 0 0 30px rgba(10, 227, 255, 0.16);
+  min-height: clamp(220px, 28vw, 300px);
+  aspect-ratio: 1598 / 984;
+  padding: 0;
+  place-items: stretch;
+  background: #09020d;
+  box-shadow: inset 0 0 30px rgba(246, 200, 95, 0.18), 0 18px 34px rgba(0, 0, 0, 0.32);
 }
 
 .south-slots-media::before {
-  content: "777";
+  content: none;
+}
+
+.south-slots-main-art,
+.south-slots-main-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.south-slots-main-art {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: end start;
-  padding: 22px;
-  color: rgba(255, 247, 223, 0.16);
-  font-size: clamp(5rem, 12vw, 10rem);
-  font-weight: 1000;
-  letter-spacing: -0.1em;
-  line-height: 0.78;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.south-slots-main-art img {
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(1.06) contrast(1.04);
 }
 
 .south-slots-media b {
-  position: absolute;
-  right: 22px;
-  bottom: 18px;
-  width: auto;
-  height: auto;
-  color: #ff39c7;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  font-size: clamp(3.8rem, 9vw, 7rem);
-  line-height: 0.8;
-  text-shadow: 0 7px 0 #5f063b, 0 0 26px rgba(255, 57, 199, 0.46);
-  box-shadow: none;
+  display: none;
 }
 
 .south-slots-logo {
-  position: absolute;
-  left: 22px;
-  top: 22px;
-  z-index: 1;
-  display: grid;
-  gap: 4px;
-  place-items: center;
-  width: 126px;
-  height: 126px;
-  border: 5px solid rgba(255, 226, 142, 0.9);
-  border-radius: 30px;
-  color: #130d03;
-  background: radial-gradient(circle at 35% 22%, #fff7ce, #f6c85f 52%, #a06d05);
-  box-shadow: 0 0 34px rgba(255, 226, 142, 0.44);
-  transform: rotate(-5deg);
+  display: none;
 }
 
 .south-slots-logo i {
@@ -6522,6 +6503,10 @@ body.is-player-logged-in [data-guest-only] {
 @media (max-width: 720px) {
   .south-slots-card {
     grid-column: auto;
+  }
+
+  .south-slots-media {
+    min-height: clamp(190px, 58vw, 250px);
   }
 
   .slots-modal {

@@ -10,11 +10,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
+  <link rel="preload" as="image" href="assets/slots/south-diamond-lobby-bg-desktop.webp?v=20260525-lobby-bg" media="(min-width: 769px)" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/slots/south-diamond-lobby-bg-phone.webp?v=20260525-lobby-bg" media="(max-width: 768px)" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/slots/south-diamond-slots-banner.webp?v=20260525-slots-banner" fetchpriority="high" />
   <link rel="preload" as="image" href="assets/slots/wildBuffalo-thumb-fast.webp?v=20260524-all-lobby-cards" fetchpriority="high" />
   <link rel="preload" as="image" href="assets/slots/kingKong-thumb-fast.webp?v=20260524-all-lobby-cards" fetchpriority="high" />
   <link rel="stylesheet" href="slots-arcade.css" />
 </head>
-<body class="slots-arcade-body">
+<body class="slots-arcade-body is-lobby-active">
   <!-- Persistent header with brand + balance + controls -->
   <header class="arcade-header">
     <button class="arcade-back hidden" type="button" data-back-button aria-label="Back to lobby">&larr;</button>
@@ -73,8 +76,11 @@
   <!-- Lobby view: grid of game tiles -->
   <main class="lobby-view" data-lobby-view>
     <div class="lobby-intro">
-      <h1>SOUTH DIAMOND SLOTS</h1>
-      <p>24 premium games · Live jackpots · Real spin action</p>
+      <h1 class="lobby-title-fallback">South Diamond Slots</h1>
+      <picture class="lobby-title-art">
+        <source srcset="assets/slots/south-diamond-slots-banner.webp?v=20260525-slots-banner" type="image/webp" />
+        <img src="assets/slots/south-diamond-slots-banner.png?v=20260525-slots-banner" alt="South Diamond Slots - 24 premium games, live jackpots, real spin action" width="2172" height="724" fetchpriority="high" decoding="async" />
+      </picture>
     </div>
     <div class="lobby-grid" data-lobby-grid>
       <!-- Tiles injected by JS -->

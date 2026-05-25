@@ -1814,6 +1814,7 @@ async function renderGameView(gameKey) {
   }).catch(() => {});
   if (!isAdminGameEnabled(gameKey)) {
     State.activeGame = gameKey;
+    document.body.classList.remove("is-lobby-active");
     $("[data-lobby-view]").classList.add("hidden");
     $("[data-game-view]").classList.remove("hidden");
     $("[data-back-button]").classList.remove("hidden");
@@ -1906,6 +1907,7 @@ async function renderGameView(gameKey) {
 
   // Show game view, hide lobby
   hideMaintenanceOverlay();
+  document.body.classList.remove("is-lobby-active");
   $("[data-lobby-view]").classList.add("hidden");
   $("[data-game-view]").classList.remove("hidden");
   $("[data-back-button]").classList.remove("hidden");
@@ -2475,6 +2477,7 @@ function backToLobby() {
   State.activeGame = null;
   $("[data-game-view]").classList.add("hidden");
   $("[data-lobby-view]").classList.remove("hidden");
+  document.body.classList.add("is-lobby-active");
   $("[data-back-button]").classList.add("hidden");
   updateDisplays();
 }

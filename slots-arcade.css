@@ -18,6 +18,20 @@ body.slots-arcade-body {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
+body.slots-arcade-body.is-lobby-active,
+body.slots-arcade-body:has(.lobby-view:not(.hidden)) {
+  background-color: #07020a;
+  background-image:
+    linear-gradient(180deg, rgba(5, 0, 8, .38) 0%, rgba(5, 0, 8, .2) 34%, rgba(5, 0, 8, .72) 100%),
+    image-set(
+      url("assets/slots/south-diamond-lobby-bg-desktop.webp?v=20260525-lobby-bg") type("image/webp"),
+      url("assets/slots/south-diamond-lobby-bg-desktop.jpg?v=20260525-lobby-bg") type("image/jpeg")
+    );
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
 button { font-family: inherit; cursor: pointer; }
 .hidden { display: none !important; }
 
@@ -211,7 +225,39 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ----- LOBBY ----- */
 .lobby-view { padding: 16px; }
-.lobby-intro { text-align: center; margin-bottom: 20px; }
+.lobby-intro {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  margin: 0 auto 20px;
+  max-width: min(1180px, 100%);
+}
+.lobby-title-fallback {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.lobby-title-art {
+  display: block;
+  width: min(100%, 1086px);
+  aspect-ratio: 2172 / 724;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #08020d;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, .35), 0 0 28px rgba(255, 154, 28, .18);
+}
+.lobby-title-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 .lobby-intro h1 {
   font-family: "Impact", "Arial Black", sans-serif;
   font-size: 2.4rem;
@@ -1671,6 +1717,50 @@ button { font-family: inherit; cursor: pointer; }
 .lobby-intro p {
   font-size: 1rem !important;
   font-weight: 700 !important;
+}
+.lobby-intro .lobby-title-fallback {
+  animation: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+@media (max-width: 768px) {
+  body.slots-arcade-body.is-lobby-active,
+  body.slots-arcade-body:has(.lobby-view:not(.hidden)) {
+    background-image:
+      linear-gradient(180deg, rgba(5, 0, 8, .2) 0%, rgba(5, 0, 8, .18) 38%, rgba(5, 0, 8, .74) 100%),
+      image-set(
+        url("assets/slots/south-diamond-lobby-bg-phone.webp?v=20260525-lobby-bg") type("image/webp"),
+        url("assets/slots/south-diamond-lobby-bg-phone.jpg?v=20260525-lobby-bg") type("image/jpeg")
+      );
+    background-size: cover;
+    background-position: center top;
+    background-attachment: scroll;
+  }
+
+  .lobby-view {
+    padding: 12px 10px;
+  }
+
+  .lobby-intro {
+    margin-bottom: 14px;
+  }
+
+  .lobby-title-art {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .32), 0 0 18px rgba(255, 154, 28, .16);
+  }
+}
+
+@media (max-width: 420px) {
+  .lobby-view {
+    padding-inline: 8px;
+  }
+
+  .lobby-title-art {
+    border-radius: 8px;
+  }
 }
 
 /* Animated jackpot pulse on lobby */
