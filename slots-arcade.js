@@ -979,9 +979,10 @@ const GAME_ORDER = [
 //   - {gameKey}-bg.jpg     -> in-game background scene (1920x1080)
 // ============================================================
 const ASSET_BASE = "assets/slots/";
-const ASSET_VERSION = "v=20260524-advanced-spin-math";
+const ASSET_VERSION = "v=20260524-all-lobby-cards";
 const ASSET_KEYS = GAME_ORDER;
 const ASSET_CACHE = {};
+const FULL_TILE_ART_KEYS = new Set(GAME_ORDER);
 
 function versionedAssetUrl(url) {
   return `${url}${url.includes("?") ? "&" : "?"}${ASSET_VERSION}`;
@@ -998,6 +999,15 @@ function checkAssetExists(url) {
 }
 
 function applyTileArt(tileEl, gameKey) {
+  if (FULL_TILE_ART_KEYS.has(gameKey)) {
+    const thumbUrl = versionedAssetUrl(`${ASSET_BASE}${gameKey}-thumb-fast.webp`);
+    tileEl.classList.add("has-full-tile-art");
+    const bg = tileEl.querySelector(".tile-bg");
+    if (bg) bg.style.backgroundImage = `url('${thumbUrl}')`;
+    const art = tileEl.querySelector(".tile-mascot-art");
+    if (art) art.innerHTML = `<img src="${thumbUrl}" alt="" loading="eager" decoding="async" fetchpriority="high" />`;
+    return;
+  }
   const thumbUrl = versionedAssetUrl(`${ASSET_BASE}${gameKey}-thumb.png`);
   checkAssetExists(thumbUrl).then((exists) => {
     if (exists) {
@@ -1334,7 +1344,7 @@ function saveState() {
 //   - Per-reel weighted reel strips (industry-standard)
 //   - Wild multipliers (game.wildMultiplier: 2 / 3)
 //   - 243 / 1024 ways-to-win evaluation (game.wayMode = "ways")
-//   - Free-spin bonus rounds (3+ scatters: 10 / 15 / 20 spins)
+//   - Free-spin bonus rounds (3+ scatters: 10 / 15 / 20 spins, 2x multiplier)
 //   - RTP governor (uses admin SlotsConfig.computeRtpMultiplier)
 //   - Live progressive jackpots (unchanged)
 //   - All existing image / paytable / symbol contracts preserved
@@ -1374,7 +1384,6 @@ function buildReelWeights(game) {
       const sym = game.symbols[k];
       let weight = Number(sym.weight) || 1;
       if (sym.wild && (r === 0 || r === game.reels - 1)) {
-        // wilds slightly rarer on first/last reel
         weight = Math.max(1, Math.round(weight * 0.8));
       }
       if (sym.scatter) {
@@ -1402,7 +1411,6 @@ function weightedPick(symbols) {
   return keys[keys.length - 1];
 }
 
-// Per-reel pick (used by generateGrid)
 function weightedPickReel(game, reelIndex) {
   const reels = buildReelWeights(game);
   const w = reels[reelIndex] || reels[0];
@@ -1430,8 +1438,6 @@ function _generateGridRaw(game) {
   return grid;
 }
 
-// Cheap pay probe used by the RTP governor below — sums raw symbol pays only,
-// no bet scaling or jackpot rolls. It's a relative comparison, not an absolute.
 function _quickPayProbe(game, grid) {
   let sum = 0;
   if (game.wayMode === "ways") {
@@ -1449,9 +1455,9 @@ function _quickPayProbe(game, grid) {
   return sum;
 }
 
-// generateGrid: pick a base grid, optionally nudge toward admin RTP target by
-// re-rolling a few candidates and picking the one whose probe is closer to the
-// desired direction. Doesn't alter symbol probabilities meaningfully.
+// generateGrid: optionally re-roll a few candidates and pick the one whose
+// probe is closer to admin RTP target. Preserves symbol probabilities since
+// each candidate is i.i.d. sampled from the same distribution.
 function generateGrid(game) {
   const baseGrid = _generateGridRaw(game);
   if (!State.activeGame || typeof SlotsConfig === "undefined" || !SlotsConfig.computeRtpMultiplier) {
@@ -1462,7 +1468,6 @@ function generateGrid(game) {
   if (Math.abs(mult - 1) < 0.05) return baseGrid;
   const wantMoreWins = mult > 1;
   const candidates = [baseGrid];
-  // 3 alternatives — keeps spin time fast
   for (let i = 0; i < 3; i++) candidates.push(_generateGridRaw(game));
   let best = candidates[0];
   let bestScore = wantMoreWins ? -Infinity : Infinity;
@@ -1504,7 +1509,6 @@ function evaluatePayline(game, grid, payline) {
     if (count < symbolMinWinningCount(target, game.reels)) return;
     const basePay = symbolPayForCount(target, count);
     if (!basePay) return;
-    // Wild multiplier: if any wild participated and the game enables it
     let mult = 1;
     if (wildCount > 0 && game.wildMultiplier) {
       mult = (typeof game.wildMultiplier === "number") ? game.wildMultiplier : 2;
@@ -1544,10 +1548,8 @@ function evaluateScatters(game, grid) {
   return { symbol: scatterSym, count, pay, positions };
 }
 
-// 243 / 1024 ways-to-win: for each non-wild, non-scatter symbol, walk reels
-// left-to-right. On each reel count how many positions hold that symbol or a
-// wild. Multiply counts across consecutive reels for the total ways the
-// symbol "appears" — pays out paytable[count] * ways once minCount reels hit.
+// 243/1024 ways: for each non-wild non-scatter symbol, walk reels L-to-R;
+// on each reel count target+wild occurrences and multiply.
 function evaluateWays(game, grid) {
   const wins = [];
   const symKeys = Object.keys(game.symbols);
@@ -1575,7 +1577,7 @@ function evaluateWays(game, grid) {
       reelsHit++;
       rowsHere.forEach((row) => positions.push([r, row]));
     }
-    if (!anyTargetSeen) continue;        // pure wild line (handled by other syms)
+    if (!anyTargetSeen) continue;
     if (reelsHit < minCount) continue;
     const basePay = symbolPayForCount(target, reelsHit);
     if (!basePay) continue;
@@ -1593,7 +1595,6 @@ function evaluateSpin(game, grid, bet) {
   let totalPay = 0;
 
   if (game.wayMode === "ways") {
-    // For ways games, "coin value" denominator = total possible ways
     const totalWays = Math.pow(Math.max(1, game.rows), Math.max(1, game.reels));
     const coinValue = bet / totalWays;
     const wayWins = evaluateWays(game, grid);
@@ -1614,7 +1615,6 @@ function evaluateSpin(game, grid, bet) {
     });
   }
 
-  // Scatter pay + free-spin trigger
   const scatter = evaluateScatters(game, grid);
   let freeSpinsAwarded = 0;
   if (scatter) {
@@ -1626,7 +1626,6 @@ function evaluateSpin(game, grid, bet) {
     else if (scatter.count === 3) freeSpinsAwarded = 10;
   }
 
-  // Free-spin multiplier applies to all line/scatter wins (not jackpots)
   if (State.freeSpinsRemaining > 0) {
     const fsMult = Number(State.freeSpinMultiplier) || 2;
     if (fsMult !== 1) {
@@ -1635,7 +1634,7 @@ function evaluateSpin(game, grid, bet) {
     }
   }
 
-  // Progressive jackpot check (unchanged probabilities)
+  // Progressive jackpot check (unchanged behavior)
   let jpHit = null;
   const r = rng();
   if (r < State.jackpotChance.grand) { jpHit = "grand"; totalPay += State.jackpots.grand; }
@@ -1695,11 +1694,22 @@ const Audio = {
   click() { this.tone(440, 0.05, 0.06, "square"); },
   reelStop() { this.tone(220 + Math.random() * 80, 0.08, 0.05, "triangle"); },
   spinStart() { [440, 660, 880].forEach((f, i) => setTimeout(() => this.tone(f, 0.08, 0.05), i * 50)); },
-  win(big = false) {
+  win(big = false, game = null) {
+    // Theme-aware win fanfare: use the game's musical scale so the celebratory
+    // arpeggio matches the game's musical bed instead of always being C-major.
+    const seed = (game && game.music && Array.isArray(game.music.scale) && game.music.scale.length)
+      ? game.music.scale.slice()
+      : [523, 659, 784, 1047, 1318, 1568];
+    const baseScale = seed.slice();
+    let idx = 0;
+    while (baseScale.length < 6) {
+      baseScale.push(seed[idx % seed.length] * 2);
+      idx++;
+    }
     if (big) {
-      [523, 659, 784, 1047, 1318, 1568].forEach((f, i) => setTimeout(() => this.tone(f, 0.18, 0.1, "triangle"), i * 80));
+      baseScale.slice(0, 6).forEach((f, i) => setTimeout(() => this.tone(f, 0.18, 0.1, "triangle"), i * 80));
     } else {
-      [523, 659, 784].forEach((f, i) => setTimeout(() => this.tone(f, 0.14, 0.08), i * 70));
+      baseScale.slice(0, 3).forEach((f, i) => setTimeout(() => this.tone(f, 0.14, 0.08), i * 70));
     }
   },
   jackpot() {
@@ -1954,7 +1964,36 @@ function updateDisplays() {
   $("[data-jp-minor]").textContent = "$" + fmt(State.jackpots.minor);
   $("[data-jp-mini]").textContent = "$" + fmt(State.jackpots.mini);
   const linesEl = $("[data-lines]");
-  if (linesEl && State.activeGame) linesEl.textContent = GAMES[State.activeGame].paylines.length;
+  if (linesEl && State.activeGame) {
+    const g = GAMES[State.activeGame];
+    linesEl.textContent = g.wayMode === "ways"
+      ? Math.pow(Math.max(1, g.rows), Math.max(1, g.reels))
+      : g.paylines.length;
+  }
+}
+
+// Render or hide the free-spin counter badge in the game view
+function renderFreeSpinBadge() {
+  const gameView = $("[data-game-view]");
+  if (!gameView) return;
+  let badge = gameView.querySelector("[data-free-spin-badge]");
+  if (State.freeSpinsRemaining > 0) {
+    if (!badge) {
+      badge = document.createElement("div");
+      badge.className = "free-spin-badge";
+      badge.setAttribute("data-free-spin-badge", "");
+      gameView.appendChild(badge);
+    }
+    const mult = Number(State.freeSpinMultiplier) || 2;
+    badge.innerHTML = `
+      <div class="fsb-title">FREE SPINS</div>
+      <div class="fsb-count">${State.freeSpinsRemaining}</div>
+      <div class="fsb-meta">${mult}x multiplier \u00b7 won ${fmt(State.freeSpinTotalWin || 0)}</div>
+    `;
+    badge.classList.remove("hidden");
+  } else if (badge) {
+    badge.classList.add("hidden");
+  }
 }
 
 function startJackpotTicker() {
@@ -2044,12 +2083,14 @@ function triggerLandingEffect(reelEl, effect) {
 async function spinGame() {
   if (State.isSpinning || !State.activeGame) return;
   const game = GAMES[State.activeGame];
+  const isFreeSpin = State.freeSpinsRemaining > 0;
+  const spinBet = isFreeSpin ? (State.freeSpinTriggerBet || State.bet) : State.bet;
   if (!State.player && !(await refreshPlayerPoints({ redirectOnFail: true }))) {
     stopAutoSpin();
     return;
   }
   await refreshArcadeControls();
-  if (State.credits < State.bet) {
+  if (!isFreeSpin && State.credits < State.bet) {
     flashMessage("Not enough South Diamond points. Ask admin to add points.");
     stopAutoSpin();
     return;
@@ -2061,7 +2102,7 @@ async function spinGame() {
     return;
   }
   clampBetToAdmin(State.activeGame);
-  if (State.credits < State.bet) {
+  if (!isFreeSpin && State.credits < State.bet) {
     flashMessage("Not enough South Diamond points for this game's admin bet limit.");
     stopAutoSpin();
     return;
@@ -2075,12 +2116,18 @@ async function spinGame() {
   Audio.resume();
   Audio.spinStart();
 
-  // Deduct bet, increment jackpots
-  State.credits -= State.bet;
-  State.totalWagered += State.bet;
-  State.spinCount++;
-  incrementJackpots(State.bet);
+  if (isFreeSpin) {
+    State.freeSpinsRemaining -= 1;
+    State.spinCount++;
+    setWinMessage(`FREE SPIN \u2014 ${State.freeSpinsRemaining} left`);
+  } else {
+    State.credits -= State.bet;
+    State.totalWagered += State.bet;
+    State.spinCount++;
+    incrementJackpots(State.bet);
+  }
   updateDisplays();
+  renderFreeSpinBadge();
   setWinMessage("Reels rolling...");
   $("[data-win-amount]").textContent = "0.00";
   $("[data-reel-strip]").classList.remove("is-winning");
@@ -2088,20 +2135,20 @@ async function spinGame() {
 
   // Generate result
   const grid = generateGrid(game);
-  const result = evaluateSpin(game, grid, State.bet);
+  const result = evaluateSpin(game, grid, spinBet);
   const settlementPromise = arcadeApi("/api/player/slots/arcade-spin", {
     method: "POST",
     body: JSON.stringify({
       gameKey: State.activeGame,
-      bet: State.bet,
+      bet: isFreeSpin ? 0 : State.bet,
       win: result.totalPay || 0,
     }),
   });
 
   // Determine if we should show anticipation
   const isJackpot = !!result.jpHit;
-  const isMegaWin = !isJackpot && result.totalPay >= State.bet * 30;
-  const isBigWin  = !isJackpot && !isMegaWin && result.totalPay >= State.bet * 10;
+  const isMegaWin = !isJackpot && result.totalPay >= spinBet * 30;
+  const isBigWin  = !isJackpot && !isMegaWin && result.totalPay >= spinBet * 10;
   const slowFinish = isJackpot || isMegaWin;
 
   // Animate reels stopping left-to-right; last reel gets slowFinish if anticipation needed
@@ -2156,9 +2203,11 @@ async function spinGame() {
   if (result.totalPay > 0) {
     State.credits += result.totalPay;
     State.totalWon += result.totalPay;
+    if (isFreeSpin) State.freeSpinTotalWin += result.totalPay;
     $("[data-reel-strip]").classList.add("is-winning");
-    const isBig  = !isJackpot && !isMegaWin && result.totalPay >= State.bet * 10;
+    const isBig  = !isJackpot && !isMegaWin && result.totalPay >= spinBet * 10;
     const isMega = isMegaWin;
+    const fsTag = isFreeSpin ? " (FREE)" : "";
     // Anticipation before reveal for big/mega/jackpot wins
     if (isJackpot) {
       await showAnticipation(result.jpHit, 2500);
@@ -2168,24 +2217,44 @@ async function spinGame() {
     } else if (isMega) {
       await showAnticipation("mega", 1500);
       showWinBurst(result.totalPay, true, true);
-      Audio.win(true);
-      setWinMessage(`MEGA WIN! +${fmt(result.totalPay)}`);
+      Audio.win(true, game);
+      setWinMessage(`MEGA WIN${fsTag}! +${fmt(result.totalPay)}`);
     } else if (isBig) {
       await showAnticipation("big", 900);
       showWinBurst(result.totalPay, true, false);
-      Audio.win(true);
-      setWinMessage(`BIG WIN! +${fmt(result.totalPay)}`);
+      Audio.win(true, game);
+      setWinMessage(`BIG WIN${fsTag}! +${fmt(result.totalPay)}`);
     } else {
       showWinBurst(result.totalPay, false, false);
-      Audio.win(false);
-      setWinMessage(`Win! +${fmt(result.totalPay)}`);
+      Audio.win(false, game);
+      setWinMessage(`Win${fsTag}! +${fmt(result.totalPay)}`);
     }
     animateCounter($("[data-win-amount]"), 0, result.totalPay, 1200);
+  } else if (isFreeSpin) {
+    setWinMessage(`Free spin \u2014 no win. ${State.freeSpinsRemaining} left.`);
   } else {
     setWinMessage("Good luck! Try again.");
   }
 
+  // Free-spin trigger (only when not already inside a free-spin session)
+  if (!isFreeSpin && result.freeSpinsAwarded > 0) {
+    State.freeSpinsRemaining = result.freeSpinsAwarded;
+    State.freeSpinTriggerBet = State.bet;
+    State.freeSpinTotalWin = 0;
+    await showAnticipation("big", 900);
+    setWinMessage(`${result.freeSpinsAwarded} FREE SPINS UNLOCKED! Tap SPIN to play.`);
+  }
+  // End-of-session summary
+  if (isFreeSpin && State.freeSpinsRemaining === 0) {
+    const total = State.freeSpinTotalWin;
+    State.freeSpinTotalWin = 0;
+    State.freeSpinTriggerBet = 0;
+    if (total > 0) setWinMessage(`Free spins complete! Total: +${fmt(total)}`);
+    else setWinMessage("Free spins complete.");
+  }
+
   updateDisplays();
+  renderFreeSpinBadge();
   if (settlement?.user) {
     State.player = settlement.user;
     State.credits = Number(settlement.user.points) || State.credits;
@@ -2194,7 +2263,7 @@ async function spinGame() {
   }
   saveState();
   if (typeof SlotsConfig !== "undefined") {
-    try { SlotsConfig.recordSpin(State.activeGame, State.bet, result.totalPay || 0); } catch (err) {}
+    try { SlotsConfig.recordSpin(State.activeGame, isFreeSpin ? 0 : State.bet, result.totalPay || 0); } catch (err) {}
   }
   State.isSpinning = false;
   if (spinButton) {
@@ -2202,9 +2271,11 @@ async function spinGame() {
     spinButton.disabled = false;
   }
 
-  // Auto-spin
-  if (State.autoSpin) {
-    setTimeout(() => { if (State.autoSpin) spinGame(); }, 650);
+  // Auto-spin (also auto-continues free spins)
+  if (State.autoSpin || State.freeSpinsRemaining > 0) {
+    setTimeout(() => {
+      if (State.autoSpin || State.freeSpinsRemaining > 0) spinGame();
+    }, 650);
   }
 }
 

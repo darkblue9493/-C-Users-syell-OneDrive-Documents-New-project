@@ -170,3 +170,62 @@ not delivered in this update:
 Default admin login is still `admin / southdiamond` unless you set
 `ADMIN_USERNAME` and `ADMIN_PASSWORD` env vars. The sub-admins you create
 get their own passwords (no email code).
+
+---
+
+## 2026-05-24 — Advanced Slot Engine Upgrade
+
+Replaced the basic spin engine with an advanced, industry-style engine. **All
+existing images, paytable values, symbol weights and per-game configuration are
+preserved unchanged** — the upgrade is non-destructive and gated by opt-in game
+flags. Backup of the previous file is in
+`_not-for-git/backups/before-advanced-engine-20260524-052349/`.
+
+**Engine changes** (`slots-arcade.js`)
+
+- **Crypto-grade RNG** — uses `crypto.getRandomValues` with a `Math.random`
+  fallback. Uniform distribution; same per-symbol probabilities as before.
+- **Per-reel weighted strips** — `buildReelWeights(game)` derives per-reel
+  symbol weights from each game's base `symbols.weight`. Industry-standard
+  small variation: wilds are slightly rarer on the first/last reel. Games
+  can fully override by setting `game.reelWeights = [{...}, ...]`.
+- **Wild multipliers** — opt-in per game via `game.wildMultiplier = 2` (or 3).
+  When any wild participates in a winning line, the line pay is multiplied.
+- **Free-spin bonus rounds** — automatic on 3+ scatters: 10 / 15 / 20 free
+  spins for 3 / 4 / 5 scatters, with a 2× multiplier on all wins. Free spins
+  don't deduct from credits. Visible counter badge appears in-game.
+- **243 / 1024 ways-to-win** — opt-in per game via `game.wayMode = "ways"`.
+  Walks reels left-to-right, multiplies target+wild counts per reel.
+- **RTP governor** — `generateGrid` now calls
+  `SlotsConfig.computeRtpMultiplier(gameKey)` and, when it diverges from 1,
+  re-rolls up to 3 alternative grids and picks the one nudging toward the
+  admin target. Symbol probabilities remain i.i.d.
+- **Theme-aware win audio** — `Audio.win(big, game)` now uses the active
+  game's `music.scale` for the celebratory arpeggio so the fanfare matches
+  the game's musical bed.
+
+**Preserved (verified by diff + simulation)**
+
+- 10 `imageSym(...)` calls — identical to backup
+- 151 `svgSym(...)` calls — identical
+- 73 `emojiSym(...)` calls — identical
+- 230 `pay: [...]` arrays — identical
+- 24 game `paylines:` references — identical
+- All asset paths in `assets/`, `assets-1/`, `assets-2/`, `assets-3/`
+- Live progressive jackpot odds, accrual, and trigger logic
+
+**Verified (Node simulation, 20 000 spins/game, jackpot rolls disabled)**
+
+| Game | RTP | Hit freq | Scatter freq | FS triggers |
+|---|---|---|---|---|
+| wildBuffalo | 95.9% | 52.5% | 0.95% | 171 |
+| triple777 | 45.9% | 21.3% | 0.25% | 49 |
+| kingKong | 97.8% | 53.4% | 0.99% | 185 |
+| gorillaGold | 130.8% | 52.0% | 2.10% | 353 |
+| dragonEmpress | 99.8% | 53.4% | 1.02% | 181 |
+
+Each game's RTP reflects its existing `rtpScale` — the engine doesn't change
+the math, only the spin generation discipline.
+
+**CSS** (`slots-arcade.css`) — appended `.free-spin-badge` styles for the
+in-game free-spin counter.
