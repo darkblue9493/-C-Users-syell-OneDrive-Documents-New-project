@@ -7872,3 +7872,608 @@ body.is-player-logged-in [data-guest-only] {
   .rwin-row { grid-template-columns: 60px 1fr 1fr; }
   .rwin-row .rwin-bet, .rwin-row .rwin-mult { display: none; }
 }
+
+/* ============================================================
+   ADMIN + SUB-ADMIN MOBILE POLISH
+   ============================================================ */
+.admin-messages-page .admin-main {
+  margin-left: 0;
+}
+
+.admin-body [data-subadmin-badge],
+.admin-body [data-subadmin-wallet-badge] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 38px !important;
+  border-radius: 999px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+}
+
+.admin-body .admin-control-panel,
+.admin-body .admin-workspace,
+.admin-body .registered-list,
+.admin-body .points-action-list,
+.admin-body .points-transaction-list,
+.admin-body .activity-list,
+.admin-body .broadcast-player-list {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  body.admin-body {
+    background: #08080e;
+  }
+
+  .admin-body .site-header.admin-side-nav {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 160 !important;
+    display: block !important;
+    width: 100% !important;
+    max-height: none !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(255, 214, 64, 0.22) !important;
+    background: rgba(8, 8, 14, 0.98) !important;
+    backdrop-filter: blur(14px);
+  }
+
+  .admin-body .admin-brand {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 56px;
+    padding: 12px 14px 8px !important;
+  }
+
+  .admin-body .admin-brand span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.08rem !important;
+  }
+
+  .admin-body .admin-brand small {
+    flex: 0 0 auto;
+    font-size: 0.68rem !important;
+  }
+
+  .admin-body .site-nav.admin-nav,
+  .admin-body .admin-nav {
+    display: flex !important;
+    grid-template-columns: none !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 8px 10px 12px !important;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .admin-body .admin-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-nav-label {
+    display: none !important;
+  }
+
+  .admin-body .admin-nav button,
+  .admin-body .admin-nav a {
+    flex: 0 0 auto;
+    grid-template-columns: 28px auto !important;
+    min-width: max-content;
+    min-height: 42px !important;
+    padding: 0 12px 0 8px !important;
+    border-radius: 999px !important;
+    font-size: 0.82rem !important;
+    scroll-snap-align: start;
+  }
+
+  .admin-body .admin-nav span:not(.admin-nav-label) {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 999px !important;
+    font-size: 0.68rem !important;
+  }
+
+  .admin-body .admin-main,
+  .admin-messages-page .admin-main {
+    margin-left: 0 !important;
+    padding-top: 0 !important;
+    min-height: auto;
+    background-size: 64px 64px !important;
+  }
+
+  .admin-body .admin-main .section {
+    padding: 0 !important;
+  }
+
+  .admin-body .section-inner.admin-shell {
+    gap: 12px !important;
+    padding: 0 10px 24px !important;
+  }
+
+  .admin-topbar {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    min-height: auto !important;
+    margin: 0 -10px !important;
+    padding: 14px 10px !important;
+  }
+
+  .admin-topbar h1 {
+    font-size: clamp(1.45rem, 8vw, 2.1rem) !important;
+    line-height: 1 !important;
+  }
+
+  .admin-topbar-actions {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .admin-topbar-actions .game-link,
+  .admin-topbar-actions .logout-button {
+    flex: 1 1 auto;
+    min-height: 38px !important;
+    padding: 0 12px !important;
+    border-radius: 999px !important;
+    font-size: 0.86rem;
+  }
+
+  .admin-body [data-subadmin-badge],
+  .admin-body [data-subadmin-wallet-badge] {
+    flex: 1 1 100% !important;
+    white-space: normal !important;
+    text-align: center;
+  }
+
+  .admin-body .admin-control-center,
+  .admin-body .admin-layout,
+  .admin-dashboard.messenger-chat {
+    border-radius: 14px !important;
+  }
+
+  .admin-body .admin-control-panels {
+    min-height: 0 !important;
+  }
+
+  .admin-body .chat-topbar,
+  .chat-section-heading {
+    min-height: auto !important;
+    padding: 14px !important;
+    gap: 10px;
+  }
+
+  .admin-body .chat-topbar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .admin-body .chat-topbar > div,
+  .chat-section-heading > div {
+    min-width: 0;
+  }
+
+  .admin-body .chat-topbar strong,
+  .chat-section-heading h2 {
+    overflow-wrap: anywhere;
+    font-size: clamp(1rem, 5vw, 1.35rem);
+  }
+
+  .admin-body .admin-search-row,
+  .admin-body .points-action-list,
+  .admin-body .points-transaction-list,
+  .admin-body .activity-list,
+  .admin-body .broadcast-player-list {
+    padding: 12px !important;
+  }
+
+  .admin-filter-row {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .admin-filter-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-filter-row button {
+    flex: 0 0 auto;
+  }
+
+  .admin-body .dashboard-grid,
+  .slots-summary-grid,
+  .spin-admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 12px !important;
+  }
+
+  .admin-body .dashboard-grid article {
+    min-height: 96px !important;
+    padding: 14px 12px;
+  }
+
+  .admin-body .dashboard-grid article span,
+  .slots-summary-grid article span {
+    font-size: 0.66rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .admin-body .dashboard-grid strong {
+    font-size: clamp(1.8rem, 11vw, 2.55rem) !important;
+  }
+
+  .admin-body .registered-list,
+  .admin-body .points-transaction-list,
+  .admin-body .points-action-list,
+  .admin-body .activity-list,
+  .admin-body .broadcast-player-list {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .admin-player-table {
+    display: grid;
+    width: 100%;
+    min-width: 0 !important;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .admin-player-table-head {
+    display: none !important;
+  }
+
+  .admin-body .registered-player.admin-player-row,
+  .admin-player-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    padding: 14px !important;
+    border: 1px solid rgba(255, 214, 64, 0.12);
+    border-radius: 14px;
+    background: #14141c;
+  }
+
+  .registered-player-identity {
+    grid-template-columns: auto auto minmax(0, 1fr) !important;
+    column-gap: 8px;
+  }
+
+  .registered-player-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-player-email,
+  .admin-player-phone,
+  .admin-player-owner,
+  .admin-player-joined,
+  .admin-player-points,
+  .admin-player-status {
+    display: grid !important;
+    grid-template-columns: 86px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 28px;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-player-email::before { content: "Email"; }
+  .admin-player-phone::before { content: "Phone"; }
+  .admin-player-owner::before { content: "Sub Admin"; }
+  .admin-player-joined::before { content: "Joined"; }
+  .admin-player-points::before { content: "Points"; }
+  .admin-player-status::before { content: "Status"; }
+
+  .admin-player-email::before,
+  .admin-player-phone::before,
+  .admin-player-owner::before,
+  .admin-player-joined::before,
+  .admin-player-points::before,
+  .admin-player-status::before {
+    color: #8d8271;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .admin-player-status.status-pill {
+    justify-content: stretch;
+    max-width: none;
+    padding: 6px 10px;
+    border-radius: 10px;
+  }
+
+  .admin-player-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px !important;
+    margin-top: 4px;
+  }
+
+  .admin-mini-button,
+  .admin-action-button {
+    min-width: 0;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 0.78rem;
+  }
+
+  .points-action-card,
+  .admin-points-form,
+  .spin-admin-grid,
+  .sga-grid-2,
+  .admin-modal-form-row,
+  .admin-modal-form-row.compact {
+    grid-template-columns: 1fr !important;
+  }
+
+  .points-action-card {
+    align-items: stretch !important;
+    padding: 14px !important;
+    border-radius: 14px;
+  }
+
+  .admin-points-form {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .admin-points-form .game-link,
+  .admin-points-form button,
+  .admin-reset-form .button,
+  .admin-note-form .button {
+    width: 100%;
+  }
+
+  .points-transaction,
+  .activity-item {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  .broadcast-panel {
+    padding: 14px;
+  }
+
+  .broadcast-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .broadcast-player-card {
+    grid-template-columns: auto 12px minmax(0, 1fr) !important;
+    gap: 10px;
+  }
+
+  .broadcast-player-card small,
+  .broadcast-player-card b {
+    grid-column: 3;
+  }
+
+  .admin-dashboard.messenger-chat {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
+  .admin-dashboard.messenger-chat .chat-inbox {
+    display: grid;
+    max-height: 260px !important;
+    padding: 12px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--admin-border);
+  }
+
+  .admin-dashboard.messenger-chat .chat-window {
+    min-height: min(620px, 76dvh) !important;
+  }
+
+  .admin-dashboard.messenger-chat .chat-messages {
+    min-height: 300px !important;
+    max-height: 48dvh !important;
+  }
+
+  .admin-dashboard.messenger-chat .chat-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .admin-dashboard.messenger-chat .chat-form input {
+    min-width: 0;
+  }
+
+  .slots-master-row,
+  .slots-master-actions,
+  .sga-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .slots-master-actions button,
+  .sga-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .slots-admin-games-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .slot-game-admin-card {
+    padding: 12px;
+  }
+
+  .sga-header {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+  }
+
+  .sga-header .slots-toggle {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    padding-top: 4px;
+  }
+
+  .sga-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .rwin-row {
+    grid-template-columns: 58px minmax(0, 1fr) auto !important;
+  }
+
+  .rwin-row .rwin-bet,
+  .rwin-row .rwin-mult {
+    display: none !important;
+  }
+
+  [data-admin-panel="subadmins"] > div {
+    padding: 14px !important;
+  }
+
+  [data-create-subadmin-form] {
+    max-width: none !important;
+  }
+
+  [data-admin-panel="subadmins"] table {
+    display: block;
+    width: 100% !important;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  [data-admin-panel="subadmins"] th,
+  [data-admin-panel="subadmins"] td {
+    padding: 0.6rem 0.55rem !important;
+  }
+
+  .admin-player-modal {
+    place-items: stretch;
+    padding: 10px;
+  }
+
+  .admin-player-modal-card {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    border-radius: 18px;
+    padding: 26px 14px 16px;
+  }
+
+  .admin-modal-close {
+    top: 10px;
+    right: 10px;
+  }
+
+  .admin-player-summary {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .admin-modal-form {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-body .admin-brand {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-body .admin-nav button,
+  .admin-body .admin-nav a {
+    min-height: 40px !important;
+    font-size: 0.78rem !important;
+  }
+
+  .admin-topbar-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-topbar-actions .logout-button,
+  .admin-topbar-actions [data-subadmin-badge],
+  .admin-topbar-actions [data-subadmin-wallet-badge] {
+    grid-column: 1 / -1;
+  }
+
+  .admin-body .dashboard-grid,
+  .slots-summary-grid,
+  .spin-admin-stats,
+  .sga-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-player-email,
+  .admin-player-phone,
+  .admin-player-owner,
+  .admin-player-joined,
+  .admin-player-points,
+  .admin-player-status {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .admin-player-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-dashboard.messenger-chat .chat-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard.messenger-chat .chat-form .button {
+    width: 100%;
+  }
+
+  .admin-body .login-main {
+    min-height: 100dvh;
+    overflow-y: auto;
+    padding: 14px;
+  }
+
+  .admin-body .login-card {
+    gap: 18px;
+    padding: 22px 16px !important;
+    border-radius: 18px;
+  }
+
+  .admin-body .login-card h1,
+  .sub-admin-card h1 {
+    font-size: clamp(2.05rem, 13vw, 3.35rem) !important;
+    line-height: 0.96;
+  }
+
+  .admin-body .login-form input,
+  .admin-body .login-form .button.primary {
+    min-height: 50px;
+  }
+
+  .sub-admin-card .footer-note {
+    font-size: 0.74rem;
+  }
+}
