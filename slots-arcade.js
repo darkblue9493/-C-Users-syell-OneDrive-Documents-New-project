@@ -1557,7 +1557,7 @@ function evaluatePayline(game, grid, payline) {
   const candidates = new Set();
   lineSymbols.forEach((symKey) => {
     const sym = game.symbols[symKey];
-    if (sym && !sym.scatter) candidates.add(symKey);
+    if (sym && !sym.scatter && !sym.wild) candidates.add(symKey);
   });
 
   let bestWin = null;
@@ -1584,7 +1584,7 @@ function evaluatePayline(game, grid, payline) {
     const pay = basePay * mult;
     const win = {
       symbol: targetSym, count, pay, basePay, multiplier: mult,
-      positions: payline.slice(0, count),
+      positions: payline.slice(0, count).map((row, reelIndex) => [reelIndex, row]),
     };
     if (
       !bestWin ||
@@ -1716,6 +1716,19 @@ function evaluateSpin(game, grid, bet) {
     State.appliedControlSignature = gameControlSignature(State.activeGame);
   }
   return { wins, totalPay: Math.round(totalPay * 100) / 100, jpHit, freeSpinsAwarded };
+}
+
+function describeWin(game, result, grid = []) {
+  if (!result || !Array.isArray(result.wins) || !result.wins.length) {
+    return result?.jpHit ? `${result.jpHit.toUpperCase()} jackpot` : "Win";
+  }
+  const primary = result.wins.slice().sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))[0];
+  if (!primary) return "Win";
+  const sym = game.symbols[primary.symbol];
+  const label = sym?.label || primary.symbol || "symbol";
+  if (primary.lineIndex === -1) return `${primary.count} BONUS symbols`;
+  const wildUsed = (primary.positions || []).some(([reel, row]) => game.symbols[grid?.[reel]?.[row]]?.wild);
+  return wildUsed ? `${primary.count} ${label} with WILD` : `${primary.count} ${label}`;
 }
 
 function incrementJackpots(bet) {
@@ -2264,6 +2277,8 @@ async function spinGame() {
     body: JSON.stringify({
       gameKey: State.activeGame,
       bet: isFreeSpin ? 0 : State.bet,
+      freeSpin: isFreeSpin,
+      triggerBet: spinBet,
       win: result.totalPay || 0,
     }),
   });
@@ -2298,7 +2313,9 @@ async function spinGame() {
     result.totalPay = Number(settlement.win) || 0;
   } catch (error) {
     await Promise.allSettled(promises);
-    State.credits = Math.round((State.credits + State.bet) * 100) / 100;
+    if (!isFreeSpin) {
+      State.credits = Math.round((State.credits + State.bet) * 100) / 100;
+    }
     updateDisplays();
     State.isSpinning = false;
     if (State._spinSafetyTimer) { clearTimeout(State._spinSafetyTimer); State._spinSafetyTimer = null; }
@@ -2316,8 +2333,7 @@ async function spinGame() {
   // Highlight winning cells
   const winningCells = new Set();
   result.wins.forEach(w => {
-    if (w.lineIndex === -1) {
-      // scatter - positions are [reel,row]
+    if (Array.isArray(w.positions) && w.positions.length) {
       (w.positions || []).forEach(([r, row]) => winningCells.add(`${r}-${row}`));
     } else if (w.linePattern) {
       for (let i = 0; i < w.count; i++) {
@@ -2338,6 +2354,7 @@ async function spinGame() {
 
   // Apply win
   if (result.totalPay > 0) {
+    const winReason = describeWin(game, result, grid);
     State.credits += result.totalPay;
     State.totalWon += result.totalPay;
     if (isFreeSpin) State.freeSpinTotalWin += result.totalPay;
@@ -2355,16 +2372,16 @@ async function spinGame() {
       await showAnticipation("mega", 1500);
       showWinBurst(result.totalPay, true, true);
       Audio.win(true, game);
-      setWinMessage(`MEGA WIN${fsTag}! +${fmt(result.totalPay)}`);
+      setWinMessage(`MEGA WIN${fsTag}! ${winReason} +${fmt(result.totalPay)}`);
     } else if (isBig) {
       await showAnticipation("big", 900);
       showWinBurst(result.totalPay, true, false);
       Audio.win(true, game);
-      setWinMessage(`BIG WIN${fsTag}! +${fmt(result.totalPay)}`);
+      setWinMessage(`BIG WIN${fsTag}! ${winReason} +${fmt(result.totalPay)}`);
     } else {
       showWinBurst(result.totalPay, false, false);
       Audio.win(false, game);
-      setWinMessage(`Win${fsTag}! +${fmt(result.totalPay)}`);
+      setWinMessage(`Win${fsTag}! ${winReason} +${fmt(result.totalPay)}`);
     }
     animateCounter($("[data-win-amount]"), 0, result.totalPay, 1200);
   } else if (isFreeSpin) {

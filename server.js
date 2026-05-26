@@ -3058,13 +3058,15 @@ async function handleApi(request, response, urlPath, url) {
     if (!user) return;
     const body = await readBody(request);
     const gameKey = Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, body.gameKey) ? String(body.gameKey) : "";
-    const bet = roundPoints(body.bet);
+    const isFreeSpin = body.freeSpin === true;
+    const bet = isFreeSpin ? 0 : roundPoints(body.bet);
+    const triggerBet = roundPoints(body.triggerBet);
     const requestedWin = roundPoints(body.win);
 
     if (!gameKey) {
       return sendJson(response, 400, { error: "Arcade game was not recognized." });
     }
-    if (!Number.isFinite(bet) || bet < 0.05 || bet > 1000) {
+    if (!isFreeSpin && (!Number.isFinite(bet) || bet < 0.05 || bet > 1000)) {
       return sendJson(response, 400, { error: "Choose a valid slot bet." });
     }
     if (!Number.isFinite(requestedWin) || requestedWin < 0 || requestedWin > 100000) {
@@ -3083,14 +3085,21 @@ async function handleApi(request, response, urlPath, url) {
     if (!effectiveArcadeConfig.globalEnabled || arcadeGameConfig?.enabled === false) {
       return sendJson(response, 403, { error: "This arcade game is currently turned off by admin." });
     }
-    if (bet < arcadeGameConfig.minBet || bet > arcadeGameConfig.maxBet) {
+    if (isFreeSpin && (!Number.isFinite(triggerBet) || triggerBet < arcadeGameConfig.minBet || triggerBet > arcadeGameConfig.maxBet)) {
+      return sendJson(response, 400, {
+        error: `Free spin bet must be based on ${arcadeGameConfig.minBet} to ${arcadeGameConfig.maxBet} points for this game.`,
+        minBet: arcadeGameConfig.minBet,
+        maxBet: arcadeGameConfig.maxBet,
+      });
+    }
+    if (!isFreeSpin && (bet < arcadeGameConfig.minBet || bet > arcadeGameConfig.maxBet)) {
       return sendJson(response, 400, {
         error: `Bet must be between ${arcadeGameConfig.minBet} and ${arcadeGameConfig.maxBet} points for this game.`,
         minBet: arcadeGameConfig.minBet,
         maxBet: arcadeGameConfig.maxBet,
       });
     }
-    if ((Number(storedUser.points) || 0) < bet) {
+    if (!isFreeSpin && (Number(storedUser.points) || 0) < bet) {
       return sendJson(response, 400, { error: "Not enough South Diamond points for that bet." });
     }
 
@@ -3101,16 +3110,18 @@ async function handleApi(request, response, urlPath, url) {
     const createdAt = new Date().toISOString();
     const transactions = [];
 
-    storedUser.points = roundPoints((Number(storedUser.points) || 0) - bet);
-    const betTransaction = createPointTransaction(
-      storedUser,
-      "redeem",
-      bet,
-      `South Diamond Slots spin - ${arcadeSlotGameNames[gameKey]}`,
-      createdAt
-    );
-    data.pointTransactions.unshift(betTransaction);
-    transactions.push(betTransaction);
+    if (!isFreeSpin) {
+      storedUser.points = roundPoints((Number(storedUser.points) || 0) - bet);
+      const betTransaction = createPointTransaction(
+        storedUser,
+        "redeem",
+        bet,
+        `South Diamond Slots spin - ${arcadeSlotGameNames[gameKey]}`,
+        createdAt
+      );
+      data.pointTransactions.unshift(betTransaction);
+      transactions.push(betTransaction);
+    }
 
     if (win > 0) {
       storedUser.points = roundPoints((Number(storedUser.points) || 0) + win);
@@ -3135,8 +3146,10 @@ async function handleApi(request, response, urlPath, url) {
       arcadeGameKey: gameKey,
       gameName: arcadeSlotGameNames[gameKey],
       bet,
+      triggerBet: isFreeSpin ? triggerBet : bet,
       win,
       requestedWin,
+      freeSpin: isFreeSpin,
       balanceAfter: storedUser.points,
       createdAt,
     };
