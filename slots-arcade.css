@@ -1765,9 +1765,16 @@ button { font-family: inherit; cursor: pointer; }
   }
 
   .lobby-title-art {
-    width: 100%;
+    width: min(100%, calc(100vw - 20px));
+    max-width: 100%;
+    aspect-ratio: 2172 / 724;
     border-radius: 10px;
     box-shadow: 0 10px 28px rgba(0, 0, 0, .32), 0 0 18px rgba(255, 154, 28, .16);
+  }
+
+  .lobby-title-art img {
+    object-fit: contain;
+    object-position: center center;
   }
 }
 
@@ -1777,7 +1784,13 @@ button { font-family: inherit; cursor: pointer; }
   }
 
   .lobby-title-art {
+    width: min(100%, calc(100vw - 16px));
+    aspect-ratio: 2172 / 724;
     border-radius: 8px;
+  }
+
+  .lobby-title-art img {
+    object-position: center center;
   }
 }
 
