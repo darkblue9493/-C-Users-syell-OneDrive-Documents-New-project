@@ -3021,6 +3021,11 @@ async function handleApi(request, response, urlPath, url) {
       remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
     });
     await writeDatabase(data);
+    sendSlotLiveEvent({
+      type: "slot-spin",
+      spinId: spinRecord.id,
+      gameKey: spinRecord.arcadeGameKey,
+    });
     return sendJson(response, 200, {
       gameKey,
       result,
@@ -3135,6 +3140,11 @@ async function handleApi(request, response, urlPath, url) {
       { userId: storedUser.id, username: storedUser.username, gameKey, bet, win, requestedWin }
     );
     await writeDatabase(data);
+    sendSlotLiveEvent({
+      type: "slots-arcade-spin",
+      spinId: spinRecord.id,
+      gameKey: spinRecord.arcadeGameKey,
+    });
     playerSessions.forEach((userId, token) => {
       if (userId === storedUser.id) playerSessions.set(token, storedUser.id);
     });

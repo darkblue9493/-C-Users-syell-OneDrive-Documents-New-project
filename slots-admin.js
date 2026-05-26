@@ -43,6 +43,8 @@
   let pendingConfig = null;
   let pendingSlotSettings = null;
   let saveTimer = null;
+  let liveRefreshTimer = null;
+  let liveStream = null;
   let saveInFlight = false;
   let saveAgain = false;
   let initialized = false;
@@ -59,20 +61,51 @@
     await loadSlotSettings();
     bindMasterControls();
     renderGameCards();
-    await refreshStatsFromServer();
-    refreshSummary();
-    renderRecentWins();
+    await refreshStatsUi();
+    connectLiveStats();
     // Auto-refresh stats every 5s while panel is visible
     setInterval(() => {
       const panel = $('[data-admin-panel="slots"]');
       if (panel && panel.classList.contains("is-active")) {
-        refreshStatsFromServer().finally(() => {
-          refreshSummary();
-          refreshGameStats();
-          renderRecentWins();
-        });
+        refreshStatsUi();
       }
     }, 5000);
+  }
+
+  async function refreshStatsUi() {
+    await refreshStatsFromServer().catch(() => null);
+    refreshSummary();
+    refreshGameStats();
+    renderRecentWins();
+  }
+
+  function queueStatsRefresh() {
+    clearTimeout(liveRefreshTimer);
+    liveRefreshTimer = setTimeout(() => {
+      const panel = $('[data-admin-panel="slots"]');
+      if (!panel || !panel.classList.contains("is-active")) return;
+      refreshStatsUi();
+    }, 250);
+  }
+
+  function connectLiveStats() {
+    if (liveStream || typeof EventSource === "undefined") return;
+    try {
+      liveStream = new EventSource("/api/player/slots/live");
+      liveStream.addEventListener("message", (event) => {
+        const payload = JSON.parse(event.data || "{}");
+        if (["slot-spin", "slots-arcade-spin", "arcade-stats-reset"].includes(payload.type)) {
+          queueStatsRefresh();
+        }
+      });
+      liveStream.addEventListener("error", () => {
+        liveStream?.close();
+        liveStream = null;
+        setTimeout(connectLiveStats, 4000);
+      });
+    } catch (error) {
+      liveStream = null;
+    }
   }
 
   async function refreshStatsFromServer() {
@@ -328,9 +361,7 @@
     try {
       if (typeof SC.resetStatsOnServer === "function") await SC.resetStatsOnServer(gameKey);
       else SC.resetGameStats(gameKey);
-      refreshGameStats();
-      refreshSummary();
-      renderRecentWins();
+      await refreshStatsUi();
       showSaveStatus(gameKey ? "Game stats reset." : "Daily stats reset.", true);
     } catch (error) {
       showSaveStatus("Stats reset failed. Please retry.", false, 6000);
