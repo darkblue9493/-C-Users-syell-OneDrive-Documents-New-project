@@ -989,6 +989,7 @@ function slotOwnerSpinFilter(ownerId, data) {
 
 function slotControlSpinFilterForOperator(operator, data) {
   if (!operator) return null;
+  if (operator.role === "admin") return null;
   return slotOwnerSpinFilter(operator.id || "admin", data);
 }
 
