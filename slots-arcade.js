@@ -1864,9 +1864,7 @@ function renderSymbolHtml(symKey, game, opts = {}) {
 async function renderGameView(gameKey) {
   const game = GAMES[gameKey];
   if (!game) return;
-  refreshArcadeControls().then(() => {
-    if (State.activeGame === gameKey) applyAdminGameControls(gameKey, { force: true });
-  }).catch(() => {});
+  await refreshArcadeControls().catch(() => null);
   if (!isAdminGameEnabled(gameKey)) {
     State.activeGame = gameKey;
     document.body.classList.remove("is-lobby-active");

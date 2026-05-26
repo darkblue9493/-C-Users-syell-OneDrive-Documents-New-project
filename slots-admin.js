@@ -447,7 +447,52 @@
   }
 
   async function saveAll() {
+    syncPendingConfigFromDom();
     await saveLive("All settings saved live.");
+  }
+
+  function numberFromInput(input, fallback) {
+    const value = Number(input?.value);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  function syncMasterControlsFromDom() {
+    const globalToggle = $("[data-slots-global-enabled]");
+    if (globalToggle) pendingConfig.globalEnabled = globalToggle.checked;
+    const defaultBet = $("[data-slots-default-bet]");
+    if (defaultBet) pendingConfig.defaultBet = Math.max(0.01, numberFromInput(defaultBet, pendingConfig.defaultBet ?? 0.25));
+    const dailyPayout = $("[data-slots-daily-payout-limit]");
+    const playerPayout = $("[data-slots-player-payout-limit]");
+    pendingSlotSettings = pendingSlotSettings || { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8 };
+    if (dailyPayout) pendingSlotSettings.dailyPayoutLimit = Math.max(0, numberFromInput(dailyPayout, pendingSlotSettings.dailyPayoutLimit));
+    if (playerPayout) pendingSlotSettings.playerDailyPayoutLimit = Math.max(0, numberFromInput(playerPayout, pendingSlotSettings.playerDailyPayoutLimit));
+  }
+
+  function syncGameCardFromDom(card) {
+    if (!card) return;
+    const key = card.dataset.gameCard;
+    const cfg = pendingConfig.games[key] || (pendingConfig.games[key] = SC.defaultGameConfig());
+    cfg.jackpotPool = cfg.jackpotPool || {};
+    const enabled = $("[data-game-enabled]", card);
+    if (enabled) cfg.enabled = enabled.checked;
+    const rtp = $("[data-game-rtp]", card);
+    cfg.targetRtp = Math.max(0.01, Math.min(numberFromInput(rtp, Math.round((cfg.targetRtp || 0.92) * 100)), 99)) / 100;
+    cfg.dailyMaxPayout = Math.max(0, numberFromInput($("[data-game-max]", card), cfg.dailyMaxPayout ?? 1000));
+    cfg.dailyMinPayout = Math.max(0, numberFromInput($("[data-game-min]", card), cfg.dailyMinPayout ?? 50));
+    cfg.minBet = Math.max(0.01, numberFromInput($("[data-game-minbet]", card), cfg.minBet ?? 0.05));
+    cfg.maxBet = Math.max(cfg.minBet, numberFromInput($("[data-game-maxbet]", card), cfg.maxBet ?? 10));
+    ["grand", "major", "minor", "mini"].forEach((level) => {
+      cfg.jackpotPool[level] = Math.max(0, numberFromInput($(`[data-jp-${level}]`, card), cfg.jackpotPool[level] ?? 0));
+    });
+  }
+
+  function syncPendingConfigFromDom(gameKey = null) {
+    syncMasterControlsFromDom();
+    if (gameKey) {
+      syncGameCardFromDom($(`[data-game-card="${gameKey}"]`));
+      return;
+    }
+    $$("[data-game-card]").forEach(syncGameCardFromDom);
   }
 
   function queueLiveSave(message) {
@@ -457,6 +502,8 @@
   }
 
   async function saveLive(successMessage = "Settings saved live.") {
+    syncPendingConfigFromDom();
+    clearTimeout(saveTimer);
     if (saveInFlight) {
       saveAgain = true;
       return;
