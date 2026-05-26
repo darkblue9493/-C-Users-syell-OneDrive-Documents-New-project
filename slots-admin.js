@@ -63,13 +63,15 @@
     renderGameCards();
     await refreshStatsUi();
     connectLiveStats();
-    // Auto-refresh stats every 5s while panel is visible
+    // Background safety poll: every 3s while panel is visible, refresh stats
+    // in case the SSE stream is blocked by a proxy. With SSE working this is
+    // effectively redundant; without it the admin still stays close to live.
     setInterval(() => {
       const panel = $('[data-admin-panel="slots"]');
       if (panel && panel.classList.contains("is-active")) {
         refreshStatsUi();
       }
-    }, 5000);
+    }, 3000);
   }
 
   async function refreshStatsUi() {
@@ -79,13 +81,25 @@
     renderRecentWins();
   }
 
+  // Trigger a stats refresh as soon as a live event arrives. The first call
+  // fires immediately so the admin sees the spin land in the UI within a
+  // single tick; rapid follow-ups within 200ms are coalesced.
+  let lastLiveRefreshAt = 0;
   function queueStatsRefresh() {
+    const panel = $('[data-admin-panel="slots"]');
+    if (!panel || !panel.classList.contains("is-active")) return;
+    const now = Date.now();
     clearTimeout(liveRefreshTimer);
-    liveRefreshTimer = setTimeout(() => {
-      const panel = $('[data-admin-panel="slots"]');
-      if (!panel || !panel.classList.contains("is-active")) return;
+    if (now - lastLiveRefreshAt >= 200) {
+      lastLiveRefreshAt = now;
       refreshStatsUi();
-    }, 250);
+      return;
+    }
+    liveRefreshTimer = setTimeout(() => {
+      lastLiveRefreshAt = Date.now();
+      const stillActive = $('[data-admin-panel="slots"]')?.classList.contains("is-active");
+      if (stillActive) refreshStatsUi();
+    }, 200);
   }
 
   function connectLiveStats() {
@@ -93,15 +107,24 @@
     try {
       liveStream = new EventSource("/api/player/slots/live");
       liveStream.addEventListener("message", (event) => {
-        const payload = JSON.parse(event.data || "{}");
-        if (["slot-spin", "slots-arcade-spin", "arcade-stats-reset"].includes(payload.type)) {
+        let payload = {};
+        try { payload = JSON.parse(event.data || "{}"); } catch (e) {}
+        // Any spin, payout cap, control save, or reset should re-render
+        // the admin stats panel right away.
+        if ([
+          "slot-spin",
+          "slots-arcade-spin",
+          "arcade-stats-reset",
+          "arcade-config",
+          "slot-settings",
+        ].includes(payload.type)) {
           queueStatsRefresh();
         }
       });
       liveStream.addEventListener("error", () => {
-        liveStream?.close();
+        try { liveStream && liveStream.close(); } catch (e) {}
         liveStream = null;
-        setTimeout(connectLiveStats, 4000);
+        setTimeout(connectLiveStats, 3000);
       });
     } catch (error) {
       liveStream = null;

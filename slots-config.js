@@ -198,12 +198,16 @@
   }
 
   function loadStats() {
-    if (serverStats && serverStats.date === todayKey()) return mergeStats(serverStats);
+    // The server's "date" is a NY-timezone day key while the client's
+    // todayKey() is UTC, so they intentionally don't always match. The
+    // server is the authoritative source of truth — if it sent us stats,
+    // we use them regardless of the date string.
+    if (serverStats) return mergeStats(serverStats);
     try {
       const raw = localStorage.getItem(STATS_KEY);
       if (!raw) return defaultStats();
       const parsed = JSON.parse(raw);
-      // Daily reset
+      // Daily reset (client-only fallback when there is no server data yet)
       if (parsed.date !== todayKey()) {
         return defaultStats();
       }

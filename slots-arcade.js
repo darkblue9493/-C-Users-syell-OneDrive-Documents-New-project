@@ -1165,15 +1165,30 @@ const State = {
 };
 
 async function arcadeApi(path, options = {}) {
-  const response = await fetch(path, {
-    cache: "no-store",
-    credentials: "same-origin",
-    headers: options.body ? { "Content-Type": "application/json" } : undefined,
-    ...options,
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "South Diamond account request failed.");
-  return data;
+  // Build an AbortController so requests cannot hang the UI indefinitely.
+  // If the caller passes their own signal we still respect it via "any".
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : 12000;
+  const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  try {
+    const response = await fetch(path, {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: options.body ? { "Content-Type": "application/json" } : undefined,
+      ...options,
+      signal: controller ? controller.signal : options.signal,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "South Diamond account request failed.");
+    return data;
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      throw new Error("South Diamond is taking too long to respond. Please try again.");
+    }
+    throw error;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
@@ -1310,10 +1325,50 @@ async function applyLiveArcadeControls() {
 }
 
 function startArcadeControlsWatcher() {
+  // Slower polling fallback (every 4s) – the live SSE stream below handles
+  // the instant push case. The poll only exists for environments where SSE
+  // is blocked (some proxies/extensions).
   setInterval(() => {
     if (State.isSpinning) return;
     applyLiveArcadeControls();
-  }, 750);
+  }, 4000);
+  startArcadeLiveStream();
+}
+
+// Listen on the server-sent-event stream so admin saves and stat changes
+// reflect on the player immediately (no polling lag). Auto-reconnects on
+// errors with a short back-off. The same endpoint is what admin listens to.
+let _arcadeLiveStream = null;
+function startArcadeLiveStream() {
+  if (_arcadeLiveStream || typeof EventSource === "undefined") return;
+  try {
+    _arcadeLiveStream = new EventSource("/api/player/slots/live");
+    _arcadeLiveStream.addEventListener("message", (event) => {
+      let payload = {};
+      try { payload = JSON.parse(event.data || "{}"); } catch (e) {}
+      // Admin changed controls (enable/disable, bet limits, jackpots, RTP)
+      if (payload.type === "arcade-config" || payload.type === "slot-settings") {
+        // Re-pull config and re-apply to the active game and lobby tiles.
+        applyLiveArcadeControls().catch(() => {});
+      }
+      // Another player (or this player) just spun — keep the local stats
+      // cache fresh so the admin tab can read up-to-date data if both are
+      // open in the same browser.
+      if (payload.type === "slots-arcade-spin" || payload.type === "slot-spin" || payload.type === "arcade-stats-reset") {
+        if (typeof SlotsConfig !== "undefined" && typeof SlotsConfig.refreshStatsFromServer === "function") {
+          SlotsConfig.refreshStatsFromServer().catch(() => {});
+        }
+      }
+    });
+    _arcadeLiveStream.addEventListener("error", () => {
+      try { _arcadeLiveStream && _arcadeLiveStream.close(); } catch (e) {}
+      _arcadeLiveStream = null;
+      // Reconnect after a short delay.
+      setTimeout(startArcadeLiveStream, 3000);
+    });
+  } catch (err) {
+    _arcadeLiveStream = null;
+  }
 }
 
 function loadState() {
@@ -2091,7 +2146,13 @@ async function spinGame() {
     stopAutoSpin();
     return;
   }
-  await refreshArcadeControls();
+  // Best-effort refresh of admin controls — do not let a slow network block the spin.
+  // We race the refresh against a short timeout so the player can keep spinning
+  // even if /api/player/slots/arcade-config is briefly slow.
+  await Promise.race([
+    refreshArcadeControls().catch(() => null),
+    new Promise((resolve) => setTimeout(resolve, 1500)),
+  ]);
   if (!isFreeSpin && State.credits < State.bet) {
     flashMessage("Not enough South Diamond points. Ask admin to add points.");
     stopAutoSpin();
@@ -2115,6 +2176,20 @@ async function spinGame() {
     spinButton.classList.add("is-spinning");
     spinButton.disabled = true;
   }
+  // Hard safety: regardless of what happens below (network hang, animation
+  // hiccup, JS exception in a downstream call), make sure the spin button is
+  // never permanently disabled. 20 seconds is well past any realistic spin.
+  if (State._spinSafetyTimer) clearTimeout(State._spinSafetyTimer);
+  State._spinSafetyTimer = setTimeout(() => {
+    State.isSpinning = false;
+    const btn = $("[data-spin-btn]");
+    if (btn) {
+      btn.classList.remove("is-spinning");
+      btn.disabled = false;
+    }
+    // Clear lingering reel-spinning styling so the reels don't stay blurred.
+    $$("[data-reel-strip] .reel.is-spinning").forEach((el) => el.classList.remove("is-spinning"));
+  }, 20000);
   Audio.resume();
   Audio.spinStart();
 
@@ -2160,8 +2235,19 @@ async function spinGame() {
   );
 
   let settlement = null;
+  // Race the server settlement against a hard timeout so a flaky network
+  // can never freeze the spin. The animation promises also have their own
+  // internal timeout (the setTimeout(duration) inside animateReelSpin) so
+  // Promise.all on them is always bounded.
+  const settlementWithTimeout = Promise.race([
+    settlementPromise,
+    new Promise((_, reject) => setTimeout(
+      () => reject(new Error("Slot server timeout. Please try again.")),
+      15000
+    )),
+  ]);
   try {
-    const settled = await Promise.all([Promise.all(promises), settlementPromise]);
+    const settled = await Promise.all([Promise.all(promises), settlementWithTimeout]);
     settlement = settled[1];
     result.totalPay = Number(settlement.win) || 0;
   } catch (error) {
@@ -2169,10 +2255,13 @@ async function spinGame() {
     State.credits = Math.round((State.credits + State.bet) * 100) / 100;
     updateDisplays();
     State.isSpinning = false;
+    if (State._spinSafetyTimer) { clearTimeout(State._spinSafetyTimer); State._spinSafetyTimer = null; }
     if (spinButton) {
       spinButton.classList.remove("is-spinning");
       spinButton.disabled = false;
     }
+    // Force-stop any lingering reel spin styling.
+    $$("[data-reel-strip] .reel.is-spinning").forEach((el) => el.classList.remove("is-spinning"));
     flashMessage(error.message || "Spin could not be saved. Try again.");
     stopAutoSpin();
     return;
@@ -2268,6 +2357,7 @@ async function spinGame() {
     try { SlotsConfig.recordSpin(State.activeGame, isFreeSpin ? 0 : State.bet, result.totalPay || 0); } catch (err) {}
   }
   State.isSpinning = false;
+  if (State._spinSafetyTimer) { clearTimeout(State._spinSafetyTimer); State._spinSafetyTimer = null; }
   if (spinButton) {
     spinButton.classList.remove("is-spinning");
     spinButton.disabled = false;
