@@ -2269,19 +2269,45 @@ async function spinGame() {
   $("[data-reel-strip]").classList.remove("is-winning");
   hideWinBurst();
 
-  // Generate result
-  const grid = generateGrid(game);
-  const result = evaluateSpin(game, grid, spinBet);
-  const settlementPromise = arcadeApi("/api/player/slots/arcade-spin", {
-    method: "POST",
-    body: JSON.stringify({
-      gameKey: State.activeGame,
-      bet: isFreeSpin ? 0 : State.bet,
-      freeSpin: isFreeSpin,
-      triggerBet: spinBet,
-      win: result.totalPay || 0,
-    }),
-  });
+  let settlement = null;
+  let grid = [];
+  let result = null;
+  try {
+    settlement = await arcadeApi("/api/player/slots/arcade-spin", {
+      method: "POST",
+      body: JSON.stringify({
+        gameKey: State.activeGame,
+        bet: isFreeSpin ? 0 : State.bet,
+        freeSpin: isFreeSpin,
+        triggerBet: spinBet,
+      }),
+    });
+    grid = Array.isArray(settlement.grid) ? settlement.grid : generateGrid(game);
+    result = {
+      wins: Array.isArray(settlement.wins) ? settlement.wins : [],
+      totalPay: Number(settlement.win) || 0,
+      jpHit: null,
+      freeSpinsAwarded: Number(settlement.freeSpinsAwarded) || 0,
+    };
+    if (isFreeSpin && Number.isFinite(Number(settlement.freeSpinsRemaining))) {
+      State.freeSpinsRemaining = Math.max(0, Number(settlement.freeSpinsRemaining));
+      renderFreeSpinBadge();
+    }
+  } catch (error) {
+    if (!isFreeSpin) {
+      State.credits = Math.round((State.credits + State.bet) * 100) / 100;
+    }
+    updateDisplays();
+    State.isSpinning = false;
+    if (State._spinSafetyTimer) { clearTimeout(State._spinSafetyTimer); State._spinSafetyTimer = null; }
+    if (spinButton) {
+      spinButton.classList.remove("is-spinning");
+      spinButton.disabled = false;
+    }
+    flashMessage(error.message || "Spin could not be saved. Try again.");
+    stopAutoSpin();
+    return;
+  }
 
   // Determine if we should show anticipation
   const isJackpot = !!result.jpHit;
@@ -2295,27 +2321,10 @@ async function spinGame() {
     animateReelSpin(reel, grid[idx], game, idx, { slowFinish: slowFinish && idx === reels.length - 1 })
   );
 
-  let settlement = null;
-  // Race the server settlement against a hard timeout so a flaky network
-  // can never freeze the spin. The animation promises also have their own
-  // internal timeout (the setTimeout(duration) inside animateReelSpin) so
-  // Promise.all on them is always bounded.
-  const settlementWithTimeout = Promise.race([
-    settlementPromise,
-    new Promise((_, reject) => setTimeout(
-      () => reject(new Error("Slot server timeout. Please try again.")),
-      15000
-    )),
-  ]);
   try {
-    const settled = await Promise.all([Promise.all(promises), settlementWithTimeout]);
-    settlement = settled[1];
-    result.totalPay = Number(settlement.win) || 0;
+    await Promise.all(promises);
   } catch (error) {
     await Promise.allSettled(promises);
-    if (!isFreeSpin) {
-      State.credits = Math.round((State.credits + State.bet) * 100) / 100;
-    }
     updateDisplays();
     State.isSpinning = false;
     if (State._spinSafetyTimer) { clearTimeout(State._spinSafetyTimer); State._spinSafetyTimer = null; }

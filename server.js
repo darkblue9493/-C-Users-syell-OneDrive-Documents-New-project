@@ -115,9 +115,170 @@ const legacySlotArcadeMap = {
   neon: "vegas7s",
 };
 
+const arcadePaylines5x3 = [
+  [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [0,1,2,1,0], [2,1,0,1,2],
+  [0,0,1,2,2], [2,2,1,0,0], [1,0,0,0,1], [1,2,2,2,1], [0,1,1,1,0],
+  [2,1,1,1,2], [1,0,1,2,1], [1,2,1,0,1], [0,2,0,2,0], [2,0,2,0,2],
+  [0,1,0,1,0], [2,1,2,1,2], [1,1,0,1,1], [1,1,2,1,1], [0,0,2,0,0],
+  [2,2,0,2,2], [1,0,2,0,1], [1,2,0,2,1], [0,2,2,2,0], [2,0,0,0,2],
+];
+const arcadePaylines3x3 = [[1,1,1], [0,0,0], [2,2,2], [0,1,2], [2,1,0]];
+const arcadePaylines5x4 = [
+  [1,1,1,1,1], [2,2,2,2,2], [0,0,0,0,0], [3,3,3,3,3],
+  [0,1,2,1,0], [3,2,1,2,3], [1,0,0,0,1], [2,3,3,3,2],
+  [0,1,1,1,0], [3,2,2,2,3], [1,2,1,2,1], [2,1,2,1,2],
+  [0,1,2,3,3], [3,2,1,0,0], [1,2,3,2,1], [2,1,0,1,2],
+  [0,2,0,2,0], [3,1,3,1,3], [1,1,2,1,1], [2,2,1,2,2],
+];
+const arcadeGameMath = {
+  wildBuffalo:     { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  kingKong:        { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 25) },
+  triple777:       { rows: 3, reels: 3, lines: arcadePaylines3x3 },
+  blackjack:       { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 20) },
+  gorillaGold:     { rows: 4, reels: 5, lines: arcadePaylines5x4 },
+  goldWolf:        { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 25) },
+  wildBull:        { rows: 3, reels: 3, lines: arcadePaylines3x3 },
+  dragonEmpress:   { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 25) },
+  mammothRush:     { rows: 4, reels: 5, lines: arcadePaylines5x4 },
+  pharaoh:         { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 20) },
+  oceanTreasure:   { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 25) },
+  vegas7s:         { rows: 3, reels: 3, lines: arcadePaylines3x3 },
+  luckyPanda:      { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  lionsPride:      { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  piratesTreasure: { rows: 4, reels: 5, lines: arcadePaylines5x4 },
+  zeusThunder:     { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  cleopatra:       { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 20) },
+  frozenRiches:    { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  galaxyStars:     { rows: 4, reels: 5, lines: arcadePaylines5x4 },
+  fruitMania:      { rows: 3, reels: 3, lines: arcadePaylines3x3 },
+  vikingGlory:     { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  aztecEmpire:     { rows: 4, reels: 5, lines: arcadePaylines5x4 },
+  halloweenHunt:   { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  luckyCharms:     { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 20) },
+};
+const arcadeSymbolKeys = ["WILD", "SCATTER", "S1", "S2", "S3", "S4", "S5", "S6"];
+const arcadeSymbolWeights = { WILD: 3, SCATTER: 2, S1: 7, S2: 7, S3: 7, S4: 7, S5: 10, S6: 14 };
+const arcadeSymbolPays = {
+  WILD: [0,0,0,50,100,500],
+  SCATTER: [0,0,0,5,20,100],
+  S1: [0,0,0,30,80,300],
+  S2: [0,0,0,20,50,200],
+  S3: [0,0,0,15,40,150],
+  S4: [0,0,0,10,30,100],
+  S5: [0,0,0,5,15,50],
+  S6: [0,0,0,4,12,40],
+};
+
 function arcadeKeyForLegacySlot(gameKey) {
   if (Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, gameKey)) return gameKey;
   return legacySlotArcadeMap[gameKey] || "wildBuffalo";
+}
+
+function arcadeRng() {
+  return crypto.randomInt(0, 1_000_000_000) / 1_000_000_000;
+}
+
+function arcadeWeightedPick(reelIndex, reels) {
+  const outer = reelIndex === 0 || reelIndex === reels - 1;
+  const weights = arcadeSymbolKeys.map((key) => {
+    const base = arcadeSymbolWeights[key] || 1;
+    return key === "WILD" && outer ? Math.max(1, Math.round(base * 0.8)) : base;
+  });
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  let roll = arcadeRng() * total;
+  for (let i = 0; i < arcadeSymbolKeys.length; i += 1) {
+    roll -= weights[i];
+    if (roll <= 0) return arcadeSymbolKeys[i];
+  }
+  return arcadeSymbolKeys[arcadeSymbolKeys.length - 1];
+}
+
+function arcadeGenerateGrid(gameKey) {
+  const math = arcadeGameMath[gameKey] || arcadeGameMath.wildBuffalo;
+  return Array.from({ length: math.reels }, (_, reelIndex) =>
+    Array.from({ length: math.rows }, () => arcadeWeightedPick(reelIndex, math.reels))
+  );
+}
+
+function arcadeSymbolPay(symbolKey, count) {
+  const pays = arcadeSymbolPays[symbolKey] || [];
+  const index = Math.min(Math.max(0, Math.floor(count)), pays.length - 1);
+  return Number(pays[index]) || 0;
+}
+
+function arcadeEvaluatePayline(grid, line) {
+  const candidates = new Set();
+  for (let reel = 0; reel < line.length; reel += 1) {
+    const symbol = grid[reel]?.[line[reel]];
+    if (symbol && symbol !== "SCATTER" && symbol !== "WILD") candidates.add(symbol);
+  }
+  let bestWin = null;
+  candidates.forEach((target) => {
+    let count = 0;
+    let wildCount = 0;
+    for (let reel = 0; reel < line.length; reel += 1) {
+      const symbol = grid[reel]?.[line[reel]];
+      if (!symbol || symbol === "SCATTER") break;
+      if (symbol === target) count += 1;
+      else if (symbol === "WILD") { count += 1; wildCount += 1; }
+      else break;
+    }
+    if (count < 3) return;
+    const basePay = arcadeSymbolPay(target, count);
+    if (!basePay) return;
+    const win = {
+      symbol: target,
+      count,
+      pay: basePay,
+      basePay,
+      multiplier: 1,
+      positions: line.slice(0, count).map((row, reelIndex) => [reelIndex, row]),
+      wildCount,
+    };
+    if (!bestWin || win.pay > bestWin.pay || (win.pay === bestWin.pay && win.count > bestWin.count)) {
+      bestWin = win;
+    }
+  });
+  return bestWin;
+}
+
+function arcadeEvaluateScatters(grid) {
+  const positions = [];
+  grid.forEach((reel, reelIndex) => {
+    reel.forEach((symbol, rowIndex) => {
+      if (symbol === "SCATTER") positions.push([reelIndex, rowIndex]);
+    });
+  });
+  if (positions.length < 3) return null;
+  const pay = arcadeSymbolPay("SCATTER", positions.length);
+  return pay ? { symbol: "SCATTER", count: positions.length, pay, positions } : null;
+}
+
+function arcadeEvaluateSpin(gameKey, grid, bet) {
+  const math = arcadeGameMath[gameKey] || arcadeGameMath.wildBuffalo;
+  const lines = math.lines || [];
+  const coinValue = roundPoints(bet / Math.max(1, lines.length));
+  const wins = [];
+  let totalPay = 0;
+  lines.forEach((line, lineIndex) => {
+    const win = arcadeEvaluatePayline(grid, line);
+    if (!win) return;
+    const amount = roundPoints(win.pay * coinValue);
+    if (amount <= 0) return;
+    wins.push({ ...win, lineIndex, amount, linePattern: line });
+    totalPay = roundPoints(totalPay + amount);
+  });
+  const scatter = arcadeEvaluateScatters(grid);
+  let freeSpinsAwarded = 0;
+  if (scatter) {
+    const amount = roundPoints(scatter.pay * bet);
+    wins.push({ ...scatter, lineIndex: -1, amount });
+    totalPay = roundPoints(totalPay + amount);
+    if (scatter.count >= 5) freeSpinsAwarded = 20;
+    else if (scatter.count === 4) freeSpinsAwarded = 15;
+    else if (scatter.count === 3) freeSpinsAwarded = 10;
+  }
+  return { wins, totalPay, freeSpinsAwarded };
 }
 
 function defaultArcadeGameConfig() {
@@ -3061,7 +3222,7 @@ async function handleApi(request, response, urlPath, url) {
     const isFreeSpin = body.freeSpin === true;
     const bet = isFreeSpin ? 0 : roundPoints(body.bet);
     const triggerBet = roundPoints(body.triggerBet);
-    const requestedWin = roundPoints(body.win);
+    const requestedWin = body.win == null ? null : roundPoints(body.win);
 
     if (!gameKey) {
       return sendJson(response, 400, { error: "Arcade game was not recognized." });
@@ -3069,7 +3230,7 @@ async function handleApi(request, response, urlPath, url) {
     if (!isFreeSpin && (!Number.isFinite(bet) || bet < 0.05 || bet > 1000)) {
       return sendJson(response, 400, { error: "Choose a valid slot bet." });
     }
-    if (!Number.isFinite(requestedWin) || requestedWin < 0 || requestedWin > 100000) {
+    if (requestedWin !== null && (!Number.isFinite(requestedWin) || requestedWin < 0 || requestedWin > 100000)) {
       return sendJson(response, 400, { error: "Slot win amount was not valid." });
     }
 
@@ -3085,13 +3246,6 @@ async function handleApi(request, response, urlPath, url) {
     if (!effectiveArcadeConfig.globalEnabled || arcadeGameConfig?.enabled === false) {
       return sendJson(response, 403, { error: "This arcade game is currently turned off by admin." });
     }
-    if (isFreeSpin && (!Number.isFinite(triggerBet) || triggerBet < arcadeGameConfig.minBet || triggerBet > arcadeGameConfig.maxBet)) {
-      return sendJson(response, 400, {
-        error: `Free spin bet must be based on ${arcadeGameConfig.minBet} to ${arcadeGameConfig.maxBet} points for this game.`,
-        minBet: arcadeGameConfig.minBet,
-        maxBet: arcadeGameConfig.maxBet,
-      });
-    }
     if (!isFreeSpin && (bet < arcadeGameConfig.minBet || bet > arcadeGameConfig.maxBet)) {
       return sendJson(response, 400, {
         error: `Bet must be between ${arcadeGameConfig.minBet} and ${arcadeGameConfig.maxBet} points for this game.`,
@@ -3104,9 +3258,23 @@ async function handleApi(request, response, urlPath, url) {
     }
 
     ensureSlotPayoutToday(data);
+    let settlementBet = bet;
+    if (isFreeSpin) {
+      const freeState = storedUser.slotFreeSpins && typeof storedUser.slotFreeSpins === "object" ? storedUser.slotFreeSpins : null;
+      if (!freeState || freeState.gameKey !== gameKey || Number(freeState.remaining) <= 0) {
+        return sendJson(response, 400, { error: "No free spins are available for this game." });
+      }
+      settlementBet = roundPoints(freeState.triggerBet);
+      freeState.remaining = Math.max(0, Number(freeState.remaining) - 1);
+      if (freeState.remaining > 0) storedUser.slotFreeSpins = freeState;
+      else delete storedUser.slotFreeSpins;
+    }
     const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey, ownerSpinFilter);
     const gamePaidToday = arcadeGameStats.won;
-    const win = requestedWin;
+    const grid = arcadeGenerateGrid(gameKey);
+    const serverResult = arcadeEvaluateSpin(gameKey, grid, settlementBet);
+    const win = serverResult.totalPay;
+    const freeSpinsAwarded = !isFreeSpin ? serverResult.freeSpinsAwarded : 0;
     const createdAt = new Date().toISOString();
     const transactions = [];
 
@@ -3135,6 +3303,9 @@ async function handleApi(request, response, urlPath, url) {
       data.pointTransactions.unshift(winTransaction);
       transactions.push(winTransaction);
     }
+    if (freeSpinsAwarded > 0) {
+      storedUser.slotFreeSpins = { gameKey, remaining: freeSpinsAwarded, triggerBet: settlementBet };
+    }
 
     storedUser.lastActiveAt = createdAt;
     data.slotPayout.paidOut = roundPoints(data.slotPayout.paidOut + win);
@@ -3149,7 +3320,11 @@ async function handleApi(request, response, urlPath, url) {
       triggerBet: isFreeSpin ? triggerBet : bet,
       win,
       requestedWin,
+      serverWin: win,
       freeSpin: isFreeSpin,
+      freeSpinsAwarded,
+      grid,
+      wins: serverResult.wins,
       balanceAfter: storedUser.points,
       createdAt,
     };
@@ -3176,9 +3351,13 @@ async function handleApi(request, response, urlPath, url) {
     return sendJson(response, 200, {
       gameKey,
       bet,
+      grid,
+      wins: serverResult.wins,
       win,
       requestedWin,
-      capped: win < requestedWin,
+      freeSpinsAwarded,
+      freeSpinsRemaining: Number(storedUser.slotFreeSpins?.remaining) || 0,
+      capped: false,
       remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
       remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
       remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
