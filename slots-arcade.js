@@ -260,7 +260,7 @@ const GAMES = {
   // =========================================================
   kingKong: {
     rtpScale: 3.43,
-    layout: "mascot-top",
+    layout: "mascot-watermark",
     title: "King Kong",
     tagline: "Roar on Top of the World",
     theme: "kingkong",
@@ -1730,6 +1730,8 @@ function incrementJackpots(bet) {
 const Audio = {
   ctx: null,
   master: null,
+  musicGain: null,
+  sfxGain: null,
   music: { timer: null, noteIndex: 0 },
   ensure() {
     if (this.ctx) return this.ctx;
@@ -1737,16 +1739,36 @@ const Audio = {
     if (!AC) return null;
     this.ctx = new AC();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.5;
+    this.musicGain = this.ctx.createGain();
+    this.sfxGain = this.ctx.createGain();
+    this.master.gain.value = 0.95;
+    this.musicGain.gain.value = State.musicOn ? 0.34 : 0.0001;
+    this.sfxGain.gain.value = State.soundOn ? 0.9 : 0.0001;
+    this.musicGain.connect(this.master);
+    this.sfxGain.connect(this.master);
     this.master.connect(this.ctx.destination);
     return this.ctx;
   },
   resume() {
     if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
   },
-  tone(freq, dur = 0.12, vol = 0.08, type = "triangle") {
+  setMusicEnabled(enabled) {
     const ctx = this.ensure();
-    if (!ctx || !State.soundOn) return;
+    if (!ctx || !this.musicGain) return;
+    this.musicGain.gain.cancelScheduledValues(ctx.currentTime);
+    this.musicGain.gain.setTargetAtTime(enabled ? 0.34 : 0.0001, ctx.currentTime, 0.03);
+  },
+  setSoundEnabled(enabled) {
+    const ctx = this.ensure();
+    if (!ctx || !this.sfxGain) return;
+    this.sfxGain.gain.cancelScheduledValues(ctx.currentTime);
+    this.sfxGain.gain.setTargetAtTime(enabled ? 0.9 : 0.0001, ctx.currentTime, 0.02);
+  },
+  tone(freq, dur = 0.12, vol = 0.12, type = "triangle", bus = "sfx") {
+    const ctx = this.ensure();
+    if (!ctx) return;
+    if (bus === "sfx" && !State.soundOn) return;
+    if (bus === "music" && !State.musicOn) return;
     try {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -1755,13 +1777,16 @@ const Audio = {
       gain.gain.setValueAtTime(0.001, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.015);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-      osc.connect(gain); gain.connect(this.master);
+      osc.connect(gain);
+      gain.connect(bus === "music" ? this.musicGain : this.sfxGain);
       osc.start(); osc.stop(ctx.currentTime + dur + 0.02);
     } catch (err) {}
   },
-  click() { this.tone(440, 0.05, 0.06, "square"); },
-  reelStop() { this.tone(220 + Math.random() * 80, 0.08, 0.05, "triangle"); },
-  spinStart() { [440, 660, 880].forEach((f, i) => setTimeout(() => this.tone(f, 0.08, 0.05), i * 50)); },
+  click() { this.tone(520, 0.06, 0.16, "square"); },
+  reelStop() { this.tone(180 + Math.random() * 120, 0.09, 0.18, "triangle"); },
+  spinStart() {
+    [220, 330, 440, 660, 880].forEach((f, i) => setTimeout(() => this.tone(f, 0.09, 0.2, i % 2 ? "sawtooth" : "square"), i * 42));
+  },
   win(big = false, game = null) {
     // Theme-aware win fanfare: use the game's musical scale so the celebratory
     // arpeggio matches the game's musical bed instead of always being C-major.
@@ -1775,30 +1800,40 @@ const Audio = {
       idx++;
     }
     if (big) {
-      baseScale.slice(0, 6).forEach((f, i) => setTimeout(() => this.tone(f, 0.18, 0.1, "triangle"), i * 80));
+      baseScale.slice(0, 8).forEach((f, i) => setTimeout(() => this.tone(f, 0.22, 0.34, i % 2 ? "sawtooth" : "triangle"), i * 70));
     } else {
-      baseScale.slice(0, 3).forEach((f, i) => setTimeout(() => this.tone(f, 0.14, 0.08), i * 70));
+      baseScale.slice(0, 5).forEach((f, i) => setTimeout(() => this.tone(f, 0.18, 0.28, "triangle"), i * 65));
     }
   },
   jackpot() {
     const notes = [523, 659, 784, 1047, 880, 1047, 1318, 1568, 1318, 1568, 1976, 2093];
-    notes.forEach((f, i) => setTimeout(() => this.tone(f, 0.25, 0.15, "triangle"), i * 100));
+    notes.forEach((f, i) => setTimeout(() => this.tone(f, 0.28, 0.4, i % 2 ? "sawtooth" : "triangle"), i * 85));
   },
   startMusic(game) {
     if (!game || !State.musicOn) return;
     this.stopMusic();
     const ctx = this.ensure();
     if (!ctx) return;
+    this.setMusicEnabled(true);
     const tempo = game.music?.tempo || 100;
     const scale = game.music?.scale || [220, 277, 330, 392, 440];
+    const gameSeed = String(State.activeGame || game.title || "").split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
     const interval = 60000 / tempo / 2;
     let beat = 0;
-    const pattern = [0,2,4,2,5,4,2,3,1,3,5,4];
+    const patterns = [
+      [0,2,4,2,5,4,2,3,1,3,5,4],
+      [0,3,5,3,1,4,6,4,2,5,3,1],
+      [0,4,2,5,3,6,4,1,5,2,4,0],
+      [0,1,3,5,4,2,6,3,5,1,4,2],
+    ];
+    const pattern = patterns[gameSeed % patterns.length];
+    const wave = ["sine", "triangle", "square", "sawtooth"][gameSeed % 4];
     this.music.timer = setInterval(() => {
       if (!State.musicOn) return;
       const note = scale[pattern[beat % pattern.length] % scale.length];
-      this.tone(note, 0.2, 0.03, "sine");
-      if (beat % 4 === 0) this.tone(scale[0] / 2, 0.3, 0.04, "triangle");
+      this.tone(note, 0.22, 0.12, wave, "music");
+      if (beat % 4 === 0) this.tone(scale[0] / 2, 0.34, 0.16, "triangle", "music");
+      if (beat % 8 === 4) this.tone(scale[(gameSeed + beat) % scale.length] * 1.5, 0.14, 0.08, "sine", "music");
       beat++;
     }, interval);
   },
@@ -2545,15 +2580,19 @@ function closePaytableModal() {
 async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) {
-      if (document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen();
+      const target = document.querySelector(".slots-arcade-body") || document.documentElement;
+      const request = target.requestFullscreen || target.webkitRequestFullscreen || target.msRequestFullscreen;
+      if (request) {
+        await request.call(target);
         try { if (screen.orientation?.lock) await screen.orientation.lock("landscape"); } catch (err) {}
       } else {
         document.body.classList.add("is-pseudo-fullscreen");
       }
       State.fullscreen = true;
     } else {
-      await document.exitFullscreen();
+      const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+      if (exit) await exit.call(document);
+      document.body.classList.remove("is-pseudo-fullscreen");
       State.fullscreen = false;
     }
     $("[data-fullscreen-btn]")?.classList.toggle("is-active", State.fullscreen);
@@ -2563,6 +2602,11 @@ async function toggleFullscreen() {
     $("[data-fullscreen-btn]")?.classList.toggle("is-active", State.fullscreen);
   }
 }
+
+document.addEventListener("fullscreenchange", () => {
+  State.fullscreen = Boolean(document.fullscreenElement) || document.body.classList.contains("is-pseudo-fullscreen");
+  $("[data-fullscreen-btn]")?.classList.toggle("is-active", State.fullscreen);
+});
 
 // ============================================================
 // 11) NAVIGATION
@@ -2652,6 +2696,7 @@ function bindEvents() {
       State.musicOn = !State.musicOn;
       $("[data-music-btn]").classList.toggle("is-active", State.musicOn);
       $("[data-music-btn]").textContent = State.musicOn ? "\u{1F3B5} ON" : "\u{1F3B5} OFF";
+      Audio.setMusicEnabled(State.musicOn);
       if (State.musicOn && State.activeGame) Audio.startMusic(GAMES[State.activeGame]);
       else Audio.stopMusic();
       saveState(); return;
@@ -2660,6 +2705,7 @@ function bindEvents() {
       State.soundOn = !State.soundOn;
       $("[data-sound-btn]").classList.toggle("is-active", State.soundOn);
       $("[data-sound-btn]").textContent = State.soundOn ? "\u{1F50A}" : "\u{1F507}";
+      Audio.setSoundEnabled(State.soundOn);
       saveState(); return;
     }
     if (e.target.closest("[data-fullscreen-btn]")) { toggleFullscreen(); return; }
@@ -2679,6 +2725,8 @@ function bindEvents() {
 // ============================================================
 async function bootstrap() {
   loadState();
+  Audio.setMusicEnabled(State.musicOn);
+  Audio.setSoundEnabled(State.soundOn);
   renderLobby();
   await refreshPlayerPoints({ redirectOnFail: false });
   try {
