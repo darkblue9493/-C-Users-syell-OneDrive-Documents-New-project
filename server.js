@@ -281,6 +281,70 @@ function arcadeEvaluateSpin(gameKey, grid, bet) {
   return { wins, totalPay, freeSpinsAwarded };
 }
 
+function arcadeProjectedRtp(stats, wagerDelta, winDelta) {
+  const wagered = roundPoints((Number(stats?.wagered) || 0) + Math.max(0, roundPoints(wagerDelta)));
+  const won = roundPoints((Number(stats?.won) || 0) + Math.max(0, roundPoints(winDelta)));
+  return wagered > 0 ? won / wagered : 0;
+}
+
+function arcadeSpinScore(candidate, context) {
+  const cfg = context.config;
+  const stats = context.stats;
+  const win = candidate.result.totalPay;
+  const projectedRtp = arcadeProjectedRtp(stats, context.wagerDelta, win);
+  const targetGap = Math.abs(projectedRtp - cfg.targetRtp);
+  let score = targetGap * 1000;
+  if (win > 0) score += 5;
+  if (candidate.result.freeSpinsAwarded > 0) score += 15;
+  if (context.overMax && win > 0) score += 5000 + win * 100;
+  if (context.overTarget && projectedRtp > cfg.targetRtp) score += 2200 + win * 35;
+  if (context.underMin && win > 0) score -= Math.min(250, win * 10);
+  if (context.underTarget && projectedRtp < cfg.targetRtp && win > 0) score -= Math.min(120, win * 5);
+  return score;
+}
+
+function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {}) {
+  const cfg = normalizeArcadeGameConfig(gameConfig);
+  const stats = gameStats || { wagered: 0, won: 0, spins: 0 };
+  const wagerDelta = options.freeSpin ? 0 : bet;
+  const currentRtp = stats.wagered > 0 ? stats.won / stats.wagered : cfg.targetRtp;
+  const overTarget = stats.wagered > 0 && currentRtp > cfg.targetRtp + 0.02;
+  const underTarget = stats.wagered > 0 && currentRtp < cfg.targetRtp - 0.06;
+  const underMin = stats.spins > 50 && stats.won < cfg.dailyMinPayout && stats.wagered > 0;
+  const overMax = cfg.dailyMaxPayout > 0 && stats.won >= cfg.dailyMaxPayout && !underTarget;
+  const sampleCount = overMax || overTarget ? 80 : 36;
+  const candidates = [];
+  for (let attempt = 0; attempt < sampleCount; attempt += 1) {
+    const grid = arcadeGenerateGrid(gameKey);
+    const result = arcadeEvaluateSpin(gameKey, grid, bet);
+    candidates.push({ grid, result });
+  }
+  const context = { config: cfg, stats, wagerDelta, overMax, overTarget, underTarget, underMin };
+  candidates.sort((left, right) => arcadeSpinScore(left, context) - arcadeSpinScore(right, context));
+  if (overMax || overTarget) {
+    const losing = candidates.find((candidate) => candidate.result.totalPay === 0 && candidate.result.freeSpinsAwarded === 0);
+    const controlledWins = candidates
+      .filter((candidate) => candidate.result.totalPay > 0 && candidate.result.freeSpinsAwarded === 0)
+      .sort((left, right) => left.result.totalPay - right.result.totalPay);
+    const maxControlledWin = overMax ? roundPoints(bet * 0.75) : roundPoints(bet * 1.5);
+    const smallWin = controlledWins.find((candidate) => candidate.result.totalPay <= maxControlledWin);
+    const overBy = Math.max(0, currentRtp - cfg.targetRtp);
+    const controlledWinChance = overMax
+      ? (overTarget ? 0.025 : 0.05)
+      : Math.max(0.06, Math.min(0.18, 0.2 - overBy * 0.25));
+    if (smallWin && arcadeRng() < controlledWinChance) return smallWin;
+    if (losing) return losing;
+  }
+  if (underMin || underTarget) {
+    const improving = candidates.find((candidate) => candidate.result.totalPay > 0);
+    const recoveryChance = currentRtp < cfg.targetRtp - 0.12 ? 0.8 : 0.55;
+    if (improving && arcadeRng() < recoveryChance) return improving;
+  }
+  if (candidates[0]) return candidates[0];
+  const grid = arcadeGenerateGrid(gameKey);
+  return { grid, result: arcadeEvaluateSpin(gameKey, grid, bet) };
+}
+
 function defaultArcadeGameConfig() {
   return {
     enabled: true,
@@ -1020,7 +1084,7 @@ function normalizeArcadeGameConfig(config) {
   const maxBet = roundPoints(source.maxBet ?? defaults.maxBet);
   return {
     enabled: source.enabled !== false,
-    targetRtp: Math.max(0.7, Math.min(Number(source.targetRtp ?? defaults.targetRtp) || defaults.targetRtp, 0.99)),
+    targetRtp: Math.max(0.5, Math.min(Number(source.targetRtp ?? defaults.targetRtp) || defaults.targetRtp, 0.99)),
     dailyMaxPayout: Math.max(0, roundPoints(source.dailyMaxPayout ?? defaults.dailyMaxPayout)),
     dailyMinPayout: Math.max(0, roundPoints(source.dailyMinPayout ?? defaults.dailyMinPayout)),
     minBet: Math.max(0.01, Math.min(minBet, 1000)),
@@ -3271,8 +3335,9 @@ async function handleApi(request, response, urlPath, url) {
     }
     const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey, ownerSpinFilter);
     const gamePaidToday = arcadeGameStats.won;
-    const grid = arcadeGenerateGrid(gameKey);
-    const serverResult = arcadeEvaluateSpin(gameKey, grid, settlementBet);
+    const selectedSpin = arcadeSelectServerSpin(gameKey, settlementBet, arcadeGameConfig, arcadeGameStats, { freeSpin: isFreeSpin });
+    const grid = selectedSpin.grid;
+    const serverResult = selectedSpin.result;
     const win = serverResult.totalPay;
     const freeSpinsAwarded = !isFreeSpin ? serverResult.freeSpinsAwarded : 0;
     const createdAt = new Date().toISOString();

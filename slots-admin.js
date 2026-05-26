@@ -268,7 +268,7 @@
 
             <div class="sga-control">
               <label>Target RTP: <b data-rtp-display>${pct(cfg.targetRtp)}</b></label>
-              <input type="range" min="70" max="99" step="1" value="${Math.round(cfg.targetRtp * 100)}" data-game-rtp />
+              <input type="range" min="50" max="99" step="1" value="${Math.round(cfg.targetRtp * 100)}" data-game-rtp />
               <small>Higher = more wins paid (player friendly). Lower = more house edge.</small>
             </div>
 
@@ -479,7 +479,7 @@
     const enabled = $("[data-game-enabled]", card);
     if (enabled) cfg.enabled = enabled.checked;
     const rtp = $("[data-game-rtp]", card);
-    cfg.targetRtp = Math.max(0.01, Math.min(numberFromInput(rtp, Math.round((cfg.targetRtp || 0.92) * 100)), 99)) / 100;
+    cfg.targetRtp = Math.max(0.5, Math.min(numberFromInput(rtp, Math.round((cfg.targetRtp || 0.92) * 100)), 99)) / 100;
     cfg.dailyMaxPayout = Math.max(0, numberFromInput($("[data-game-max]", card), cfg.dailyMaxPayout ?? 1000));
     cfg.dailyMinPayout = Math.max(0, numberFromInput($("[data-game-min]", card), cfg.dailyMinPayout ?? 50));
     cfg.minBet = Math.max(0.01, numberFromInput($("[data-game-minbet]", card), cfg.minBet ?? 0.05));
