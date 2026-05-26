@@ -1333,6 +1333,16 @@ function startArcadeControlsWatcher() {
     applyLiveArcadeControls();
   }, 4000);
   startArcadeLiveStream();
+  window.addEventListener("storage", (event) => {
+    if (event.key !== "sd_slots_live_config_broadcast" || !event.newValue) return;
+    try {
+      const payload = JSON.parse(event.newValue);
+      if (payload.config && typeof SlotsConfig !== "undefined" && typeof SlotsConfig.save === "function") {
+        SlotsConfig.save(payload.config);
+        applyLiveArcadeControls().catch(() => {});
+      }
+    } catch (error) {}
+  });
 }
 
 // Listen on the server-sent-event stream so admin saves and stat changes
@@ -1348,6 +1358,9 @@ function startArcadeLiveStream() {
       try { payload = JSON.parse(event.data || "{}"); } catch (e) {}
       // Admin changed controls (enable/disable, bet limits, jackpots, RTP)
       if (payload.type === "arcade-config" || payload.type === "slot-settings") {
+        if (payload.config && typeof SlotsConfig !== "undefined" && typeof SlotsConfig.save === "function") {
+          SlotsConfig.save(payload.config);
+        }
         // Re-pull config and re-apply to the active game and lobby tiles.
         applyLiveArcadeControls().catch(() => {});
       }

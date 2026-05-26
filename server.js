@@ -2511,6 +2511,7 @@ async function handleApi(request, response, urlPath, url) {
       type: "arcade-config",
       lastModified: nextConfig.lastModified,
       defaultBet: nextConfig.defaultBet,
+      config: nextConfig,
       operator: op.role,
       operatorId: op.id,
     });

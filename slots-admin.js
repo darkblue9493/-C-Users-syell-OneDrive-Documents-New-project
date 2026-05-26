@@ -374,7 +374,10 @@
         }
       });
       const saveBtn = $("[data-save-game]", card);
-      if (saveBtn) saveBtn.addEventListener("click", () => saveLive(`${SC.GAME_LIST.find(g => g.key === key)?.title || "Game"} saved live.`));
+      if (saveBtn) saveBtn.addEventListener("click", () => {
+        syncPendingConfigFromDom(key);
+        saveLive(`${SC.GAME_LIST.find(g => g.key === key)?.title || "Game"} saved live.`);
+      });
       if (!enabled.checked) card.classList.add("is-disabled");
     });
     refreshGameStats();
@@ -515,6 +518,9 @@
         saveSlotSettings(),
       ]);
       pendingConfig = saved[0];
+      try {
+        localStorage.setItem("sd_slots_live_config_broadcast", JSON.stringify({ at: Date.now(), config: pendingConfig }));
+      } catch (e) {}
       showSaveStatus(successMessage, true);
     } catch (error) {
       const ok = SC.save(pendingConfig);
