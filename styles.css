@@ -5957,6 +5957,96 @@ body.is-player-logged-in [data-guest-only] {
   gap: 16px;
 }
 
+.admin-modal-history {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(255, 214, 64, 0.12);
+  border-radius: 14px;
+  background: rgba(5, 5, 5, 0.22);
+}
+
+.admin-modal-history-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.admin-modal-history h3 {
+  margin: 0;
+  color: #ffe600;
+  font-size: 1.05rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.admin-modal-history-summary {
+  color: #d9ceb7;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-align: right;
+}
+
+.admin-modal-history-list {
+  display: grid;
+  gap: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin-modal-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(255, 214, 64, 0.1);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.admin-modal-history-row strong,
+.admin-modal-history-row span,
+.admin-modal-history-row small,
+.admin-modal-history-row b {
+  display: block;
+}
+
+.admin-modal-history-row strong {
+  color: #fff8df;
+  font-size: 0.95rem;
+}
+
+.admin-modal-history-row span,
+.admin-modal-history-row small {
+  color: #a99e89;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.admin-modal-history-values {
+  text-align: right;
+}
+
+.admin-modal-history-row b {
+  color: #ff5f7e;
+}
+
+.admin-modal-history-row.is-win b {
+  color: #2cff91;
+}
+
+.admin-modal-history-empty {
+  padding: 18px;
+  border: 1px dashed rgba(255, 214, 64, 0.14);
+  border-radius: 10px;
+  color: #a99e89;
+  font-weight: 900;
+  text-align: center;
+}
+
 .admin-modal-form {
   display: grid;
   gap: 10px;

@@ -1726,6 +1726,8 @@ const modalOpenChat = document.querySelector("[data-modal-open-chat]");
 const modalPointsForm = document.querySelector("[data-modal-points-form]");
 const modalResetForm = document.querySelector("[data-modal-reset-form]");
 const modalNoteForm = document.querySelector("[data-modal-note-form]");
+const modalGameHistory = document.querySelector("[data-modal-game-history]");
+const modalGameHistorySummary = document.querySelector("[data-modal-game-history-summary]");
 const playerFilterButtons = document.querySelectorAll("[data-player-filter]");
 const loginForm = document.querySelector("[data-login-form]");
 const loginUsername = document.querySelector("[data-login-username]");
@@ -2065,11 +2067,66 @@ function openAdminPlayerModal(userId, focusTarget = "") {
   modalResetForm.dataset.userId = user.id;
   modalNoteForm.dataset.userId = user.id;
   modalNoteForm.note.value = user.adminNote || "";
+  renderPlayerGameHistoryLoading();
+  loadPlayerGameHistory(user.id);
   playerModal.classList.remove("is-hidden");
   playerModal.setAttribute("aria-hidden", "false");
   if (focusTarget === "points") modalPointsForm.points.focus();
   else if (focusTarget === "password") modalResetForm.password.focus();
   else modalOpenChat.focus();
+}
+
+function renderPlayerGameHistoryLoading() {
+  if (modalGameHistorySummary) modalGameHistorySummary.textContent = "Loading...";
+  if (modalGameHistory) {
+    modalGameHistory.innerHTML = `<article class="admin-modal-history-empty">Loading game history...</article>`;
+  }
+}
+
+function renderPlayerGameHistory(data = {}) {
+  if (!modalGameHistory) return;
+  const history = Array.isArray(data.history) ? data.history : [];
+  const totals = data.totals || {};
+  if (modalGameHistorySummary) {
+    modalGameHistorySummary.textContent = `${Number(totals.spins) || 0} spins | Bet ${formatPoints(totals.wagered || 0)} | Won ${formatPoints(totals.won || 0)}`;
+  }
+  modalGameHistory.innerHTML = "";
+  if (!history.length) {
+    modalGameHistory.innerHTML = `<article class="admin-modal-history-empty">No game history for this player yet.</article>`;
+    return;
+  }
+  history.slice(0, 100).forEach((spin) => {
+    const item = document.createElement("article");
+    item.className = `admin-modal-history-row ${Number(spin.win) > 0 ? "is-win" : "is-loss"}`;
+    item.innerHTML = `
+      <div>
+        <strong></strong>
+        <span></span>
+      </div>
+      <div class="admin-modal-history-values">
+        <small></small>
+        <b></b>
+      </div>
+    `;
+    item.querySelector("strong").textContent = spin.gameName || "South Diamond Slots";
+    item.querySelector("span").textContent = spin.createdAt ? new Date(spin.createdAt).toLocaleString() : "-";
+    item.querySelector("small").textContent = `Bet ${formatPoints(spin.bet || 0)}`;
+    item.querySelector("b").textContent = Number(spin.win) > 0 ? `Won +${formatPoints(spin.win)}` : "Won 0";
+    modalGameHistory.appendChild(item);
+  });
+}
+
+async function loadPlayerGameHistory(userId) {
+  try {
+    const data = await api(`/api/admin/player-game-history?userId=${encodeURIComponent(userId)}`);
+    if (activeModalUserId !== userId) return;
+    renderPlayerGameHistory(data);
+  } catch (error) {
+    if (modalGameHistorySummary) modalGameHistorySummary.textContent = "Unavailable";
+    if (modalGameHistory) {
+      modalGameHistory.innerHTML = `<article class="admin-modal-history-empty">Could not load game history.</article>`;
+    }
+  }
 }
 
 function closeAdminPlayerModal() {

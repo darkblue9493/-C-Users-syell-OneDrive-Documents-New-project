@@ -999,7 +999,9 @@ function arcadeConfigForOperator(data, operator) {
   const scopedConfigs = data.subAdminSlotsConfig && typeof data.subAdminSlotsConfig === "object"
     ? data.subAdminSlotsConfig
     : {};
-  return normalizeArcadeSlotsConfig(scopedConfigs[operator.id] || data.arcadeSlotsConfig);
+  if (!scopedConfigs[operator.id]) return data.arcadeSlotsConfig;
+  const scopedConfig = normalizeArcadeSlotsConfig(scopedConfigs[operator.id]);
+  return data.arcadeSlotsConfig.lastModified > scopedConfig.lastModified ? data.arcadeSlotsConfig : scopedConfig;
 }
 
 function arcadeConfigForPlayer(data, player) {
@@ -2491,6 +2493,13 @@ async function handleApi(request, response, urlPath, url) {
     nextConfig.lastModified = Date.now();
     if (op.role === "admin") {
       data.arcadeSlotsConfig = nextConfig;
+      data.subAdminSlotsConfig = data.subAdminSlotsConfig && typeof data.subAdminSlotsConfig === "object" ? data.subAdminSlotsConfig : {};
+      Object.keys(data.subAdminSlotsConfig).forEach((subAdminId) => {
+        data.subAdminSlotsConfig[subAdminId] = normalizeArcadeSlotsConfig({
+          ...nextConfig,
+          lastModified: nextConfig.lastModified,
+        });
+      });
     } else {
       data.subAdminSlotsConfig = data.subAdminSlotsConfig && typeof data.subAdminSlotsConfig === "object" ? data.subAdminSlotsConfig : {};
       data.subAdminSlotsConfig[op.id] = nextConfig;
