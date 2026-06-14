@@ -178,6 +178,64 @@ const arcadeSymbolPays = {
   S6: [0,0,0,4,12,40],
 };
 
+// ============================================================
+// VOLATILITY PROFILES
+// Real slot machines are *designed*, not just random: each title has a
+// volatility character that governs how OFTEN you win (hit frequency) and
+// how BIG those wins tend to be. These profiles drive that rhythm so a
+// punchy 3-reel game feels different from a high-variance 5x4 epic.
+//   hitFrequency  - target share of spins that pay something
+//   wildMultiplier- multiplier applied to line wins that use a wild
+//   bigWinChance  - chance a winning spin is allowed to be a big hit
+//   nearMissChance- chance a losing spin is dressed up as a near-miss tease
+// ============================================================
+const arcadeVolatilityProfiles = {
+  low:    { hitFrequency: 0.42, wildMultiplier: 2, bigWinChance: 0.05, nearMissChance: 0.22 },
+  medium: { hitFrequency: 0.30, wildMultiplier: 2, bigWinChance: 0.08, nearMissChance: 0.30 },
+  high:   { hitFrequency: 0.22, wildMultiplier: 3, bigWinChance: 0.12, nearMissChance: 0.38 },
+};
+const arcadeGameVolatility = {
+  triple777: "low", vegas7s: "low", fruitMania: "low", wildBull: "low",
+  wildBuffalo: "medium", kingKong: "medium", blackjack: "medium", goldWolf: "medium",
+  gorillaGold: "medium", pharaoh: "medium", oceanTreasure: "medium", luckyPanda: "medium",
+  piratesTreasure: "medium", frozenRiches: "medium", halloweenHunt: "medium",
+  luckyCharms: "medium", vikingGlory: "medium",
+  dragonEmpress: "high", mammothRush: "high", lionsPride: "high", zeusThunder: "high",
+  cleopatra: "high", galaxyStars: "high", aztecEmpire: "high",
+};
+function arcadeProfile(gameKey) {
+  return arcadeVolatilityProfiles[arcadeGameVolatility[gameKey] || "medium"];
+}
+// Bucket a win amount by size relative to the bet.
+function arcadeClassifyWin(win, bet) {
+  if (win <= 0) return "loss";
+  if (win >= bet * 10) return "big";
+  if (win >= bet * 3) return "medium";
+  return "small";
+}
+// Detect "near-miss" grids that build tension without paying:
+//   "scatter" - exactly 2 scatters on screen (one short of the bonus)
+//   "line"    - a symbol fills all reels but the last (one short of a line hit)
+function arcadeGridNearMiss(grid) {
+  let scatters = 0;
+  for (const reel of grid) for (const sym of reel) if (sym === "SCATTER") scatters += 1;
+  if (scatters === 2) return "scatter";
+  const reels = grid.length;
+  if (reels >= 4) {
+    const midRow = Math.floor((grid[0]?.length || 1) / 2);
+    const first = grid[0]?.[midRow];
+    if (first && first !== "SCATTER") {
+      let run = 1;
+      for (let r = 1; r < reels; r += 1) {
+        const sym = grid[r]?.[midRow];
+        if (sym === first || sym === "WILD") run += 1; else break;
+      }
+      if (run === reels - 1) return "line";
+    }
+  }
+  return null;
+}
+
 function arcadeKeyForLegacySlot(gameKey) {
   if (Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, gameKey)) return gameKey;
   return legacySlotArcadeMap[gameKey] || "wildBuffalo";
@@ -215,7 +273,7 @@ function arcadeSymbolPay(symbolKey, count) {
   return Number(pays[index]) || 0;
 }
 
-function arcadeEvaluatePayline(grid, line) {
+function arcadeEvaluatePayline(grid, line, wildMultiplier = 1) {
   const candidates = new Set();
   for (let reel = 0; reel < line.length; reel += 1) {
     const symbol = grid[reel]?.[line[reel]];
@@ -235,12 +293,15 @@ function arcadeEvaluatePayline(grid, line) {
     if (count < 3) return;
     const basePay = arcadeSymbolPay(target, count);
     if (!basePay) return;
+    // A line carried by a wild pays a multiplier — the classic "wild win" boost.
+    const multiplier = wildCount > 0 && wildMultiplier > 1 ? wildMultiplier : 1;
+    const pay = roundPoints(basePay * multiplier);
     const win = {
       symbol: target,
       count,
-      pay: basePay,
+      pay,
       basePay,
-      multiplier: 1,
+      multiplier,
       positions: line.slice(0, count).map((row, reelIndex) => [reelIndex, row]),
       wildCount,
     };
@@ -263,14 +324,14 @@ function arcadeEvaluateScatters(grid) {
   return pay ? { symbol: "SCATTER", count: positions.length, pay, positions } : null;
 }
 
-function arcadeEvaluateSpin(gameKey, grid, bet) {
+function arcadeEvaluateSpin(gameKey, grid, bet, wildMultiplier = 1) {
   const math = arcadeGameMath[gameKey] || arcadeGameMath.wildBuffalo;
   const lines = math.lines || [];
   const coinValue = roundPoints(bet / Math.max(1, lines.length));
   const wins = [];
   let totalPay = 0;
   lines.forEach((line, lineIndex) => {
-    const win = arcadeEvaluatePayline(grid, line);
+    const win = arcadeEvaluatePayline(grid, line, wildMultiplier);
     if (!win) return;
     const amount = roundPoints(win.pay * coinValue);
     if (amount <= 0) return;
@@ -343,63 +404,88 @@ function arcadePickVariedWin(candidates, bet) {
   return arcadeRandomCandidate(buckets.length ? arcadeRandomCandidate(buckets) : candidates);
 }
 
+// Volatility-driven spin selection.
+// We sample a pool of fair candidate grids, then choose one to deliver the
+// designed *rhythm*: a target hit frequency, volatility-appropriate win sizes,
+// and near-miss teases on losses — all while honoring the admin's RTP target
+// and daily payout caps. Every returned grid is a real, fairly generated grid;
+// we only choose WHICH fair outcome to show, exactly like a real cabinet's
+// math model steering toward its certified RTP.
 function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {}) {
   const cfg = normalizeArcadeGameConfig(gameConfig);
+  const profile = arcadeProfile(gameKey);
+  const wildMult = profile.wildMultiplier;
   const stats = gameStats || { wagered: 0, won: 0, spins: 0 };
-  const wagerDelta = options.freeSpin ? 0 : bet;
   const currentRtp = stats.wagered > 0 ? stats.won / stats.wagered : cfg.targetRtp;
-  const overTarget = stats.wagered > 0 && currentRtp > cfg.targetRtp + 0.08;
-  const underTarget = stats.wagered > bet * 30 && currentRtp < cfg.targetRtp - 0.05;
+
+  // Payout-cap / RTP-controller state (admin controls feed straight into this).
+  // rtpError > 0 means we are paying out MORE than the admin's target RTP.
+  const overMax = cfg.dailyMaxPayout > 0 && stats.won >= cfg.dailyMaxPayout;
+  const warm = stats.spins > 15;
+  const rtpError = warm ? currentRtp - cfg.targetRtp : 0;
   const underMin = stats.spins > 50 && stats.won < cfg.dailyMinPayout && stats.wagered > 0;
-  const overMax = cfg.dailyMaxPayout > 0 && stats.won >= cfg.dailyMaxPayout && !underTarget;
-  const sampleCount = overMax || overTarget ? 42 : underTarget || underMin ? 90 : 1;
+  const over = warm && rtpError > 0.01;
+  const under = (warm && rtpError < -0.01) || underMin;
+
+  // Sample a pool of fair candidate grids.
+  const SAMPLE = 36;
   const candidates = [];
-  for (let attempt = 0; attempt < sampleCount; attempt += 1) {
+  for (let i = 0; i < SAMPLE; i += 1) {
     const grid = arcadeGenerateGrid(gameKey);
-    const result = arcadeEvaluateSpin(gameKey, grid, bet);
-    candidates.push({ grid, result });
+    const result = arcadeEvaluateSpin(gameKey, grid, bet, wildMult);
+    candidates.push({
+      grid,
+      result,
+      cls: arcadeClassifyWin(result.totalPay, bet),
+      near: arcadeGridNearMiss(grid),
+    });
   }
-  const natural = candidates[0];
-  if (overMax || overTarget) {
-    const losing = arcadeCandidateBucket(candidates, (candidate) =>
-      candidate.result.totalPay === 0 && candidate.result.freeSpinsAwarded === 0
-    );
-    const controlledWins = arcadeCandidateBucket(candidates, (candidate) =>
-      candidate.result.totalPay > 0 && candidate.result.freeSpinsAwarded === 0
-    ).sort((left, right) => left.result.totalPay - right.result.totalPay);
-    const maxControlledWin = overMax ? roundPoints(bet * 0.75) : roundPoints(bet * 1.5);
-    const smallWins = controlledWins.filter((candidate) => candidate.result.totalPay <= maxControlledWin);
-    const overBy = Math.max(0, currentRtp - cfg.targetRtp);
-    const controlChance = overMax ? 0.95 : Math.max(0.25, Math.min(0.75, overBy * 2.4));
-    if (arcadeRng() < controlChance) {
-      const controlledWinChance = overMax ? 0.025 : Math.max(0.04, Math.min(0.12, 0.14 - overBy * 0.2));
-      if (smallWins.length && arcadeRng() < controlledWinChance) return arcadeRandomCandidate(smallWins);
-      const loser = arcadeRandomCandidate(losing);
-      if (loser) return loser;
+  const pick = (arr) => (arr.length ? arr[Math.floor(arcadeRng() * arr.length)] : null);
+  const ofClass = (c) => candidates.filter((k) => k.cls === c && k.result.freeSpinsAwarded === 0);
+  const losses = ofClass("loss");
+  const smalls = ofClass("small");
+  const mediums = ofClass("medium");
+  const bigs = ofClass("big");
+  const bonuses = candidates.filter((k) => k.result.freeSpinsAwarded > 0);
+
+  // Hard ceiling: at/over the daily payout cap, force a loss (tiny win at most).
+  if (overMax) {
+    return pick(losses) || pick(smalls) || candidates[0];
+  }
+
+  // Proportional RTP controller: the volatility profile sets the base win
+  // frequency; we then scale it by how far realized RTP has drifted from the
+  // admin's target, so the house edge stays honest over time. Paying too much
+  // -> fewer/smaller wins; paying too little -> more/bigger wins.
+  let winChance = profile.hitFrequency;
+  if (warm) winChance *= Math.max(0.15, Math.min(1.9, 1 - rtpError * 6));
+  winChance = Math.max(0.02, Math.min(0.7, winChance));
+
+  if (arcadeRng() >= winChance) {
+    // This spin is a loss — sometimes dress it up as a near-miss tease.
+    const teaseChance = under ? profile.nearMissChance * 0.5 : profile.nearMissChance;
+    if (arcadeRng() < teaseChance) {
+      const tease = pick(losses.filter((k) => k.near));
+      if (tease) { tease.anticipation = true; return tease; }
     }
-    return natural;
+    const loss = pick(losses);
+    if (loss) return loss;
+    // (Extremely rare: no losing grid sampled — fall through to a win.)
   }
-  if (underMin || underTarget) {
-    const gap = Math.max(0, cfg.targetRtp - currentRtp);
-    const recoveryChance = underMin ? 0.14 : Math.max(0.05, Math.min(0.16, gap * 0.6));
-    if (arcadeRng() < recoveryChance) {
-      const minorWins = arcadeMinorPrizeCandidates(candidates, bet, underMin ? 12 : 10);
-      const minorPrize = arcadePickVariedWin(minorWins, bet);
-      if (minorPrize) return minorPrize;
-      const maxRecoveryWin = roundPoints(bet * (underMin ? 12 : 10));
-      const improving = arcadeCandidateBucket(candidates, (candidate) =>
-        candidate.result.totalPay > 0 &&
-        candidate.result.totalPay !== bet &&
-        candidate.result.totalPay <= maxRecoveryWin &&
-        candidate.result.freeSpinsAwarded === 0
-      );
-      const picked = arcadeRandomCandidate(improving);
-      if (picked) return picked;
-    }
-  }
-  if (natural) return natural;
-  const grid = arcadeGenerateGrid(gameKey);
-  return { grid, result: arcadeEvaluateSpin(gameKey, grid, bet) };
+
+  // This spin pays. Occasionally award a free-spin bonus (not while running hot).
+  if (!over && bonuses.length && arcadeRng() < 0.06) return pick(bonuses);
+
+  // Win-size selection: keep it small when we're running hot, allow bigger
+  // hits when we owe the player — shaped by the game's volatility.
+  const allowBig = (under && arcadeRng() < profile.bigWinChance * 1.6)
+                || (!over && arcadeRng() < profile.bigWinChance);
+  const chosen = over
+    ? (pick(smalls) || pick(mediums) || pick(losses) || pick(bigs) || candidates[0])
+    : ((allowBig ? pick(bigs) : null) || pick(mediums) || pick(smalls) || pick(bigs) || pick(losses) || candidates[0]);
+  // Mark sizable wins so the client slows the final reel for a dramatic reveal.
+  if (chosen && chosen.result.totalPay >= bet * 8) chosen.anticipation = true;
+  return chosen;
 }
 
 function defaultArcadeGameConfig() {
@@ -3476,6 +3562,7 @@ async function handleApi(request, response, urlPath, url) {
     const payoutCaps = slotPayoutCaps(data, storedUser, effectiveArcadeConfig, gameKey, gamePaidToday);
     const selectedSpin = arcadeSelectServerSpin(gameKey, settlementBet, arcadeGameConfig, arcadeGameStats, { freeSpin: isFreeSpin });
     const grid = selectedSpin.grid;
+    const anticipation = selectedSpin.anticipation === true;
     const serverResult = {
       ...selectedSpin.result,
       totalPay: Math.min(roundPoints(selectedSpin.result.totalPay), payoutCaps.maxWin),
@@ -3568,6 +3655,7 @@ async function handleApi(request, response, urlPath, url) {
       wins: serverResult.wins,
       win,
       requestedWin,
+      anticipation,
       freeSpinsAwarded,
       freeSpinsRemaining: Number(storedUser.slotFreeSpins?.remaining) || 0,
       capped: false,

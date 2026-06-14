@@ -2433,64 +2433,138 @@ function startJackpotTicker() {
 // ============================================================
 // 9) SPIN ANIMATION
 // ============================================================
-function animateReelSpin(reelEl, finalSymbols, game, delay = 0, opts = {}) {
+// ============================================================
+// REEL MOTION ENGINE  (requestAnimationFrame, frame-rate independent)
+//   Phase 1  beginReelLoop : reels start spinning INSTANTLY on click,
+//            looping at constant velocity while the server resolves.
+//   Phase 2  landReel      : staggered stop with an overshoot + settle
+//            bounce, landing exactly on the resolved grid.
+// Motion is driven by delta-time (px/sec) so it feels identical on a
+// 60Hz or 144Hz display and never stutters when frames are dropped.
+// ============================================================
+const REEL_LOOP_CPS = 24;            // loop speed in cells-per-second
+const reelSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function reelCellHeight(reelEl) {
+  const cell = reelEl.querySelector(".reel-cell");
+  if (cell && cell.offsetHeight) return cell.offsetHeight;
+  const rows = Number(reelEl.style.getPropertyValue("--rows")) || 3;
+  return (reelEl.offsetHeight || 270) / rows;
+}
+
+// Start an instant, continuously-scrolling blur loop on a single reel.
+function beginReelLoop(reelEl, game) {
+  const strip = reelEl.querySelector(".reel-track");
+  if (!strip) return;
+  const symKeys = Object.keys(game.symbols);
+  const rows = game.rows;
+  const cellH = reelCellHeight(reelEl);        // measure BEFORE we overwrite cells
+  const total = rows + 4;                       // window + spares for recycling
+  let html = "";
+  for (let i = 0; i < total; i++) {
+    html += `<div class="reel-cell" data-row="-1">${renderSymbolHtml(symKeys[(Math.random() * symKeys.length) | 0], game)}</div>`;
+  }
+  strip.style.transition = "none";
+  strip.innerHTML = html;
+  reelEl.classList.remove("is-warming");
+  reelEl.classList.add("is-spinning");
+
+  const st = {
+    y: Math.random() * cellH,                   // random phase so reels aren't in lockstep
+    vel: REEL_LOOP_CPS * cellH * (0.92 + Math.random() * 0.16), // ±8% speed variance
+    cellH, rows, symKeys, game, strip,
+    running: true, landing: false,
+    last: performance.now(), raf: 0,
+  };
+  reelEl._spin = st;
+
+  const tick = (now) => {
+    if (!st.running) return;
+    const dt = Math.min(0.05, (now - st.last) / 1000); // clamp tab-switch gaps
+    st.last = now;
+    if (!st.landing) {
+      st.y += st.vel * dt;
+      // symbols travel DOWNWARD; recycle bottom cell to the top
+      while (st.y >= st.cellH) {
+        st.y -= st.cellH;
+        const last = st.strip.lastElementChild;
+        if (last) {
+          last.innerHTML = renderSymbolHtml(st.symKeys[(Math.random() * st.symKeys.length) | 0], st.game);
+          st.strip.insertBefore(last, st.strip.firstElementChild);
+        }
+      }
+      st.strip.style.transform = `translateY(${st.y - st.cellH}px)`;
+    }
+    st.raf = requestAnimationFrame(tick);
+  };
+  st.raf = requestAnimationFrame(tick);
+}
+
+// Immediately freeze a reel's loop (used on error / safety abort).
+function haltReelLoop(reelEl) {
+  const st = reelEl && reelEl._spin;
+  if (st) { st.running = false; if (st.raf) cancelAnimationFrame(st.raf); }
+  if (reelEl) reelEl.classList.remove("is-spinning", "is-warming");
+}
+
+// Decelerate a spinning reel to rest on finalSymbols, with overshoot + settle.
+function landReel(reelEl, finalSymbols, game, opts = {}) {
   return new Promise((resolve) => {
-    const symKeys = Object.keys(game.symbols);
-    const visibleRows = game.rows;
-    const profile = getSpinProfile(game);
-    const bufferCount = 14 + Math.floor(Math.random() * 4);
-    // Build strip: random buffer + 2 anticipation buffer + final symbols
-    // The "anticipation" cells right before final symbols are picked from common low-pay symbols
-    const stripSymbols = [];
-    for (let i = 0; i < bufferCount; i++) {
-      stripSymbols.push(symKeys[Math.floor(Math.random() * symKeys.length)]);
-    }
-    for (let i = 0; i < visibleRows; i++) {
-      stripSymbols.push(finalSymbols[i] || symKeys[0]);
-    }
+    const st = reelEl._spin;
     const strip = reelEl.querySelector(".reel-track");
-    if (!strip) return resolve();
-    reelEl.classList.remove("is-warming");
-    strip.innerHTML = stripSymbols.map((s, idx) =>
-      `<div class="reel-cell" data-row="${idx >= bufferCount ? idx - bufferCount : -1}">${renderSymbolHtml(s, game)}</div>`
-    ).join("");
-    const reelHeight = reelEl.offsetHeight || 200;
-    const cellHeight = reelHeight / visibleRows;
+    if (!st || !strip) return resolve();
+    const cellH = st.cellH;
+    const rows = game.rows;
+    const symKeys = st.symKeys;
+    const profile = getSpinProfile(game);
+    const runIn = 10;                                   // cells scrolled before the result lands
+
+    // Fixed strip: [final rows][run-in randoms]. Final block starts above the
+    // window and descends into place, so motion stays downward and continuous.
+    let html = "";
+    for (let i = 0; i < rows; i++) {
+      html += `<div class="reel-cell" data-row="${i}">${renderSymbolHtml(finalSymbols[i] || symKeys[0], game)}</div>`;
+    }
+    for (let i = 0; i < runIn; i++) {
+      html += `<div class="reel-cell" data-row="-1">${renderSymbolHtml(symKeys[(Math.random() * symKeys.length) | 0], game)}</div>`;
+    }
+    st.landing = true;                                  // stop the loop writing transform
     strip.style.transition = "none";
-    strip.style.transform = "translateY(0)";
-    reelEl.classList.add("is-spinning");
-    reelEl.dataset.effect = profile.effect;
-    void strip.offsetHeight;
-    // Stagger - each reel waits longer than previous (per-game stagger)
-    const startDelay = delay * 45;
-    // If slowFinish requested (last reel + big win pending), make it dramatic
-    const slowMult = opts.slowFinish ? 1.25 : 1.0;
-    const baseDuration = 520 + delay * 35;
-    const duration = Math.round(baseDuration * slowMult);
-    setTimeout(() => {
-      const finalOffset = bufferCount * cellHeight;
-      strip.style.setProperty("--final-offset", finalOffset + "px");
-      strip.style.transition = `transform ${duration}ms ${profile.easing}`;
-      strip.style.transform = `translateY(-${finalOffset}px)`;
-      if (opts.slowFinish) reelEl.classList.add("slow-finish");
-      // Remove spin styling right at the stop so the roll stays continuous.
-      const sharpEarly = duration;
-      setTimeout(() => {
-        reelEl.classList.remove("is-spinning");
-      }, sharpEarly);
-      // Trigger landing effect at end
-      setTimeout(() => {
-        reelEl.classList.remove("slow-finish");
-        reelEl.classList.add("just-landed", "effect-" + profile.effect);
-        Audio.reelStop();
-        // Add a small "thud" particle effect if effect is dust/stomp/etc
-        triggerLandingEffect(reelEl, profile.effect);
-        setTimeout(() => {
-          reelEl.classList.remove("just-landed", "effect-" + profile.effect);
-        }, 600);
-        resolve();
-      }, duration);
-    }, startDelay);
+    strip.innerHTML = html;
+
+    const startT = -(runIn * cellH);                    // run-in fills the window
+    const restT = 0;                                    // final rows fill the window
+    const over = Math.min(18, cellH * 0.16);            // overshoot past the stop, then settle
+    const dur = Math.round((opts.duration || 520) * (opts.slowFinish ? 1.35 : 1));
+    const decel = 0.80;                                 // fraction spent decelerating vs settling
+    const ease = (x) => 1 - Math.pow(1 - x, 3);         // easeOutCubic
+    const t0 = performance.now();
+    if (opts.slowFinish) reelEl.classList.add("slow-finish");
+
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      let T;
+      if (p < decel) {
+        T = startT + (restT + over - startT) * ease(p / decel);
+      } else {
+        const q = (p - decel) / (1 - decel);
+        T = (restT + over) + (restT - (restT + over)) * ease(q);
+      }
+      strip.style.transform = `translateY(${T}px)`;
+      if (p < 1) { requestAnimationFrame(step); return; }
+      // Settled.
+      strip.style.transform = `translateY(${restT}px)`;
+      st.running = false;
+      if (st.raf) cancelAnimationFrame(st.raf);
+      reelEl.classList.remove("is-spinning", "slow-finish");
+      reelEl.classList.add("just-landed", "effect-" + profile.effect);
+      reelEl.dataset.effect = profile.effect;
+      if (Audio.reelStop) Audio.reelStop();
+      triggerLandingEffect(reelEl, profile.effect);
+      setTimeout(() => reelEl.classList.remove("just-landed", "effect-" + profile.effect), 600);
+      resolve();
+    };
+    requestAnimationFrame(step);
   });
 }
 
@@ -2550,8 +2624,9 @@ async function spinGame() {
       btn.classList.remove("is-spinning");
       btn.disabled = false;
     }
-    // Clear lingering reel-spinning styling so the reels don't stay blurred.
-    $$("[data-reel-strip] .reel.is-spinning").forEach((el) => el.classList.remove("is-spinning", "is-warming"));
+    // Clear lingering reel-spinning styling AND stop any running rAF loop
+    // so the reels don't stay blurred or keep scrolling forever.
+    $$("[data-reel-strip] .reel").forEach((el) => haltReelLoop(el));
   }, 20000);
   Audio.resume();
   Audio.spinStart();
@@ -2573,6 +2648,14 @@ async function spinGame() {
   $("[data-reel-strip]").classList.remove("is-winning");
   hideWinBurst();
 
+  // Start the reels spinning IMMEDIATELY on click — do not wait for the
+  // network. They loop at constant velocity while the server resolves the
+  // grid below, then stop on the real result. This is what gives the spin
+  // its instant, responsive game feel.
+  const reels = $$("[data-reel-strip] .reel");
+  reels.forEach((reel) => beginReelLoop(reel, game));
+  const spinStartedAt = performance.now();
+
   let settlement = null;
   let grid = [];
   let result = null;
@@ -2591,6 +2674,7 @@ async function spinGame() {
       wins: Array.isArray(settlement.wins) ? settlement.wins : [],
       totalPay: Number(settlement.win) || 0,
       jpHit: null,
+      anticipation: settlement.anticipation === true,
       freeSpinsAwarded: Number(settlement.freeSpinsAwarded) || 0,
     };
     if (isFreeSpin && Number.isFinite(Number(settlement.freeSpinsRemaining))) {
@@ -2601,6 +2685,7 @@ async function spinGame() {
     if (!isFreeSpin) {
       State.credits = Math.round((State.credits + State.bet) * 100) / 100;
     }
+    reels.forEach(haltReelLoop);
     updateDisplays();
     State.isSpinning = false;
     if (State._spinSafetyTimer) { clearTimeout(State._spinSafetyTimer); State._spinSafetyTimer = null; }
@@ -2617,12 +2702,27 @@ async function spinGame() {
   const isJackpot = !!result.jpHit;
   const isMegaWin = !isJackpot && result.totalPay >= spinBet * 30;
   const isBigWin  = !isJackpot && !isMegaWin && result.totalPay >= spinBet * 10;
-  const slowFinish = isJackpot || isMegaWin;
+  // The server flags near-miss teases and big pending wins; either one earns
+  // the dramatic last-reel slow-down that makes a real machine feel alive.
+  const slowFinish = isJackpot || isMegaWin || result.anticipation === true;
 
-  // Animate reels stopping left-to-right; last reel gets slowFinish if anticipation needed
-  const reels = $$("[data-reel-strip] .reel");
+  // Guarantee a minimum visible spin so a fast server response still feels
+  // like a real spin (reels never "snap" instantly to the result).
+  const profile = getSpinProfile(game);
+  const MIN_SPIN = slowFinish ? 950 : 650;
+  const elapsed = performance.now() - spinStartedAt;
+  if (elapsed < MIN_SPIN) await reelSleep(MIN_SPIN - elapsed);
+
+  // Stop reels left-to-right; each reel decelerates with an overshoot bounce.
+  // The last reel slows dramatically when a big win / jackpot is pending.
+  const stagger = Math.max(110, Math.round(profile.stagger * 0.55));
   const promises = reels.map((reel, idx) =>
-    animateReelSpin(reel, grid[idx], game, idx, { slowFinish: slowFinish && idx === reels.length - 1 })
+    reelSleep(idx * stagger).then(() =>
+      landReel(reel, grid[idx], game, {
+        slowFinish: slowFinish && idx === reels.length - 1,
+        duration: 470 + idx * 45,
+      })
+    )
   );
 
   try {
@@ -2636,8 +2736,8 @@ async function spinGame() {
       spinButton.classList.remove("is-spinning");
       spinButton.disabled = false;
     }
-    // Force-stop any lingering reel spin styling.
-    $$("[data-reel-strip] .reel.is-spinning").forEach((el) => el.classList.remove("is-spinning", "is-warming"));
+    // Force-stop any lingering reel spin loops.
+    $$("[data-reel-strip] .reel").forEach((el) => haltReelLoop(el));
     flashMessage(error.message || "Spin could not be saved. Try again.");
     stopAutoSpin();
     return;

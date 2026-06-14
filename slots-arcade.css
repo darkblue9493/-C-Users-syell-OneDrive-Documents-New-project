@@ -1607,8 +1607,10 @@ button { font-family: inherit; cursor: pointer; }
 .reel.is-spinning .reel-cell .sym-cell {
   filter: blur(0.6px);
 }
+/* Settle bounce is handled by the rAF engine (landReel) via inline transform.
+   The old CSS keyframe fought that transform, so it is disabled here. */
 .reel.just-landed .reel-track {
-  animation: track-bounce 380ms cubic-bezier(.4, -.4, .3, 1.6);
+  animation: none;
 }
 @keyframes track-bounce {
   0%   { transform: translateY(calc(-1 * var(--final-offset, 0px) - 16px)); }
