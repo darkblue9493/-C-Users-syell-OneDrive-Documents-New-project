@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>South Diamond Login</title>
-    <meta name="description" content="South Diamond player login and support chat." />
+    <title>South Diamond</title>
+    <meta name="description" content="South Diamond player login, daily spin, games, and support chat." />
     <meta name="theme-color" content="#08020d" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <style>
@@ -14,19 +14,19 @@
         font-family: Arial, Helvetica, sans-serif;
         color: #fff;
         background:
-          linear-gradient(180deg, rgba(5, 0, 8, .58), rgba(5, 0, 8, .88)),
+          linear-gradient(180deg, rgba(5, 0, 8, .45), rgba(5, 0, 8, .9)),
           url("assets/slots/south-diamond-lobby-bg-phone.webp?v=20260525-lobby-bg") center top / cover fixed,
           #08020d;
       }
-      .login-shell {
+      .shell {
         min-height: 100vh;
         display: grid;
         place-items: center;
         padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
       }
-      .login-card {
-        width: min(440px, 100%);
-        padding: 22px;
+      .home-card {
+        width: min(460px, 100%);
+        padding: 20px;
         border: 1px solid rgba(255, 215, 107, .38);
         border-radius: 18px;
         background: linear-gradient(180deg, rgba(10, 2, 16, .96), rgba(22, 5, 34, .94));
@@ -37,7 +37,7 @@
         align-items: center;
         justify-content: center;
         gap: 10px;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
         color: #ffd76b;
         font-family: Georgia, serif;
         font-size: 1.55rem;
@@ -64,12 +64,13 @@
         font-size: clamp(1.8rem, 7vw, 2.7rem);
         line-height: 1;
       }
-      .login-card > p {
+      .intro {
         margin: 0 0 18px;
         text-align: center;
         color: rgba(255, 255, 255, .74);
         line-height: 1.45;
       }
+      .hidden { display: none !important; }
       .login-form {
         display: grid;
         gap: 10px;
@@ -90,18 +91,16 @@
         font: inherit;
         font-size: 16px;
       }
-      .button-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-top: 8px;
-      }
-      button {
+      button, .home-link {
         min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border-radius: 999px;
         border: 1px solid rgba(255, 255, 255, .35);
         font: inherit;
         font-weight: 900;
+        text-decoration: none;
         cursor: pointer;
       }
       .primary {
@@ -112,6 +111,92 @@
       .secondary {
         background: rgba(255, 255, 255, .08);
         color: #fff;
+      }
+      .danger {
+        background: linear-gradient(180deg, #ff6b6b, #b4232c);
+        color: #fff;
+      }
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .player-home {
+        display: grid;
+        gap: 14px;
+      }
+      .player-top {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid rgba(123, 232, 255, .28);
+        border-radius: 14px;
+        background: rgba(0, 0, 0, .34);
+      }
+      .player-top span {
+        display: block;
+        color: #7be8ff;
+        font-size: .78rem;
+        font-weight: 900;
+      }
+      .player-top strong {
+        display: block;
+        margin-top: 2px;
+        font-size: 1.1rem;
+      }
+      .balance {
+        text-align: right;
+        color: #52ef9f;
+      }
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .spin-card {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid rgba(255, 215, 107, .28);
+        border-radius: 16px;
+        background: rgba(255, 215, 107, .08);
+      }
+      .spin-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .spin-top strong {
+        color: #ffd76b;
+        font-size: 1.1rem;
+      }
+      .spin-result {
+        min-height: 46px;
+        display: grid;
+        place-items: center;
+        padding: 10px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, .36);
+        color: rgba(255, 255, 255, .9);
+        text-align: center;
+        line-height: 1.35;
+      }
+      .spin-result.win {
+        color: #52ef9f;
+        border: 1px solid rgba(82, 239, 159, .4);
+      }
+      .wheel {
+        width: 96px;
+        height: 96px;
+        margin: 0 auto;
+        border-radius: 50%;
+        border: 6px solid #ffd76b;
+        background: conic-gradient(#d4002a 0 60deg, #1a0828 60deg 120deg, #0b8f4a 120deg 180deg, #5a0017 180deg 240deg, #b8830a 240deg 300deg, #08020d 300deg 360deg);
+        transition: transform 2s cubic-bezier(.16, .9, .18, 1);
       }
       .status {
         min-height: 20px;
@@ -136,7 +221,6 @@
         box-shadow: 0 18px 54px rgba(0, 0, 0, .55);
         overflow: hidden;
       }
-      .hidden { display: none !important; }
       .chat-head {
         display: flex;
         align-items: center;
@@ -192,32 +276,67 @@
         line-height: 1.35;
       }
       @media (max-width: 390px) {
-        .login-card { padding: 18px; }
+        .home-card { padding: 18px; }
         .button-row,
+        .actions,
         .chat-name,
         .chat-form { grid-template-columns: 1fr; }
+        .player-top { grid-template-columns: 1fr; }
+        .balance { text-align: left; }
       }
     </style>
   </head>
   <body>
-    <main class="login-shell">
-      <section class="login-card" aria-label="South Diamond player login">
-        <a class="brand" href="/" aria-label="South Diamond">
+    <main class="shell">
+      <section class="home-card" aria-label="South Diamond player home">
+        <a class="brand" href="/" aria-label="South Diamond" data-home-brand>
           <span class="brand-mark">SD</span>
           <span>South Diamond</span>
         </a>
-        <h1>Player Login</h1>
-        <p>Log in to enter the South Diamond games. Need help? Start chat before you sign in.</p>
-        <form class="login-form" data-player-login>
-          <label for="player-email">Username or email</label>
-          <input id="player-email" name="email" type="text" autocomplete="username" required />
-          <label for="player-password">Password</label>
-          <input id="player-password" name="password" type="password" autocomplete="current-password" required />
-          <div class="button-row">
-            <button class="primary" type="submit">Log In</button>
-            <button class="secondary" type="button" data-chat-open>Chat</button>
+
+        <div data-login-view>
+          <h1>Player Login</h1>
+          <p class="intro">Log in to enter the South Diamond games. Need help? Start chat before you sign in.</p>
+          <form class="login-form" data-player-login>
+            <label for="player-email">Username or email</label>
+            <input id="player-email" name="email" type="text" autocomplete="username" required />
+            <label for="player-password">Password</label>
+            <input id="player-password" name="password" type="password" autocomplete="current-password" required />
+            <div class="button-row">
+              <button class="primary" type="submit">Log In</button>
+              <button class="secondary" type="button" data-chat-open>Chat</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="player-home hidden" data-player-home>
+          <h1>South Diamond</h1>
+          <div class="player-top">
+            <div>
+              <span>Player</span>
+              <strong data-player-name>Player</strong>
+            </div>
+            <div class="balance">
+              <span>Points</span>
+              <strong data-player-points>0.00</strong>
+            </div>
           </div>
-        </form>
+          <div class="actions">
+            <a class="home-link primary" href="/slots-arcade.html">Enter Games</a>
+            <button class="secondary" type="button" data-chat-open>Chat</button>
+            <button class="secondary" type="button" data-spin-run>Daily Spin</button>
+            <button class="danger" type="button" data-logout>Sign Out</button>
+          </div>
+          <section class="spin-card" aria-label="Daily spin">
+            <div class="spin-top">
+              <strong>Daily Spin</strong>
+              <span data-spin-state>Checking...</span>
+            </div>
+            <div class="wheel" data-spin-wheel aria-hidden="true"></div>
+            <p class="spin-result" data-spin-result>Checking daily spin...</p>
+          </section>
+        </div>
+
         <p class="status" data-status role="alert"></p>
       </section>
     </main>
@@ -242,12 +361,21 @@
     <script>
       (() => {
         const status = document.querySelector("[data-status]");
+        const loginView = document.querySelector("[data-login-view]");
+        const playerHome = document.querySelector("[data-player-home]");
+        const playerName = document.querySelector("[data-player-name]");
+        const playerPoints = document.querySelector("[data-player-points]");
+        const spinState = document.querySelector("[data-spin-state]");
+        const spinResult = document.querySelector("[data-spin-result]");
+        const spinWheel = document.querySelector("[data-spin-wheel]");
+        const spinRunButtons = document.querySelectorAll("[data-spin-run]");
         const chatPanel = document.querySelector("[data-chat-panel]");
         const nameForm = document.querySelector("[data-chat-name-form]");
         const nameStatus = document.querySelector("[data-chat-name-status]");
         const chatForm = document.querySelector("[data-chat-form]");
         const messages = document.querySelector("[data-messages]");
         const storageKey = "sd_player_login_guest_name";
+        let currentPlayer = null;
         let guestName = "";
 
         async function api(path, options = {}) {
@@ -258,8 +386,16 @@
             ...options,
           });
           const data = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(data.error || "South Diamond request failed.");
+          if (!response.ok) {
+            const error = new Error(data.error || "South Diamond request failed.");
+            Object.assign(error, data);
+            throw error;
+          }
           return data;
+        }
+
+        function fmt(n) {
+          return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function setStatus(message, good = false) {
@@ -267,7 +403,27 @@
           status.style.color = good ? "#52ef9f" : "#ffd76b";
         }
 
+        function showLogin() {
+          currentPlayer = null;
+          loginView.classList.remove("hidden");
+          playerHome.classList.add("hidden");
+          setStatus("");
+        }
+
+        function showHome(user) {
+          currentPlayer = user;
+          loginView.classList.add("hidden");
+          playerHome.classList.remove("hidden");
+          playerName.textContent = user?.username || "Player";
+          playerPoints.textContent = fmt(user?.points);
+          setStatus("");
+          refreshSpinStatus().catch((error) => {
+            spinResult.textContent = error.message || "Could not load daily spin.";
+          });
+        }
+
         function savedName() {
+          if (currentPlayer) return currentPlayer.username || "Player";
           if (guestName) return guestName;
           try { guestName = localStorage.getItem(storageKey) || ""; } catch (error) {}
           return guestName.trim().slice(0, 60);
@@ -295,21 +451,65 @@
         }
 
         function updateChatState() {
-          const hasName = Boolean(savedName());
-          nameForm.classList.toggle("hidden", hasName);
-          chatForm.elements.message.disabled = !hasName;
-          if (!hasName) nameForm.elements.namedItem("name")?.focus();
+          const needsGuestName = !currentPlayer && !savedName();
+          nameForm.classList.toggle("hidden", !needsGuestName);
+          chatForm.elements.message.disabled = needsGuestName;
+          if (needsGuestName) nameForm.elements.namedItem("name")?.focus();
         }
 
-        async function refreshGuestChat() {
-          const data = await api("/api/chats/guest-message");
+        async function refreshChat() {
+          const endpoint = currentPlayer ? "/api/player/chat" : "/api/chats/guest-message";
+          const data = await api(endpoint);
           renderMessages(data.chat?.messages || []);
         }
 
         function openChat() {
           chatPanel.classList.remove("hidden");
           updateChatState();
-          refreshGuestChat().catch(() => renderMessages([]));
+          refreshChat().catch(() => renderMessages([]));
+        }
+
+        function spinWait(value) {
+          if (!value) return "Daily spin is not ready yet.";
+          const date = new Date(value);
+          if (Number.isNaN(date.getTime())) return "Daily spin is not ready yet.";
+          return `Next spin opens ${date.toLocaleString()}.`;
+        }
+
+        async function refreshSpinStatus({ updateResult = true } = {}) {
+          if (!currentPlayer) return;
+          const data = await api("/api/player/spin-status");
+          spinState.textContent = data.eligible ? "Ready" : "Used";
+          if (updateResult) {
+            spinResult.classList.remove("win");
+            spinResult.textContent = data.eligible ? "Your daily spin is ready." : spinWait(data.nextSpinAt);
+          }
+          spinRunButtons.forEach((button) => {
+            button.disabled = !data.eligible;
+            button.textContent = data.eligible ? "Daily Spin" : "Spin Used";
+          });
+        }
+
+        async function runDailySpin() {
+          if (!currentPlayer) return showLogin();
+          spinRunButtons.forEach((button) => { button.disabled = true; });
+          spinResult.classList.remove("win");
+          spinResult.textContent = "Spinning...";
+          spinWheel.style.transform = `rotate(${720 + Math.floor(Math.random() * 360)}deg)`;
+          try {
+            const data = await api("/api/player/spin", { method: "POST", body: JSON.stringify({}) });
+            currentPlayer = data.user;
+            playerPoints.textContent = fmt(data.user?.points);
+            spinState.textContent = "Complete";
+            spinResult.classList.toggle("win", Number(data.prize) > 0);
+            spinResult.textContent = Number(data.prize) > 0
+              ? `You won ${data.prize} point${Number(data.prize) === 1 ? "" : "s"}.`
+              : "No win this time. Come back tomorrow.";
+          } catch (error) {
+            spinResult.textContent = `${error.message || "Daily spin failed."} ${spinWait(error.nextSpinAt)}`.trim();
+          } finally {
+            refreshSpinStatus({ updateResult: false }).catch(() => {});
+          }
         }
 
         document.querySelector("[data-player-login]").addEventListener("submit", async (event) => {
@@ -317,22 +517,33 @@
           setStatus("Checking login...");
           const form = event.currentTarget;
           try {
-            await api("/api/player/login", {
+            const data = await api("/api/player/login", {
               method: "POST",
               body: JSON.stringify({
                 email: form.elements.email.value.trim(),
                 password: form.elements.password.value,
               }),
             });
-            setStatus("Login accepted. Opening games...", true);
-            window.location.href = "/slots-arcade.html";
+            form.reset();
+            showHome(data.user);
           } catch (error) {
             setStatus(error.message || "Could not log in.");
           }
         });
 
-        document.querySelector("[data-chat-open]").addEventListener("click", openChat);
+        document.querySelectorAll("[data-chat-open]").forEach((button) => button.addEventListener("click", openChat));
         document.querySelector("[data-chat-close]").addEventListener("click", () => chatPanel.classList.add("hidden"));
+        spinRunButtons.forEach((button) => button.addEventListener("click", runDailySpin));
+        document.querySelector("[data-home-brand]").addEventListener("click", (event) => {
+          if (!currentPlayer) return;
+          event.preventDefault();
+          showHome(currentPlayer);
+        });
+
+        document.querySelector("[data-logout]").addEventListener("click", async () => {
+          await api("/api/player/logout", { method: "POST" }).catch(() => {});
+          showLogin();
+        });
 
         nameForm.addEventListener("submit", (event) => {
           event.preventDefault();
@@ -352,16 +563,15 @@
 
         chatForm.addEventListener("submit", async (event) => {
           event.preventDefault();
-          if (!savedName()) return updateChatState();
+          if (!currentPlayer && !savedName()) return updateChatState();
           const input = chatForm.elements.message;
           const text = input.value.trim();
           if (!text) return;
           input.value = "";
           try {
-            const data = await api("/api/chats/guest-message", {
-              method: "POST",
-              body: JSON.stringify({ name: savedName(), text }),
-            });
+            const endpoint = currentPlayer ? "/api/chats/player-message" : "/api/chats/guest-message";
+            const body = currentPlayer ? { text } : { name: savedName(), text };
+            const data = await api(endpoint, { method: "POST", body: JSON.stringify(body) });
             renderMessages(data.chat?.messages || []);
           } catch (error) {
             renderMessages([{ author: "operator", text: error.message || "Could not send message." }]);
@@ -369,8 +579,8 @@
         });
 
         api("/api/player/me")
-          .then(() => { window.location.href = "/slots-arcade.html"; })
-          .catch(() => {});
+          .then((data) => showHome(data.user))
+          .catch(() => showLogin());
       })();
     </script>
   </body>

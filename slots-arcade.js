@@ -1207,7 +1207,7 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
     updateDisplays();
     updateArcadeAccountUi();
     flashMessage("Log in to your South Diamond account to play slots.");
-    if (redirectOnFail) showArcadeAuth("Sign in to play South Diamond Slots.");
+    if (redirectOnFail) window.location.href = "/";
     return false;
   }
 }
@@ -1936,8 +1936,6 @@ function updateArcadeAccountUi() {
   if (chatOpen) chatOpen.classList.toggle("hidden", !loggedIn);
   if (loggedIn) {
     hideArcadeAuth();
-    refreshDailySpinStatus().catch(() => {});
-    refreshArcadeChat().catch(() => {});
   } else {
     hideArcadeAuth();
     setArcadeAuthStatus("Log in to play, chat, and use daily spin.");
@@ -2417,6 +2415,7 @@ function animateReelSpin(reelEl, finalSymbols, game, delay = 0, opts = {}) {
     }
     const strip = reelEl.querySelector(".reel-track");
     if (!strip) return resolve();
+    reelEl.classList.remove("is-warming");
     strip.innerHTML = stripSymbols.map((s, idx) =>
       `<div class="reel-cell" data-row="${idx >= bufferCount ? idx - bufferCount : -1}">${renderSymbolHtml(s, game)}</div>`
     ).join("");
@@ -2428,10 +2427,10 @@ function animateReelSpin(reelEl, finalSymbols, game, delay = 0, opts = {}) {
     reelEl.dataset.effect = profile.effect;
     void strip.offsetHeight;
     // Stagger - each reel waits longer than previous (per-game stagger)
-    const startDelay = delay * profile.stagger;
+    const startDelay = delay * Math.round(profile.stagger * 0.45);
     // If slowFinish requested (last reel + big win pending), make it dramatic
     const slowMult = opts.slowFinish ? 1.8 : 1.0;
-    const baseDuration = profile.duration + delay * 100;
+    const baseDuration = Math.round(profile.duration * 0.72) + delay * 60;
     const duration = Math.round(baseDuration * slowMult);
     setTimeout(() => {
       const finalOffset = bufferCount * cellHeight;
@@ -2460,6 +2459,29 @@ function animateReelSpin(reelEl, finalSymbols, game, delay = 0, opts = {}) {
   });
 }
 
+function startInstantReelWarmup(game) {
+  if (!game) return;
+  const symKeys = Object.keys(game.symbols || {});
+  if (!symKeys.length) return;
+  const visibleRows = Math.max(1, Number(game.rows) || 3);
+  $$("[data-reel-strip] .reel").forEach((reelEl) => {
+    const strip = reelEl.querySelector(".reel-track");
+    if (!strip) return;
+    const reelHeight = reelEl.offsetHeight || 200;
+    const cellHeight = reelHeight / visibleRows;
+    const cells = [];
+    for (let i = 0; i < visibleRows + 8; i++) {
+      const symbol = symKeys[Math.floor(Math.random() * symKeys.length)];
+      cells.push(`<div class="reel-cell" data-row="-1">${renderSymbolHtml(symbol, game)}</div>`);
+    }
+    strip.innerHTML = cells.join("");
+    strip.style.transition = "none";
+    strip.style.transform = "translateY(0)";
+    strip.style.setProperty("--warmup-distance", `${cellHeight}px`);
+    reelEl.classList.add("is-spinning", "is-warming");
+  });
+}
+
 function triggerLandingEffect(reelEl, effect) {
   if (!effect || effect === "default" || effect === "clean") return;
   // Inject a quick burst element under reel
@@ -2481,10 +2503,7 @@ async function spinGame() {
   // Best-effort refresh of admin controls — do not let a slow network block the spin.
   // We race the refresh against a short timeout so the player can keep spinning
   // even if /api/player/slots/arcade-config is briefly slow.
-  await Promise.race([
-    refreshArcadeControls().catch(() => null),
-    new Promise((resolve) => setTimeout(resolve, 1500)),
-  ]);
+  refreshArcadeControls().catch(() => null);
   if (!isFreeSpin && State.credits < State.bet) {
     flashMessage("Not enough South Diamond points. Ask admin to add points.");
     stopAutoSpin();
@@ -2508,6 +2527,7 @@ async function spinGame() {
     spinButton.classList.add("is-spinning");
     spinButton.disabled = true;
   }
+  startInstantReelWarmup(game);
   // Hard safety: regardless of what happens below (network hang, animation
   // hiccup, JS exception in a downstream call), make sure the spin button is
   // never permanently disabled. 20 seconds is well past any realistic spin.
@@ -2520,7 +2540,7 @@ async function spinGame() {
       btn.disabled = false;
     }
     // Clear lingering reel-spinning styling so the reels don't stay blurred.
-    $$("[data-reel-strip] .reel.is-spinning").forEach((el) => el.classList.remove("is-spinning"));
+    $$("[data-reel-strip] .reel.is-spinning").forEach((el) => el.classList.remove("is-spinning", "is-warming"));
   }, 20000);
   Audio.resume();
   Audio.spinStart();
@@ -2606,7 +2626,7 @@ async function spinGame() {
       spinButton.disabled = false;
     }
     // Force-stop any lingering reel spin styling.
-    $$("[data-reel-strip] .reel.is-spinning").forEach((el) => el.classList.remove("is-spinning"));
+    $$("[data-reel-strip] .reel.is-spinning").forEach((el) => el.classList.remove("is-spinning", "is-warming"));
     flashMessage(error.message || "Spin could not be saved. Try again.");
     stopAutoSpin();
     return;
@@ -2983,7 +3003,7 @@ function bindEvents() {
     if (e.target.closest("[data-arcade-home]")) {
       e.preventDefault();
       if (State.activeGame) backToLobby();
-      else window.location.href = "/";
+      else renderLobby();
       return;
     }
     if (e.target.closest("[data-spin-btn]")) { Audio.resume(); spinGame(); return; }
@@ -3028,7 +3048,7 @@ async function bootstrap() {
   Audio.setSoundEnabled(State.soundOn);
   renderLobby();
   bindArcadePlayerTools();
-  await refreshPlayerPoints({ redirectOnFail: false });
+  await refreshPlayerPoints({ redirectOnFail: true });
   try {
     await refreshArcadeControls();
     renderLobby();

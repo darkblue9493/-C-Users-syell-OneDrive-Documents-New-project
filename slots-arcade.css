@@ -41,7 +41,7 @@ button { font-family: inherit; cursor: pointer; }
   top: 0;
   z-index: 100;
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -3022,7 +3022,6 @@ body.is-pseudo-fullscreen .game-view {
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
       "brand home balance"
-      "player player player"
       "toggles toggles toggles";
     align-items: center;
     padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px;
@@ -3070,29 +3069,10 @@ body.is-pseudo-fullscreen .game-view {
     font-size: 1rem;
   }
 
-  .arcade-player {
-    grid-area: player;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) repeat(4, auto);
-    width: 100%;
-    gap: 5px;
-  }
-
-  .arcade-player > span {
-    max-width: none;
-    align-self: center;
-    font-size: .78rem;
-  }
-
   .arcade-pill-button {
     min-height: 34px;
     padding: 6px 8px;
     font-size: .66rem;
-  }
-
-  .arcade-auth-panel,
-  .arcade-chat-drawer {
-    top: 128px;
   }
 
   .arcade-login-form {
@@ -3109,16 +3089,6 @@ body.is-pseudo-fullscreen .game-view {
 
   .arcade-guest-name-form {
     grid-template-columns: 1fr;
-  }
-
-  .arcade-chat-drawer {
-    width: calc(100vw - 16px);
-    margin-top: 6px;
-    border-radius: 12px;
-  }
-
-  .arcade-chat-messages {
-    max-height: 180px;
   }
 
   .arcade-toggles {
@@ -3322,23 +3292,9 @@ body.is-pseudo-fullscreen .game-view {
     font-size: .9rem;
   }
 
-  .arcade-player {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .arcade-player > span {
-    grid-column: 1 / -1;
-    text-align: center;
-  }
-
   .arcade-pill-button {
     width: 100%;
     padding-inline: 5px;
-  }
-
-  .arcade-auth-panel,
-  .arcade-chat-drawer {
-    top: 170px;
   }
 
   .jackpot-strip {
@@ -3547,4 +3503,15 @@ body.is-pseudo-fullscreen .game-view {
 @media (max-width: 720px) {
   .free-spin-badge { top: 70px; right: 10px; min-width: 108px; padding: 8px 10px 10px; }
   .free-spin-badge .fsb-count { font-size: 32px; }
+}
+
+/* Immediate visual feedback while the saved server result is loading. */
+.reel.is-warming .reel-track {
+  animation: reel-warmup-scroll 180ms linear infinite;
+  will-change: transform;
+}
+
+@keyframes reel-warmup-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-1 * var(--warmup-distance, 60px))); }
 }

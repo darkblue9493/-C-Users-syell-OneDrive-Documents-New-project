@@ -30,70 +30,12 @@
       <span class="balance-label">POINTS</span>
       <strong data-credits>0.00</strong>
     </div>
-    <div class="arcade-player">
-      <span data-arcade-player-name>Guest</span>
-      <button class="arcade-pill-button" type="button" data-arcade-auth-open>Sign In</button>
-      <button class="arcade-pill-button" type="button" data-arcade-spin-open disabled>Daily Spin</button>
-      <button class="arcade-pill-button" type="button" data-arcade-chat-open disabled>Chat</button>
-      <button class="arcade-pill-button danger hidden" type="button" data-arcade-logout>Sign Out</button>
-    </div>
     <div class="arcade-toggles">
       <button class="toggle-btn is-active" type="button" data-music-btn aria-label="Toggle music">🎵 ON</button>
       <button class="toggle-btn is-active" type="button" data-sound-btn aria-label="Toggle sound">🔊</button>
       <button class="toggle-btn" type="button" data-fullscreen-btn aria-label="Toggle fullscreen">⛶</button>
     </div>
   </header>
-
-  <section class="arcade-auth-panel" data-arcade-auth-panel>
-    <form class="arcade-login-form" data-arcade-login-form>
-      <div>
-        <strong>Player Sign In</strong>
-        <span data-arcade-auth-status>Log in to play, chat, and use daily spin.</span>
-      </div>
-      <label>
-        <span>Username or email</span>
-        <input name="email" type="text" autocomplete="username" required />
-      </label>
-      <label>
-        <span>Password</span>
-        <input name="password" type="password" autocomplete="current-password" required />
-      </label>
-      <button class="arcade-pill-button primary" type="submit">Sign In</button>
-      <button class="arcade-pill-button" type="button" data-arcade-guest-chat-open>Chat</button>
-    </form>
-  </section>
-
-  <section class="arcade-chat-drawer hidden" data-arcade-chat aria-label="South Diamond player chat">
-    <div class="arcade-chat-head">
-      <strong>Support Chat</strong>
-      <button class="arcade-pill-button" type="button" data-arcade-chat-close>Close</button>
-    </div>
-    <form class="arcade-guest-name-form hidden" data-arcade-guest-name-form>
-      <label>
-        <span>Your name</span>
-        <input name="name" type="text" autocomplete="name" maxlength="60" placeholder="Enter your name" />
-      </label>
-      <button class="arcade-pill-button primary" type="submit">Start Chat</button>
-      <small data-arcade-guest-status></small>
-    </form>
-    <div class="arcade-chat-messages" data-arcade-chat-messages></div>
-    <form class="arcade-chat-form" data-arcade-chat-form>
-      <input name="message" type="text" autocomplete="off" placeholder="Message support..." />
-      <button class="arcade-pill-button primary" type="submit">Send</button>
-    </form>
-  </section>
-
-  <section class="arcade-spin-modal hidden" data-arcade-spin-modal aria-hidden="true">
-    <div class="arcade-spin-card">
-      <button class="arcade-spin-close" type="button" data-arcade-spin-close aria-label="Close daily spin">x</button>
-      <strong>Daily Spin</strong>
-      <div class="arcade-spin-wheel" data-arcade-spin-wheel>
-        <span>10</span><span>0</span><span>5</span><span>1</span><span>3</span><span>0</span>
-      </div>
-      <p data-arcade-spin-result>Your daily spin is inside the slots lobby.</p>
-      <button class="arcade-pill-button primary" type="button" data-arcade-spin-run>Spin</button>
-    </div>
-  </section>
 
   <!-- Live progressive jackpot strip - always visible -->
   <section class="jackpot-strip">
