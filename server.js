@@ -303,44 +303,92 @@ function arcadeSpinScore(candidate, context) {
   return score;
 }
 
+function arcadeCandidateBucket(candidates, predicate) {
+  return candidates.filter(predicate);
+}
+
+function arcadeRandomCandidate(candidates) {
+  if (!Array.isArray(candidates) || !candidates.length) return null;
+  return candidates[Math.floor(arcadeRng() * candidates.length)];
+}
+
+function arcadeMinorPrizeCandidates(candidates, bet, maxMultiplier = 10) {
+  const minPrize = roundPoints(Math.max(bet * 3, bet + 0.01));
+  const maxPrize = roundPoints(Math.max(minPrize, bet * maxMultiplier));
+  return arcadeCandidateBucket(candidates, (candidate) => {
+    const win = roundPoints(candidate.result.totalPay);
+    return win >= minPrize &&
+      win <= maxPrize &&
+      win !== bet &&
+      candidate.result.freeSpinsAwarded === 0;
+  });
+}
+
+function arcadePickVariedWin(candidates, bet) {
+  if (!Array.isArray(candidates) || !candidates.length) return null;
+  const buckets = [
+    candidates.filter((candidate) => candidate.result.totalPay >= bet * 8),
+    candidates.filter((candidate) => candidate.result.totalPay >= bet * 5 && candidate.result.totalPay < bet * 8),
+    candidates.filter((candidate) => candidate.result.totalPay >= bet * 3 && candidate.result.totalPay < bet * 5),
+  ].filter((bucket) => bucket.length);
+  return arcadeRandomCandidate(buckets.length ? arcadeRandomCandidate(buckets) : candidates);
+}
+
 function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {}) {
   const cfg = normalizeArcadeGameConfig(gameConfig);
   const stats = gameStats || { wagered: 0, won: 0, spins: 0 };
   const wagerDelta = options.freeSpin ? 0 : bet;
   const currentRtp = stats.wagered > 0 ? stats.won / stats.wagered : cfg.targetRtp;
-  const overTarget = stats.wagered > 0 && currentRtp > cfg.targetRtp + 0.02;
-  const underTarget = stats.wagered > 0 && currentRtp < cfg.targetRtp - 0.06;
+  const overTarget = stats.wagered > 0 && currentRtp > cfg.targetRtp + 0.08;
+  const underTarget = stats.wagered > bet * 30 && currentRtp < cfg.targetRtp - 0.05;
   const underMin = stats.spins > 50 && stats.won < cfg.dailyMinPayout && stats.wagered > 0;
   const overMax = cfg.dailyMaxPayout > 0 && stats.won >= cfg.dailyMaxPayout && !underTarget;
-  const sampleCount = overMax || overTarget ? 80 : 36;
+  const sampleCount = overMax || overTarget ? 42 : underTarget || underMin ? 90 : 1;
   const candidates = [];
   for (let attempt = 0; attempt < sampleCount; attempt += 1) {
     const grid = arcadeGenerateGrid(gameKey);
     const result = arcadeEvaluateSpin(gameKey, grid, bet);
     candidates.push({ grid, result });
   }
-  const context = { config: cfg, stats, wagerDelta, overMax, overTarget, underTarget, underMin };
-  candidates.sort((left, right) => arcadeSpinScore(left, context) - arcadeSpinScore(right, context));
+  const natural = candidates[0];
   if (overMax || overTarget) {
-    const losing = candidates.find((candidate) => candidate.result.totalPay === 0 && candidate.result.freeSpinsAwarded === 0);
-    const controlledWins = candidates
-      .filter((candidate) => candidate.result.totalPay > 0 && candidate.result.freeSpinsAwarded === 0)
-      .sort((left, right) => left.result.totalPay - right.result.totalPay);
+    const losing = arcadeCandidateBucket(candidates, (candidate) =>
+      candidate.result.totalPay === 0 && candidate.result.freeSpinsAwarded === 0
+    );
+    const controlledWins = arcadeCandidateBucket(candidates, (candidate) =>
+      candidate.result.totalPay > 0 && candidate.result.freeSpinsAwarded === 0
+    ).sort((left, right) => left.result.totalPay - right.result.totalPay);
     const maxControlledWin = overMax ? roundPoints(bet * 0.75) : roundPoints(bet * 1.5);
-    const smallWin = controlledWins.find((candidate) => candidate.result.totalPay <= maxControlledWin);
+    const smallWins = controlledWins.filter((candidate) => candidate.result.totalPay <= maxControlledWin);
     const overBy = Math.max(0, currentRtp - cfg.targetRtp);
-    const controlledWinChance = overMax
-      ? (overTarget ? 0.025 : 0.05)
-      : Math.max(0.06, Math.min(0.18, 0.2 - overBy * 0.25));
-    if (smallWin && arcadeRng() < controlledWinChance) return smallWin;
-    if (losing) return losing;
+    const controlChance = overMax ? 0.95 : Math.max(0.25, Math.min(0.75, overBy * 2.4));
+    if (arcadeRng() < controlChance) {
+      const controlledWinChance = overMax ? 0.025 : Math.max(0.04, Math.min(0.12, 0.14 - overBy * 0.2));
+      if (smallWins.length && arcadeRng() < controlledWinChance) return arcadeRandomCandidate(smallWins);
+      const loser = arcadeRandomCandidate(losing);
+      if (loser) return loser;
+    }
+    return natural;
   }
   if (underMin || underTarget) {
-    const improving = candidates.find((candidate) => candidate.result.totalPay > 0);
-    const recoveryChance = currentRtp < cfg.targetRtp - 0.12 ? 0.8 : 0.55;
-    if (improving && arcadeRng() < recoveryChance) return improving;
+    const gap = Math.max(0, cfg.targetRtp - currentRtp);
+    const recoveryChance = underMin ? 0.14 : Math.max(0.05, Math.min(0.16, gap * 0.6));
+    if (arcadeRng() < recoveryChance) {
+      const minorWins = arcadeMinorPrizeCandidates(candidates, bet, underMin ? 12 : 10);
+      const minorPrize = arcadePickVariedWin(minorWins, bet);
+      if (minorPrize) return minorPrize;
+      const maxRecoveryWin = roundPoints(bet * (underMin ? 12 : 10));
+      const improving = arcadeCandidateBucket(candidates, (candidate) =>
+        candidate.result.totalPay > 0 &&
+        candidate.result.totalPay !== bet &&
+        candidate.result.totalPay <= maxRecoveryWin &&
+        candidate.result.freeSpinsAwarded === 0
+      );
+      const picked = arcadeRandomCandidate(improving);
+      if (picked) return picked;
+    }
   }
-  if (candidates[0]) return candidates[0];
+  if (natural) return natural;
   const grid = arcadeGenerateGrid(gameKey);
   return { grid, result: arcadeEvaluateSpin(gameKey, grid, bet) };
 }
@@ -1212,6 +1260,35 @@ function slotOwnerSpinFilter(ownerId, data) {
   return (spin) => ownedUserIds.has(spin?.userId);
 }
 
+function slotPlayerSpinFilter(userId) {
+  const id = String(userId || "");
+  return (spin) => String(spin?.userId || "") === id;
+}
+
+function slotPayoutCaps(data, user, arcadeSlotsConfig, gameKey, gamePaidToday = 0) {
+  const settings = normalizeSlotSettings(data.slotSettings);
+  const ownerSpinFilter = slotOwnerSpinFilter(user?.parentAdminId || "admin", data);
+  const playerSpinFilter = slotPlayerSpinFilter(user?.id);
+  const ownerStats = arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter);
+  const playerStats = arcadeSlotsStatsFromPayout(data.slotPayout, playerSpinFilter);
+  const gameConfig = normalizeArcadeGameConfig(
+    arcadeSlotsConfig?.games?.[gameKey] || defaultArcadeGameConfigForKey(gameKey)
+  );
+  const remainingDaily = roundPoints(settings.dailyPayoutLimit - ownerStats.totalWon);
+  const remainingPlayer = roundPoints(settings.playerDailyPayoutLimit - playerStats.totalWon);
+  const remainingGame = roundPoints(gameConfig.dailyMaxPayout - gamePaidToday);
+  const maxWin = Math.max(0, roundPoints(Math.min(remainingDaily, remainingPlayer, remainingGame)));
+  return {
+    settings,
+    ownerStats,
+    playerStats,
+    remainingDaily: Math.max(0, remainingDaily),
+    remainingPlayer: Math.max(0, remainingPlayer),
+    remainingGame: Math.max(0, remainingGame),
+    maxWin,
+  };
+}
+
 function slotControlSpinFilterForOperator(operator, data) {
   if (!operator) return null;
   if (operator.role === "admin") return null;
@@ -1940,8 +2017,10 @@ function readBody(request) {
 function publicFilePath(urlPath) {
   const cleanPath = decodeURIComponent(urlPath.split("?")[0]);
   const routeMap = {
-    "/": "index.html",
-    "/index.html": "index.html",
+    "/": "slots-arcade.html",
+    "/index.html": "slots-arcade.html",
+    "/website-backup": "index-website-backup.html",
+    "/website-backup.html": "index-website-backup.html",
     [adminPath]: "admin.html",
     [adminMessagesPath]: "admin-messages.html",
     [adminLoginPath]: "login.html",
@@ -3188,6 +3267,7 @@ async function handleApi(request, response, urlPath, url) {
     const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, arcadeGameKey, ownerSpinFilter);
     const gamePaidToday = arcadeGameStats.won;
     const remainingGamePayout = Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday));
+    const payoutCaps = slotPayoutCaps(data, user, effectiveArcadeConfig, arcadeGameKey, gamePaidToday);
     const payoutMultiplier = arcadePayoutMultiplier(arcadeGameConfig, arcadeGameStats);
     let grid = [];
     let result = [];
@@ -3200,7 +3280,7 @@ async function handleApi(request, response, urlPath, url) {
       wins = evaluation.wins;
       const bonusWin = Math.random() < 0.015 ? roundPoints(bet * 5) : 0;
       bonus = bonusWin > 0 ? { label: "South Diamond bonus", amount: bonusWin } : null;
-      win = roundPoints((evaluation.totalWin + bonusWin) * payoutMultiplier);
+      win = Math.min(roundPoints((evaluation.totalWin + bonusWin) * payoutMultiplier), payoutCaps.maxWin);
       if (win <= 0) wins = [];
       if (!win) bonus = null;
       break;
@@ -3241,7 +3321,6 @@ async function handleApi(request, response, urlPath, url) {
     data.slotPayout.spins.unshift(spinRecord);
     data.gameHistory = Array.isArray(data.gameHistory) ? data.gameHistory : [];
     data.gameHistory.unshift(spinRecord);
-    data.slotPayout.spins = data.slotPayout.spins.slice(0, 500);
     addActivity(data, "slots-spin", `${user.username} opened ${slotGameNames[gameKey]} for ${bet} points${win ? ` and earned ${win}` : ""}`, {
       userId: user.id,
       username: user.username,
@@ -3253,8 +3332,8 @@ async function handleApi(request, response, urlPath, url) {
       wins,
       bonus,
       balanceAfter: user.points,
-      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
-      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
+      remainingPayout: Math.max(0, roundPoints(payoutCaps.remainingDaily - win)),
+      remainingPlayerPayout: Math.max(0, roundPoints(payoutCaps.remainingPlayer - win)),
     });
     await writeDatabase(data);
     sendSlotLiveEvent({
@@ -3270,8 +3349,8 @@ async function handleApi(request, response, urlPath, url) {
       bonus,
       bet,
       win,
-      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
-      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
+      remainingPayout: Math.max(0, roundPoints(payoutCaps.remainingDaily - win)),
+      remainingPlayerPayout: Math.max(0, roundPoints(payoutCaps.remainingPlayer - win)),
       remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
       user: sanitizeUser(user),
       transactions: transactions.map(sanitizePointTransaction),
@@ -3335,9 +3414,20 @@ async function handleApi(request, response, urlPath, url) {
     }
     const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey, ownerSpinFilter);
     const gamePaidToday = arcadeGameStats.won;
+    const payoutCaps = slotPayoutCaps(data, storedUser, effectiveArcadeConfig, gameKey, gamePaidToday);
     const selectedSpin = arcadeSelectServerSpin(gameKey, settlementBet, arcadeGameConfig, arcadeGameStats, { freeSpin: isFreeSpin });
     const grid = selectedSpin.grid;
-    const serverResult = selectedSpin.result;
+    const serverResult = {
+      ...selectedSpin.result,
+      totalPay: Math.min(roundPoints(selectedSpin.result.totalPay), payoutCaps.maxWin),
+    };
+    if (serverResult.totalPay <= 0) {
+      serverResult.totalPay = 0;
+      serverResult.wins = [];
+      serverResult.freeSpinsAwarded = 0;
+    } else if (serverResult.totalPay < selectedSpin.result.totalPay) {
+      serverResult.wins = (serverResult.wins || []).map((win) => ({ ...win, capped: true }));
+    }
     const win = serverResult.totalPay;
     const freeSpinsAwarded = !isFreeSpin ? serverResult.freeSpinsAwarded : 0;
     const createdAt = new Date().toISOString();
@@ -3396,7 +3486,6 @@ async function handleApi(request, response, urlPath, url) {
     data.slotPayout.spins.unshift(spinRecord);
     data.gameHistory = Array.isArray(data.gameHistory) ? data.gameHistory : [];
     data.gameHistory.unshift(spinRecord);
-    data.slotPayout.spins = data.slotPayout.spins.slice(0, 500);
     addActivity(
       data,
       "slots-arcade-spin",
@@ -3423,8 +3512,8 @@ async function handleApi(request, response, urlPath, url) {
       freeSpinsAwarded,
       freeSpinsRemaining: Number(storedUser.slotFreeSpins?.remaining) || 0,
       capped: false,
-      remainingPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
-      remainingPlayerPayout: Math.max(0, roundPoints(arcadeTotalDailyMaxPayout(effectiveArcadeConfig) - arcadeSlotsStatsFromPayout(data.slotPayout, ownerSpinFilter).totalWon)),
+      remainingPayout: Math.max(0, roundPoints(payoutCaps.remainingDaily - win)),
+      remainingPlayerPayout: Math.max(0, roundPoints(payoutCaps.remainingPlayer - win)),
       remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
       user: sanitizeUser(storedUser),
       transactions: transactions.map(sanitizePointTransaction),

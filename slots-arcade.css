@@ -41,7 +41,7 @@ button { font-family: inherit; cursor: pointer; }
   top: 0;
   z-index: 100;
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -140,6 +140,246 @@ button { font-family: inherit; cursor: pointer; }
   color: #1a0d06;
   border-color: #fff;
   box-shadow: 0 0 14px rgba(255, 215, 107, .6);
+}
+.arcade-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 5px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .72), rgba(26, 8, 40, .64));
+  border: 1px solid rgba(123, 232, 255, .28);
+}
+.arcade-player > span {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #7be8ff;
+  font-weight: 900;
+  font-size: .82rem;
+}
+.arcade-pill-button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  color: #fff;
+  font-weight: 900;
+  font-size: .72rem;
+  letter-spacing: 0;
+}
+.arcade-pill-button.primary,
+.arcade-pill-button.is-ready {
+  background: linear-gradient(180deg, #52ef9f, #0b8f4a);
+  color: #04150c;
+  border-color: rgba(255, 255, 255, .72);
+  box-shadow: 0 0 14px rgba(82, 239, 159, .36);
+}
+.arcade-pill-button.danger {
+  background: linear-gradient(180deg, #ff6b6b, #b4232c);
+  color: #fff;
+}
+.arcade-pill-button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+.arcade-auth-panel {
+  position: sticky;
+  top: 62px;
+  z-index: 90;
+  padding: 10px 12px;
+  background: rgba(5, 0, 10, .78);
+  border-bottom: 1px solid rgba(255, 215, 107, .22);
+  backdrop-filter: blur(10px);
+}
+.arcade-auth-panel.is-collapsed {
+  display: none;
+}
+.arcade-login-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 220px) minmax(130px, 200px) auto auto;
+  gap: 8px;
+  align-items: end;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.arcade-login-form strong {
+  display: block;
+  color: #ffd76b;
+  font-size: .95rem;
+}
+.arcade-login-form div span,
+.arcade-login-form label span {
+  display: block;
+  color: rgba(255,255,255,.68);
+  font-size: .68rem;
+}
+.arcade-login-form [data-arcade-auth-status].is-good {
+  color: #52ef9f;
+}
+.arcade-login-form input,
+.arcade-guest-name-form input,
+.arcade-chat-form input {
+  width: 100%;
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 215, 107, .28);
+  background: rgba(0, 0, 0, .62);
+  color: #fff;
+  padding: 8px 10px;
+  font: inherit;
+}
+.arcade-guest-name-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  padding: 10px;
+  background: rgba(255, 215, 107, .08);
+  border-top: 1px solid rgba(255, 215, 107, .16);
+  border-bottom: 1px solid rgba(255, 215, 107, .12);
+}
+.arcade-guest-name-form label span {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(255,255,255,.72);
+  font-size: .68rem;
+}
+.arcade-guest-name-form small {
+  grid-column: 1 / -1;
+  min-height: 16px;
+  color: #ffd76b;
+  font-size: .72rem;
+}
+.arcade-chat-drawer {
+  position: sticky;
+  top: 62px;
+  z-index: 95;
+  max-width: 760px;
+  margin: 8px auto 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(8, 2, 14, .98), rgba(16, 4, 28, .96));
+  border: 1px solid rgba(123, 232, 255, .35);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, .42), 0 0 22px rgba(123, 232, 255, .12);
+  overflow: hidden;
+}
+.arcade-chat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(123, 232, 255, .1);
+}
+.arcade-chat-head strong {
+  color: #7be8ff;
+}
+.arcade-chat-messages {
+  max-height: 220px;
+  overflow: auto;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+.arcade-chat-message {
+  max-width: 86%;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.arcade-chat-message.player {
+  justify-self: end;
+  background: rgba(82, 239, 159, .14);
+  border-color: rgba(82, 239, 159, .26);
+}
+.arcade-chat-message span {
+  display: block;
+  margin-bottom: 3px;
+  color: #ffd76b;
+  font-size: .68rem;
+  font-weight: 900;
+}
+.arcade-chat-message p {
+  color: #fff;
+  font-size: .88rem;
+  line-height: 1.35;
+}
+.arcade-chat-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.arcade-spin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0,0,0,.78);
+  backdrop-filter: blur(7px);
+}
+.arcade-spin-card {
+  position: relative;
+  width: min(360px, 94vw);
+  padding: 18px;
+  text-align: center;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #1a0828, #08020d);
+  border: 2px solid #ffd76b;
+  box-shadow: 0 0 34px rgba(255, 215, 107, .32);
+}
+.arcade-spin-card > strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #ffd76b;
+  font-size: 1.2rem;
+}
+.arcade-spin-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+}
+.arcade-spin-wheel {
+  width: 190px;
+  height: 190px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  border: 8px solid #ffd76b;
+  display: grid;
+  place-items: center;
+  position: relative;
+  background: conic-gradient(#d4002a 0 60deg, #1a0828 60deg 120deg, #0b8f4a 120deg 180deg, #5a0017 180deg 240deg, #b8830a 240deg 300deg, #08020d 300deg 360deg);
+  transition: transform 2.8s cubic-bezier(.16, .9, .18, 1);
+}
+.arcade-spin-wheel span {
+  position: absolute;
+  color: #fff;
+  font-weight: 900;
+  text-shadow: 0 2px 4px #000;
+}
+.arcade-spin-wheel span:nth-child(1) { transform: translate(0, -64px); }
+.arcade-spin-wheel span:nth-child(2) { transform: translate(56px, -32px); }
+.arcade-spin-wheel span:nth-child(3) { transform: translate(56px, 32px); }
+.arcade-spin-wheel span:nth-child(4) { transform: translate(0, 64px); }
+.arcade-spin-wheel span:nth-child(5) { transform: translate(-56px, 32px); }
+.arcade-spin-wheel span:nth-child(6) { transform: translate(-56px, -32px); }
+.arcade-spin-card p {
+  min-height: 42px;
+  color: rgba(255,255,255,.82);
+  line-height: 1.35;
 }
 
 /* ----- JACKPOT STRIP ----- */
@@ -2782,6 +3022,7 @@ body.is-pseudo-fullscreen .game-view {
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
       "brand home balance"
+      "player player player"
       "toggles toggles toggles";
     align-items: center;
     padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px;
@@ -2827,6 +3068,57 @@ body.is-pseudo-fullscreen .game-view {
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 1rem;
+  }
+
+  .arcade-player {
+    grid-area: player;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) repeat(4, auto);
+    width: 100%;
+    gap: 5px;
+  }
+
+  .arcade-player > span {
+    max-width: none;
+    align-self: center;
+    font-size: .78rem;
+  }
+
+  .arcade-pill-button {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: .66rem;
+  }
+
+  .arcade-auth-panel,
+  .arcade-chat-drawer {
+    top: 128px;
+  }
+
+  .arcade-login-form {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .arcade-login-form input,
+  .arcade-guest-name-form input,
+  .arcade-chat-form input {
+    min-height: 42px;
+    font-size: 16px;
+  }
+
+  .arcade-guest-name-form {
+    grid-template-columns: 1fr;
+  }
+
+  .arcade-chat-drawer {
+    width: calc(100vw - 16px);
+    margin-top: 6px;
+    border-radius: 12px;
+  }
+
+  .arcade-chat-messages {
+    max-height: 180px;
   }
 
   .arcade-toggles {
@@ -3028,6 +3320,25 @@ body.is-pseudo-fullscreen .game-view {
   .arcade-balance strong {
     max-width: 86px;
     font-size: .9rem;
+  }
+
+  .arcade-player {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .arcade-player > span {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+
+  .arcade-pill-button {
+    width: 100%;
+    padding-inline: 5px;
+  }
+
+  .arcade-auth-panel,
+  .arcade-chat-drawer {
+    top: 170px;
   }
 
   .jackpot-strip {

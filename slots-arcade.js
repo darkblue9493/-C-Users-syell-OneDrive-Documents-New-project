@@ -1153,6 +1153,7 @@ const State = {
   soundOn: true,
   fullscreen: false,
   player: null,
+  guestChatName: "",
   pointsSyncedAt: 0,
   appliedControlGame: null,
   appliedControlSignature: "",
@@ -1198,17 +1199,15 @@ async function refreshPlayerPoints({ redirectOnFail = false } = {}) {
     State.credits = Number(data.user?.points) || 0;
     State.pointsSyncedAt = Date.now();
     updateDisplays();
+    updateArcadeAccountUi();
     return true;
   } catch (error) {
     State.player = null;
     State.credits = 0;
     updateDisplays();
+    updateArcadeAccountUi();
     flashMessage("Log in to your South Diamond account to play slots.");
-    if (redirectOnFail) {
-      window.setTimeout(() => {
-        window.location.href = "/#login";
-      }, 900);
-    }
+    if (redirectOnFail) showArcadeAuth("Sign in to play South Diamond Slots.");
     return false;
   }
 }
@@ -1864,6 +1863,280 @@ function fmt(n) {
 }
 function $(sel, root = document) { return root.querySelector(sel); }
 function $$(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
+
+function setArcadeAuthStatus(message, good = false) {
+  const el = document.querySelector("[data-arcade-auth-status]");
+  if (!el) return;
+  el.textContent = message || "";
+  el.classList.toggle("is-good", Boolean(good));
+}
+
+function showArcadeAuth(message = "") {
+  const panel = document.querySelector("[data-arcade-auth-panel]");
+  if (panel) panel.classList.remove("is-collapsed");
+  if (message) setArcadeAuthStatus(message);
+}
+
+function hideArcadeAuth() {
+  document.querySelector("[data-arcade-auth-panel]")?.classList.add("is-collapsed");
+}
+
+function getGuestChatName() {
+  if (State.guestChatName) return State.guestChatName;
+  try {
+    State.guestChatName = String(localStorage.getItem(STORAGE_PREFIX + "guest_chat_name") || "").trim().slice(0, 60);
+  } catch (error) {}
+  return State.guestChatName;
+}
+
+function setGuestChatName(name) {
+  State.guestChatName = String(name || "").trim().slice(0, 60);
+  try {
+    if (State.guestChatName) localStorage.setItem(STORAGE_PREFIX + "guest_chat_name", State.guestChatName);
+  } catch (error) {}
+}
+
+function setGuestChatStatus(message = "") {
+  const status = document.querySelector("[data-arcade-guest-status]");
+  if (status) status.textContent = message;
+}
+
+function updateGuestNameStep() {
+  const form = document.querySelector("[data-arcade-guest-name-form]");
+  if (!form) return;
+  const needsName = !State.player && !getGuestChatName();
+  form.classList.toggle("hidden", !needsName);
+  const messageInput = document.querySelector("[data-arcade-chat-form] input[name='message']");
+  if (messageInput) {
+    messageInput.disabled = needsName;
+    messageInput.placeholder = needsName ? "Enter your name first..." : "Message support...";
+  }
+  if (needsName) {
+    form.elements.namedItem("name")?.focus();
+  }
+}
+
+function updateArcadeAccountUi() {
+  const loggedIn = Boolean(State.player);
+  document.body.classList.toggle("is-arcade-player", loggedIn);
+  const name = document.querySelector("[data-arcade-player-name]");
+  if (name) name.textContent = loggedIn ? State.player.username || "Player" : "Guest";
+  const authOpen = document.querySelector("[data-arcade-auth-open]");
+  const logout = document.querySelector("[data-arcade-logout]");
+  const spinOpen = document.querySelector("[data-arcade-spin-open]");
+  const chatOpen = document.querySelector("[data-arcade-chat-open]");
+  if (authOpen) {
+    authOpen.classList.toggle("hidden", loggedIn);
+    authOpen.disabled = loggedIn;
+  }
+  if (logout) logout.classList.toggle("hidden", !loggedIn);
+  if (spinOpen) spinOpen.disabled = !loggedIn;
+  if (chatOpen) chatOpen.disabled = !loggedIn;
+  if (spinOpen) spinOpen.classList.toggle("hidden", !loggedIn);
+  if (chatOpen) chatOpen.classList.toggle("hidden", !loggedIn);
+  if (loggedIn) {
+    hideArcadeAuth();
+    refreshDailySpinStatus().catch(() => {});
+    refreshArcadeChat().catch(() => {});
+  } else {
+    hideArcadeAuth();
+    setArcadeAuthStatus("Log in to play, chat, and use daily spin.");
+    document.querySelector("[data-arcade-chat]")?.classList.add("hidden");
+  }
+}
+
+function renderArcadeMessages(messages = []) {
+  const list = document.querySelector("[data-arcade-chat-messages]");
+  if (!list) return;
+  list.innerHTML = "";
+  const fallback = State.player
+    ? "Message South Diamond support here."
+    : getGuestChatName()
+      ? "Send your message to South Diamond support."
+      : "Enter your name to start a chat with South Diamond support.";
+  const shown = messages.length ? messages : [{ author: "operator", text: fallback }];
+  shown.forEach((message) => {
+    const item = document.createElement("article");
+    item.className = `arcade-chat-message ${message.author === "operator" ? "operator" : "player"}`;
+    const author = document.createElement("span");
+    author.textContent = message.author === "operator" ? "Support" : "You";
+    const text = document.createElement("p");
+    text.textContent = message.text || "";
+    item.append(author, text);
+    list.appendChild(item);
+  });
+  list.scrollTop = list.scrollHeight;
+}
+
+async function refreshArcadeChat() {
+  if (!document.querySelector("[data-arcade-chat-messages]")) return;
+  const endpoint = State.player ? "/api/player/chat" : "/api/chats/guest-message";
+  const data = await arcadeApi(endpoint, { timeoutMs: 8000 });
+  renderArcadeMessages(data.chat?.messages || []);
+}
+
+function openArcadeChat({ guest = false } = {}) {
+  const drawer = document.querySelector("[data-arcade-chat]");
+  if (!drawer) return;
+  drawer.classList.remove("hidden");
+  updateGuestNameStep();
+  if (!State.player && guest) {
+    setArcadeAuthStatus("Enter your name to start chat.", true);
+  }
+  refreshArcadeChat().catch(() => {});
+}
+
+function formatSpinWait(value) {
+  if (!value) return "Daily spin is not ready yet.";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Daily spin is not ready yet.";
+  return `Next spin opens ${date.toLocaleString()}.`;
+}
+
+async function refreshDailySpinStatus({ updateResult = true } = {}) {
+  if (!State.player) return;
+  const status = await arcadeApi("/api/player/spin-status", { timeoutMs: 8000 });
+  const button = document.querySelector("[data-arcade-spin-open]");
+  const result = document.querySelector("[data-arcade-spin-result]");
+  if (button) {
+    button.disabled = false;
+    button.classList.toggle("is-ready", Boolean(status.eligible));
+  }
+  if (result && updateResult) result.textContent = status.eligible ? "Your daily spin is ready." : formatSpinWait(status.nextSpinAt);
+}
+
+function openArcadeSpin() {
+  if (!State.player) return showArcadeAuth("Sign in to use daily spin.");
+  const modal = document.querySelector("[data-arcade-spin-modal]");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  refreshDailySpinStatus().catch((error) => {
+    const result = document.querySelector("[data-arcade-spin-result]");
+    if (result) result.textContent = error.message;
+  });
+}
+
+function closeArcadeSpin() {
+  const modal = document.querySelector("[data-arcade-spin-modal]");
+  modal?.classList.add("hidden");
+  modal?.setAttribute("aria-hidden", "true");
+}
+
+async function runArcadeDailySpin() {
+  const button = document.querySelector("[data-arcade-spin-run]");
+  const result = document.querySelector("[data-arcade-spin-result]");
+  const wheel = document.querySelector("[data-arcade-spin-wheel]");
+  if (!button || !State.player) return;
+  button.disabled = true;
+  if (result) result.textContent = "Spinning...";
+  try {
+    const data = await arcadeApi("/api/player/spin", { method: "POST", body: JSON.stringify({}), timeoutMs: 12000 });
+    if (wheel) wheel.style.transform = `rotate(${720 + Math.floor(Math.random() * 360)}deg)`;
+    State.player = data.user;
+    State.credits = Number(data.user?.points) || State.credits;
+    updateDisplays();
+    updateArcadeAccountUi();
+    if (result) {
+      result.textContent = data.prize > 0
+        ? `You won ${data.prize} point${data.prize === 1 ? "" : "s"}.`
+        : "Better luck next time. Come back tomorrow.";
+    }
+  } catch (error) {
+    if (result) result.textContent = `${error.message} ${formatSpinWait(error.nextSpinAt)}`.trim();
+  } finally {
+    button.disabled = false;
+    refreshDailySpinStatus({ updateResult: false }).catch(() => {});
+  }
+}
+
+function bindArcadePlayerTools() {
+  const loginForm = document.querySelector("[data-arcade-login-form]");
+  loginForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = loginForm.querySelector("button[type='submit']");
+    if (button) button.disabled = true;
+    setArcadeAuthStatus("Checking login...");
+    try {
+      const data = await arcadeApi("/api/player/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: loginForm.elements.email.value.trim(),
+          password: loginForm.elements.password.value,
+        }),
+        timeoutMs: 12000,
+      });
+      State.player = data.user;
+      State.credits = Number(data.user?.points) || 0;
+      loginForm.reset();
+      setArcadeAuthStatus("Signed in.", true);
+      updateDisplays();
+      updateArcadeAccountUi();
+      renderLobby();
+    } catch (error) {
+      setArcadeAuthStatus(error.message || "Could not sign in.");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+  document.querySelector("[data-arcade-auth-open]")?.addEventListener("click", () => showArcadeAuth("Enter your player login."));
+  document.querySelector("[data-arcade-guest-chat-open]")?.addEventListener("click", () => openArcadeChat({ guest: true }));
+  document.querySelector("[data-arcade-logout]")?.addEventListener("click", async () => {
+    await arcadeApi("/api/player/logout", { method: "POST", timeoutMs: 8000 }).catch(() => {});
+    State.player = null;
+    State.credits = 0;
+    updateDisplays();
+    updateArcadeAccountUi();
+    setWinMessage("Signed out.");
+  });
+  document.querySelector("[data-arcade-chat-open]")?.addEventListener("click", () => {
+    openArcadeChat();
+  });
+  document.querySelector("[data-arcade-chat-close]")?.addEventListener("click", () => {
+    document.querySelector("[data-arcade-chat]")?.classList.add("hidden");
+  });
+  document.querySelector("[data-arcade-guest-name-form]")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const nameInput = form.elements.namedItem("name");
+    const name = nameInput?.value.trim() || "";
+    if (!name) {
+      setGuestChatStatus("Please enter your name first.");
+      nameInput?.focus();
+      return;
+    }
+    setGuestChatName(name);
+    setGuestChatStatus("");
+    updateGuestNameStep();
+    renderArcadeMessages([]);
+    document.querySelector("[data-arcade-chat-form] input[name='message']")?.focus();
+  });
+  document.querySelector("[data-arcade-chat-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const input = form.elements.message;
+    const text = input.value.trim();
+    if (!text) return;
+    if (!State.player && !getGuestChatName()) {
+      updateGuestNameStep();
+      setGuestChatStatus("Please enter your name first.");
+      return;
+    }
+    input.value = "";
+    const data = await arcadeApi(State.player ? "/api/chats/player-message" : "/api/chats/guest-message", {
+      method: "POST",
+      body: JSON.stringify(State.player ? { text } : { text, name: getGuestChatName() }),
+      timeoutMs: 10000,
+    });
+    renderArcadeMessages(data.chat?.messages || []);
+  });
+  document.querySelector("[data-arcade-spin-open]")?.addEventListener("click", openArcadeSpin);
+  document.querySelector("[data-arcade-spin-close]")?.addEventListener("click", closeArcadeSpin);
+  document.querySelector("[data-arcade-spin-run]")?.addEventListener("click", runArcadeDailySpin);
+  document.querySelector("[data-arcade-spin-modal]")?.addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) closeArcadeSpin();
+  });
+}
 
 // ============================================================
 // 8) RENDERER - Build DOM for lobby + in-game view
@@ -2754,6 +3027,7 @@ async function bootstrap() {
   Audio.setMusicEnabled(State.musicOn);
   Audio.setSoundEnabled(State.soundOn);
   renderLobby();
+  bindArcadePlayerTools();
   await refreshPlayerPoints({ redirectOnFail: false });
   try {
     await refreshArcadeControls();
@@ -2763,6 +3037,11 @@ async function bootstrap() {
   bindEvents();
   startJackpotTicker();
   startArcadeControlsWatcher();
+  setInterval(() => {
+    if (State.player && !document.querySelector("[data-arcade-chat]")?.classList.contains("hidden")) {
+      refreshArcadeChat().catch(() => {});
+    }
+  }, 4500);
   // Music/sound button initial state
   const mb = $("[data-music-btn]"); if (mb) { mb.textContent = State.musicOn ? "\u{1F3B5} ON" : "\u{1F3B5} OFF"; mb.classList.toggle("is-active", State.musicOn); }
   const sb = $("[data-sound-btn]"); if (sb) { sb.textContent = State.soundOn ? "\u{1F50A}" : "\u{1F507}"; sb.classList.toggle("is-active", State.soundOn); }
