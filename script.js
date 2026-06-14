@@ -1751,6 +1751,8 @@ let adminHasRenderedOnce = false;
 let adminRenderInFlight = false;
 let adminRenderQueued = false;
 let adminSearchRenderTimer = null;
+let adminLiveStream = null;
+let adminLiveRefreshTimer = null;
 const adminBroadcastExcludedUserIds = new Set();
 const adminIdleLimitMs = 2 * 60 * 60 * 1000;
 const adminKeepAliveMs = 5 * 60 * 1000;
@@ -2373,6 +2375,37 @@ function renderActivity(activity = []) {
   });
 }
 
+function queueAdminLiveRefresh() {
+  if (!adminMain) return;
+  clearTimeout(adminLiveRefreshTimer);
+  adminLiveRefreshTimer = setTimeout(() => {
+    const isWorking =
+      document.activeElement?.matches("input, textarea, select, button") ||
+      document.activeElement?.closest("form") ||
+      playerModal?.classList.contains("is-open");
+    if (!document.hidden && !isWorking) renderAdmin({ forceLists: true });
+  }, 250);
+}
+
+function startAdminLiveUpdates() {
+  if (!adminMain || adminLiveStream || typeof EventSource === "undefined") return;
+  try {
+    adminLiveStream = new EventSource("/api/player/slots/live");
+    adminLiveStream.addEventListener("message", (event) => {
+      let payload = {};
+      try { payload = JSON.parse(event.data || "{}"); } catch (error) {}
+      if (payload.type && payload.type !== "connected") queueAdminLiveRefresh();
+    });
+    adminLiveStream.addEventListener("error", () => {
+      try { adminLiveStream && adminLiveStream.close(); } catch (error) {}
+      adminLiveStream = null;
+      setTimeout(startAdminLiveUpdates, 3000);
+    });
+  } catch (error) {
+    adminLiveStream = null;
+  }
+}
+
 function renderDashboard(stats = {}) {
   if (!dashboardStats) return;
   dashboardStats.querySelectorAll("[data-stat]").forEach((item) => {
@@ -2578,7 +2611,10 @@ async function handleAdminPlayerListClick(event) {
 
 if (adminInbox && adminForm) {
   setupAdminIdleLogout();
-  requireAdminSession().then(renderAdmin);
+  requireAdminSession().then(() => {
+    renderAdmin();
+    startAdminLiveUpdates();
+  });
 
   if (adminUsers) {
     adminUsers.addEventListener("click", handleAdminPlayerListClick);

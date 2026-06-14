@@ -2402,8 +2402,7 @@ function animateReelSpin(reelEl, finalSymbols, game, delay = 0, opts = {}) {
     const symKeys = Object.keys(game.symbols);
     const visibleRows = game.rows;
     const profile = getSpinProfile(game);
-    // Longer buffer for smoother landing - user sees symbols clearly scrolling past before result
-    const bufferCount = 28 + Math.floor(Math.random() * 6);
+    const bufferCount = 14 + Math.floor(Math.random() * 4);
     // Build strip: random buffer + 2 anticipation buffer + final symbols
     // The "anticipation" cells right before final symbols are picked from common low-pay symbols
     const stripSymbols = [];
@@ -2427,10 +2426,10 @@ function animateReelSpin(reelEl, finalSymbols, game, delay = 0, opts = {}) {
     reelEl.dataset.effect = profile.effect;
     void strip.offsetHeight;
     // Stagger - each reel waits longer than previous (per-game stagger)
-    const startDelay = delay * Math.round(profile.stagger * 0.45);
+    const startDelay = delay * 45;
     // If slowFinish requested (last reel + big win pending), make it dramatic
-    const slowMult = opts.slowFinish ? 1.8 : 1.0;
-    const baseDuration = Math.round(profile.duration * 0.72) + delay * 60;
+    const slowMult = opts.slowFinish ? 1.25 : 1.0;
+    const baseDuration = 520 + delay * 35;
     const duration = Math.round(baseDuration * slowMult);
     setTimeout(() => {
       const finalOffset = bufferCount * cellHeight;
@@ -2438,8 +2437,8 @@ function animateReelSpin(reelEl, finalSymbols, game, delay = 0, opts = {}) {
       strip.style.transition = `transform ${duration}ms ${profile.easing}`;
       strip.style.transform = `translateY(-${finalOffset}px)`;
       if (opts.slowFinish) reelEl.classList.add("slow-finish");
-      // Remove blur class slightly before end so final symbols are sharp during last 15%
-      const sharpEarly = Math.round(duration * 0.85);
+      // Remove spin styling right at the stop so the roll stays continuous.
+      const sharpEarly = duration;
       setTimeout(() => {
         reelEl.classList.remove("is-spinning");
       }, sharpEarly);
@@ -2456,29 +2455,6 @@ function animateReelSpin(reelEl, finalSymbols, game, delay = 0, opts = {}) {
         resolve();
       }, duration);
     }, startDelay);
-  });
-}
-
-function startInstantReelWarmup(game) {
-  if (!game) return;
-  const symKeys = Object.keys(game.symbols || {});
-  if (!symKeys.length) return;
-  const visibleRows = Math.max(1, Number(game.rows) || 3);
-  $$("[data-reel-strip] .reel").forEach((reelEl) => {
-    const strip = reelEl.querySelector(".reel-track");
-    if (!strip) return;
-    const reelHeight = reelEl.offsetHeight || 200;
-    const cellHeight = reelHeight / visibleRows;
-    const cells = [];
-    for (let i = 0; i < visibleRows + 8; i++) {
-      const symbol = symKeys[Math.floor(Math.random() * symKeys.length)];
-      cells.push(`<div class="reel-cell" data-row="-1">${renderSymbolHtml(symbol, game)}</div>`);
-    }
-    strip.innerHTML = cells.join("");
-    strip.style.transition = "none";
-    strip.style.transform = "translateY(0)";
-    strip.style.setProperty("--warmup-distance", `${cellHeight}px`);
-    reelEl.classList.add("is-spinning", "is-warming");
   });
 }
 
@@ -2527,7 +2503,6 @@ async function spinGame() {
     spinButton.classList.add("is-spinning");
     spinButton.disabled = true;
   }
-  startInstantReelWarmup(game);
   // Hard safety: regardless of what happens below (network hang, animation
   // hiccup, JS exception in a downstream call), make sure the spin button is
   // never permanently disabled. 20 seconds is well past any realistic spin.
@@ -3002,8 +2977,12 @@ function bindEvents() {
     if (e.target.closest("[data-back-button]")) { e.preventDefault(); backToLobby(); return; }
     if (e.target.closest("[data-arcade-home]")) {
       e.preventDefault();
-      if (State.activeGame) backToLobby();
-      else renderLobby();
+      window.location.href = "/";
+      return;
+    }
+    if (e.target.closest("[data-arcade-chat-home]")) {
+      e.preventDefault();
+      window.location.href = "/?chat=1";
       return;
     }
     if (e.target.closest("[data-spin-btn]")) { Audio.resume(); spinGame(); return; }

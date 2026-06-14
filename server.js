@@ -33,11 +33,20 @@ const playerSessions = new Map();
 const adminLoginAttempts = new Map();
 const subAdminLoginAttempts = new Map();
 const pendingAdminLogins = new Map();
+let localDbCache = null;
+let localDbCacheReady = false;
+let localDbWriteQueue = Promise.resolve();
 const subAdminSessionMaxAge = 60 * 60 * 8; // sub-admins: 8 hours per login
 const slotLiveClients = new Set();
 const maxJsonBodyBytes = 8_000_000;
 const playerSessionMaxAge = 60 * 60 * 24 * 400;
 const adminSessionMaxAge = 60 * 60 * 2;
+const retentionMs = {
+  pointTransactions: 30 * 24 * 60 * 60 * 1000,
+  activityLog: 30 * 24 * 60 * 60 * 1000,
+};
+const maxPointTransactions = 5000;
+const maxActivityLogEntries = 5000;
 // Public self-signup has been removed. Players are now created by admin or sub-admin only,
 // so no automatic signup/referral bonuses are awarded. Set these back to a positive number
 // if you ever re-enable public signup.
@@ -934,6 +943,8 @@ async function ensureDatabase() {
 
   if (!fs.existsSync(dbPath)) {
     fs.writeFileSync(dbPath, JSON.stringify(starterDatabase(), null, 2));
+    localDbCache = normalizeDatabase(starterDatabase());
+    localDbCacheReady = true;
     return;
   }
 
@@ -950,6 +961,10 @@ async function ensureDatabase() {
   if (changed) {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
   }
+  if (!localDbCacheReady) {
+    localDbCache = normalizeDatabase(data);
+    localDbCacheReady = true;
+  }
 }
 
 async function readDatabase() {
@@ -965,14 +980,18 @@ async function readDatabase() {
     }
   }
 
-  const data = normalizeDatabase(JSON.parse(fs.readFileSync(dbPath, "utf8")));
-  loadAdminSessions(data);
-  return data;
+  if (!localDbCacheReady || !localDbCache) {
+    localDbCache = normalizeDatabase(JSON.parse(fs.readFileSync(dbPath, "utf8")));
+    localDbCacheReady = true;
+  }
+  loadAdminSessions(localDbCache);
+  return localDbCache;
 }
 
 async function writeDatabase(data) {
   await ensureDatabase();
   const normalized = normalizeDatabase(data);
+  pruneDatabase(normalized);
   loadAdminSessions(normalized);
   if (useSupabase) {
     try {
@@ -981,13 +1000,43 @@ async function writeDatabase(data) {
         headers: { Prefer: "resolution=merge-duplicates,return=representation" },
         body: JSON.stringify({ id: "main", data: normalized, updated_at: new Date().toISOString() }),
       });
+      sendSlotLiveEvent({ type: "data-updated" });
       return;
     } catch (error) {
       disableSupabaseFallback(error);
     }
   }
 
-  fs.writeFileSync(dbPath, JSON.stringify(normalized, null, 2));
+  localDbCache = normalized;
+  localDbCacheReady = true;
+  const payload = JSON.stringify(normalized, null, 2);
+  localDbWriteQueue = localDbWriteQueue
+    .catch(() => {})
+    .then(() => fs.promises.writeFile(dbPath, payload))
+    .catch((error) => console.error("South Diamond database write failed:", error.message));
+  sendSlotLiveEvent({ type: "data-updated" });
+}
+
+function createdAtMs(item) {
+  const time = new Date(item?.createdAt || 0).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function pruneDatabase(data, now = Date.now()) {
+  const pointCutoff = now - retentionMs.pointTransactions;
+  const activityCutoff = now - retentionMs.activityLog;
+  if (Array.isArray(data.pointTransactions)) {
+    data.pointTransactions = data.pointTransactions
+      .filter((item) => createdAtMs(item) >= pointCutoff)
+      .sort((a, b) => createdAtMs(b) - createdAtMs(a))
+      .slice(0, maxPointTransactions);
+  }
+  if (Array.isArray(data.activityLog)) {
+    data.activityLog = data.activityLog
+      .filter((item) => createdAtMs(item) >= activityCutoff)
+      .sort((a, b) => createdAtMs(b) - createdAtMs(a))
+      .slice(0, maxActivityLogEntries);
+  }
 }
 
 function sendJson(response, statusCode, body) {
@@ -1065,7 +1114,7 @@ function addActivity(data, type, text, details = {}) {
     details,
     createdAt: new Date().toISOString(),
   });
-  data.activityLog = data.activityLog.slice(0, 300);
+  data.activityLog = data.activityLog.slice(0, maxActivityLogEntries);
 }
 
 function currentSpinDateKey(date = new Date()) {
@@ -2669,15 +2718,19 @@ async function handleApi(request, response, urlPath, url) {
     const ownedUserIds = new Set(
       (data.users || []).filter((u) => operatorOwnsPlayer(op, u)).map((u) => u.id)
     );
-    const transactions = (data.pointTransactions || []).filter((t) => ownedUserIds.has(t.userId));
+    const cutoff = Date.now() - retentionMs.pointTransactions;
+    const transactions = (data.pointTransactions || [])
+      .filter((t) => ownedUserIds.has(t.userId))
+      .filter((t) => createdAtMs(t) >= cutoff)
+      .slice(0, maxPointTransactions);
     return sendJson(response, 200, {
       transactions: transactions.map((transaction) => sanitizePointTransaction(transaction, data)),
     });
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/activity") {
-    if (!requireAdmin(request, response)) return;
-    const op = { role: "admin", id: "admin" };
+    const op = requireOperator(request, response);
+    if (!op) return;
     const data = await readDatabase();
     // STRICT ISOLATION: each operator sees only activity on their own players
     // (plus their own operator-level events: sub-admin creation, wallet loads, etc.
@@ -2686,7 +2739,7 @@ async function handleApi(request, response, urlPath, url) {
       (data.users || []).filter((u) => operatorOwnsPlayer(op, u)).map((u) => u.id)
     );
     const activity = (data.activityLog || []).filter((entry) => {
-      const meta = entry.meta || {};
+      const meta = entry.details || entry.meta || {};
       if (meta.userId && ownedUserIds.has(meta.userId)) return true;
       if (meta.operatorId && String(meta.operatorId) === String(op.id)) return true;
       if (meta.subAdminId && String(meta.subAdminId) === String(op.id)) return true;
@@ -3015,7 +3068,8 @@ async function handleApi(request, response, urlPath, url) {
     const messages = chats.flatMap((chat) => chat.messages || []);
     const adminPointTransactions = (data.pointTransactions || [])
       .filter(isAdminPointTransaction)
-      .filter((t) => ownedUserIds.has(t.userId));
+      .filter((t) => ownedUserIds.has(t.userId))
+      .filter((t) => createdAtMs(t) >= Date.now() - retentionMs.pointTransactions);
     return sendJson(response, 200, {
       stats: {
         totalUsers: users.length,
@@ -3322,8 +3376,10 @@ async function handleApi(request, response, urlPath, url) {
       createdAt,
     };
     data.slotPayout.spins.unshift(spinRecord);
+    data.slotPayout.spins = data.slotPayout.spins.slice(0, 5000);
     data.gameHistory = Array.isArray(data.gameHistory) ? data.gameHistory : [];
     data.gameHistory.unshift(spinRecord);
+    data.gameHistory = data.gameHistory.slice(0, 5000);
     addActivity(data, "slots-spin", `${user.username} opened ${slotGameNames[gameKey]} for ${bet} points${win ? ` and earned ${win}` : ""}`, {
       userId: user.id,
       username: user.username,
@@ -3519,7 +3575,6 @@ async function handleApi(request, response, urlPath, url) {
       remainingPlayerPayout: Math.max(0, roundPoints(payoutCaps.remainingPlayer - win)),
       remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
       user: sanitizeUser(storedUser),
-      transactions: transactions.map(sanitizePointTransaction),
     });
   }
 
@@ -3666,8 +3721,10 @@ async function handleApi(request, response, urlPath, url) {
     const user = await requirePlayer(request, response);
     if (!user) return;
     const data = await readDatabase();
+    const cutoff = Date.now() - retentionMs.pointTransactions;
     const transactions = (data.pointTransactions || [])
       .filter((transaction) => transaction.userId === user.id)
+      .filter((transaction) => createdAtMs(transaction) >= cutoff)
       .map(sanitizePointTransaction);
     return sendJson(response, 200, { transactions });
   }
@@ -3678,6 +3735,32 @@ async function handleApi(request, response, urlPath, url) {
     return sendJson(response, 410, {
       error: "Self-serve password reset is no longer available. Contact your operator.",
     });
+  }
+
+  if (request.method === "POST" && urlPath === "/api/player/change-password") {
+    const sessionUser = await requirePlayer(request, response);
+    if (!sessionUser) return;
+    const body = await readBody(request);
+    const currentPassword = String(body.currentPassword || "");
+    const newPassword = String(body.newPassword || "");
+    if (newPassword.length < 6) {
+      return sendJson(response, 400, { error: "New password must be at least 6 characters." });
+    }
+    const data = await readDatabase();
+    const user = data.users.find((item) => item.id === sessionUser.id);
+    if (!user) return sendJson(response, 401, { error: "Player login is required." });
+    if (!verifyPassword(currentPassword, user.passwordHash)) {
+      return sendJson(response, 401, { error: "Current password is wrong." });
+    }
+    user.passwordHash = hashPassword(newPassword);
+    user.lastActiveAt = new Date().toISOString();
+    addActivity(data, "player-password-change", `${user.username} changed their password`, {
+      userId: user.id,
+      username: user.username,
+      operatorId: user.parentAdminId || "admin",
+    });
+    await writeDatabase(data);
+    return sendJson(response, 200, { ok: true, user: sanitizeUser(user) });
   }
 
   if (request.method === "POST" && urlPath === "/api/player/profile") {

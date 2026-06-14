@@ -41,7 +41,7 @@ button { font-family: inherit; cursor: pointer; }
   top: 0;
   z-index: 100;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -3019,10 +3019,10 @@ body.is-pseudo-fullscreen .game-view {
   }
 
   .arcade-header {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
     grid-template-areas:
-      "brand home balance"
-      "toggles toggles toggles";
+      "brand home chat balance"
+      "toggles toggles toggles toggles";
     align-items: center;
     padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px;
     gap: 8px;
@@ -3035,6 +3035,10 @@ body.is-pseudo-fullscreen .game-view {
 
   .arcade-home {
     grid-area: home;
+  }
+
+  .arcade-chat-home {
+    grid-area: chat;
   }
 
   .brand-mark {
@@ -3503,15 +3507,4 @@ body.is-pseudo-fullscreen .game-view {
 @media (max-width: 720px) {
   .free-spin-badge { top: 70px; right: 10px; min-width: 108px; padding: 8px 10px 10px; }
   .free-spin-badge .fsb-count { font-size: 32px; }
-}
-
-/* Immediate visual feedback while the saved server result is loading. */
-.reel.is-warming .reel-track {
-  animation: reel-warmup-scroll 180ms linear infinite;
-  will-change: transform;
-}
-
-@keyframes reel-warmup-scroll {
-  from { transform: translateY(0); }
-  to { transform: translateY(calc(-1 * var(--warmup-distance, 60px))); }
 }
