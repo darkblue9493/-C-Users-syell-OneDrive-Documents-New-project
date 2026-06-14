@@ -41,7 +41,7 @@ button { font-family: inherit; cursor: pointer; }
   top: 0;
   z-index: 100;
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -265,6 +265,56 @@ button { font-family: inherit; cursor: pointer; }
   border: 1px solid rgba(123, 232, 255, .35);
   box-shadow: 0 16px 38px rgba(0, 0, 0, .42), 0 0 22px rgba(123, 232, 255, .12);
   overflow: hidden;
+}
+.arcade-menu-panel {
+  position: sticky;
+  top: 62px;
+  z-index: 96;
+  width: min(420px, calc(100vw - 20px));
+  margin: 8px 10px 0 auto;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(8, 2, 14, .98), rgba(16, 4, 28, .96));
+  border: 1px solid rgba(123, 232, 255, .35);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, .42), 0 0 22px rgba(123, 232, 255, .12);
+}
+.arcade-menu-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.arcade-menu-head span,
+.arcade-menu-form > span {
+  display: block;
+  color: rgba(255,255,255,.7);
+  font-size: .72rem;
+  font-weight: 900;
+}
+.arcade-menu-head strong {
+  color: #7be8ff;
+  font-size: 1rem;
+}
+.arcade-menu-form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.arcade-menu-form input {
+  width: 100%;
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 215, 107, .28);
+  background: rgba(0, 0, 0, .62);
+  color: #fff;
+  padding: 8px 10px;
+  font: inherit;
+}
+.arcade-menu-form small {
+  min-height: 16px;
+  color: #ffd76b;
+  font-size: .72rem;
 }
 .arcade-chat-head {
   display: flex;
@@ -3021,7 +3071,8 @@ body.is-pseudo-fullscreen .game-view {
   .arcade-header {
     grid-template-columns: minmax(0, 1fr) auto auto auto;
     grid-template-areas:
-      "brand home chat balance"
+      "brand balance balance balance"
+      "home menu chat chat"
       "toggles toggles toggles toggles";
     align-items: center;
     padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px;
@@ -3039,6 +3090,10 @@ body.is-pseudo-fullscreen .game-view {
 
   .arcade-chat-home {
     grid-area: chat;
+  }
+
+  .arcade-menu-open {
+    grid-area: menu;
   }
 
   .brand-mark {

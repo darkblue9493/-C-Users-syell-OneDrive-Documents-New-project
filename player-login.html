@@ -576,7 +576,7 @@
               }),
             });
             form.reset();
-            showHome(data.user);
+            window.location.href = "/slots-arcade.html";
           } catch (error) {
             setStatus(error.message || "Could not log in.");
           }
@@ -657,12 +657,7 @@
         });
 
         api("/api/player/me")
-          .then((data) => {
-            showHome(data.user);
-            if (new URLSearchParams(window.location.search).get("chat") === "1") {
-              setTimeout(openChat, 100);
-            }
-          })
+          .then(() => { window.location.href = "/slots-arcade.html"; })
           .catch(() => showLogin());
       })();
     </script>

@@ -1921,6 +1921,8 @@ function updateArcadeAccountUi() {
   document.body.classList.toggle("is-arcade-player", loggedIn);
   const name = document.querySelector("[data-arcade-player-name]");
   if (name) name.textContent = loggedIn ? State.player.username || "Player" : "Guest";
+  const menuName = document.querySelector("[data-arcade-menu-name]");
+  if (menuName) menuName.textContent = loggedIn ? State.player.username || "Player" : "Player";
   const authOpen = document.querySelector("[data-arcade-auth-open]");
   const logout = document.querySelector("[data-arcade-logout]");
   const spinOpen = document.querySelector("[data-arcade-spin-open]");
@@ -1976,6 +1978,7 @@ async function refreshArcadeChat() {
 function openArcadeChat({ guest = false } = {}) {
   const drawer = document.querySelector("[data-arcade-chat]");
   if (!drawer) return;
+  if (!State.player) return window.location.href = "/";
   drawer.classList.remove("hidden");
   updateGuestNameStep();
   if (!State.player && guest) {
@@ -2085,10 +2088,41 @@ function bindArcadePlayerTools() {
     State.credits = 0;
     updateDisplays();
     updateArcadeAccountUi();
-    setWinMessage("Signed out.");
+    window.location.href = "/";
   });
   document.querySelector("[data-arcade-chat-open]")?.addEventListener("click", () => {
     openArcadeChat();
+  });
+  document.querySelector("[data-arcade-chat-home]")?.addEventListener("click", openArcadeChat);
+  document.querySelector("[data-arcade-menu-open]")?.addEventListener("click", () => {
+    document.querySelector("[data-arcade-menu-panel]")?.classList.toggle("hidden");
+  });
+  document.querySelector("[data-arcade-menu-close]")?.addEventListener("click", () => {
+    document.querySelector("[data-arcade-menu-panel]")?.classList.add("hidden");
+  });
+  document.querySelector("[data-arcade-password-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const status = document.querySelector("[data-arcade-menu-status]");
+    const button = form.querySelector("button[type='submit']");
+    if (button) button.disabled = true;
+    if (status) status.textContent = "Updating password...";
+    try {
+      await arcadeApi("/api/player/change-password", {
+        method: "POST",
+        body: JSON.stringify({
+          currentPassword: form.elements.currentPassword.value,
+          newPassword: form.elements.newPassword.value,
+        }),
+        timeoutMs: 10000,
+      });
+      form.reset();
+      if (status) status.textContent = "Password updated.";
+    } catch (error) {
+      if (status) status.textContent = error.message || "Could not update password.";
+    } finally {
+      if (button) button.disabled = false;
+    }
   });
   document.querySelector("[data-arcade-chat-close]")?.addEventListener("click", () => {
     document.querySelector("[data-arcade-chat]")?.classList.add("hidden");
@@ -2203,11 +2237,13 @@ async function renderGameView(gameKey) {
     $("[data-lobby-view]").classList.add("hidden");
     $("[data-game-view]").classList.remove("hidden");
     $("[data-back-button]").classList.remove("hidden");
+    $("[data-arcade-home]")?.classList.remove("hidden");
     showMaintenanceOverlay();
     setWinMessage("This game is currently turned off by admin.");
     return;
   }
   State.activeGame = gameKey;
+  $("[data-arcade-home]")?.classList.remove("hidden");
   applyAdminGameControls(gameKey, { force: true });
   const root = $("[data-game-view]");
   if (!root) return;
@@ -2918,6 +2954,7 @@ function backToLobby() {
   $("[data-lobby-view]").classList.remove("hidden");
   document.body.classList.add("is-lobby-active");
   $("[data-back-button]").classList.add("hidden");
+  $("[data-arcade-home]")?.classList.add("hidden");
   updateDisplays();
 }
 
@@ -2977,12 +3014,7 @@ function bindEvents() {
     if (e.target.closest("[data-back-button]")) { e.preventDefault(); backToLobby(); return; }
     if (e.target.closest("[data-arcade-home]")) {
       e.preventDefault();
-      window.location.href = "/";
-      return;
-    }
-    if (e.target.closest("[data-arcade-chat-home]")) {
-      e.preventDefault();
-      window.location.href = "/?chat=1";
+      if (State.activeGame) backToLobby();
       return;
     }
     if (e.target.closest("[data-spin-btn]")) { Audio.resume(); spinGame(); return; }

@@ -21,22 +21,53 @@
   <!-- Persistent header with brand + balance + controls -->
   <header class="arcade-header">
     <button class="arcade-back hidden" type="button" data-back-button aria-label="Back to lobby">&larr;</button>
-    <a class="arcade-brand" href="/" data-arcade-home aria-label="Back to South Diamond main page">
+    <a class="arcade-brand" href="/slots-arcade.html" aria-label="South Diamond games">
       <span class="brand-mark"></span>
       <span class="brand-text">South Diamond</span>
     </a>
-    <button class="arcade-home" type="button" data-arcade-home aria-label="Back to main menu">Home</button>
-    <button class="arcade-home arcade-chat-home" type="button" data-arcade-chat-home aria-label="Open support chat">Chat</button>
+    <button class="arcade-home hidden" type="button" data-arcade-home aria-label="Back to games lobby">Home</button>
     <div class="arcade-balance">
       <span class="balance-label">POINTS</span>
       <strong data-credits>0.00</strong>
     </div>
+    <button class="arcade-home arcade-menu-open" type="button" data-arcade-menu-open aria-label="Open player menu">Menu</button>
+    <button class="arcade-home arcade-chat-home" type="button" data-arcade-chat-home aria-label="Open support chat">Chat</button>
     <div class="arcade-toggles">
       <button class="toggle-btn is-active" type="button" data-music-btn aria-label="Toggle music">🎵 ON</button>
       <button class="toggle-btn is-active" type="button" data-sound-btn aria-label="Toggle sound">🔊</button>
       <button class="toggle-btn" type="button" data-fullscreen-btn aria-label="Toggle fullscreen">⛶</button>
     </div>
   </header>
+
+  <section class="arcade-menu-panel hidden" data-arcade-menu-panel aria-label="Player menu">
+    <div class="arcade-menu-head">
+      <div>
+        <span>Player</span>
+        <strong data-arcade-menu-name>Player</strong>
+      </div>
+      <button class="arcade-pill-button" type="button" data-arcade-menu-close>Close</button>
+    </div>
+    <form class="arcade-menu-form" data-arcade-password-form>
+      <span>Change Password</span>
+      <input name="currentPassword" type="password" autocomplete="current-password" placeholder="Current password" required />
+      <input name="newPassword" type="password" autocomplete="new-password" placeholder="New password" minlength="6" required />
+      <button class="arcade-pill-button primary" type="submit">Update Password</button>
+      <small data-arcade-menu-status></small>
+    </form>
+    <button class="arcade-pill-button danger" type="button" data-arcade-logout>Sign Out</button>
+  </section>
+
+  <section class="arcade-chat-drawer hidden" data-arcade-chat aria-label="South Diamond player chat">
+    <div class="arcade-chat-head">
+      <strong>Support Chat</strong>
+      <button class="arcade-pill-button" type="button" data-arcade-chat-close>Close</button>
+    </div>
+    <div class="arcade-chat-messages" data-arcade-chat-messages></div>
+    <form class="arcade-chat-form" data-arcade-chat-form>
+      <input name="message" type="text" autocomplete="off" placeholder="Message support..." />
+      <button class="arcade-pill-button primary" type="submit">Send</button>
+    </form>
+  </section>
 
   <!-- Live progressive jackpot strip - always visible -->
   <section class="jackpot-strip">
