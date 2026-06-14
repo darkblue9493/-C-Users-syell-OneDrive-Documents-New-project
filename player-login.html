@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>South Diamond Login</title>
+    <meta name="description" content="South Diamond player login and support chat." />
+    <meta name="theme-color" content="#08020d" />
+    <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; margin: 0; }
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #fff;
+        background:
+          linear-gradient(180deg, rgba(5, 0, 8, .58), rgba(5, 0, 8, .88)),
+          url("assets/slots/south-diamond-lobby-bg-phone.webp?v=20260525-lobby-bg") center top / cover fixed,
+          #08020d;
+      }
+      .login-shell {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+      }
+      .login-card {
+        width: min(440px, 100%);
+        padding: 22px;
+        border: 1px solid rgba(255, 215, 107, .38);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(10, 2, 16, .96), rgba(22, 5, 34, .94));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, .58), 0 0 32px rgba(255, 215, 107, .14);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        color: #ffd76b;
+        font-family: Georgia, serif;
+        font-size: 1.55rem;
+        font-weight: 900;
+        text-decoration: none;
+        text-shadow: 0 0 14px rgba(255, 215, 107, .45);
+      }
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border: 2px solid #fff;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #ffd76b, #d4002a);
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: .78rem;
+        box-shadow: 0 0 16px rgba(255, 215, 107, .72);
+      }
+      h1 {
+        margin: 0 0 8px;
+        text-align: center;
+        font-size: clamp(1.8rem, 7vw, 2.7rem);
+        line-height: 1;
+      }
+      .login-card > p {
+        margin: 0 0 18px;
+        text-align: center;
+        color: rgba(255, 255, 255, .74);
+        line-height: 1.45;
+      }
+      .login-form {
+        display: grid;
+        gap: 10px;
+      }
+      label {
+        color: rgba(255, 255, 255, .72);
+        font-size: .82rem;
+        font-weight: 800;
+      }
+      input {
+        width: 100%;
+        min-height: 46px;
+        border: 1px solid rgba(255, 215, 107, .32);
+        border-radius: 12px;
+        background: rgba(0, 0, 0, .56);
+        color: #fff;
+        padding: 10px 12px;
+        font: inherit;
+        font-size: 16px;
+      }
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      button {
+        min-height: 46px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, .35);
+        font: inherit;
+        font-weight: 900;
+        cursor: pointer;
+      }
+      .primary {
+        background: linear-gradient(180deg, #ffd76b, #b8830a);
+        color: #1a0d06;
+        box-shadow: 0 0 18px rgba(255, 215, 107, .32);
+      }
+      .secondary {
+        background: rgba(255, 255, 255, .08);
+        color: #fff;
+      }
+      .status {
+        min-height: 20px;
+        margin: 12px 0 0;
+        color: #ffd76b;
+        text-align: center;
+        font-size: .86rem;
+      }
+      .chat-panel {
+        position: fixed;
+        left: 50%;
+        bottom: max(14px, env(safe-area-inset-bottom));
+        z-index: 10;
+        width: min(420px, calc(100vw - 24px));
+        max-height: min(620px, calc(100vh - 28px));
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        transform: translateX(-50%);
+        border: 1px solid rgba(123, 232, 255, .38);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(7, 2, 12, .98), rgba(17, 4, 28, .98));
+        box-shadow: 0 18px 54px rgba(0, 0, 0, .55);
+        overflow: hidden;
+      }
+      .hidden { display: none !important; }
+      .chat-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 11px 12px;
+        background: rgba(123, 232, 255, .1);
+      }
+      .chat-head strong { color: #7be8ff; }
+      .chat-name,
+      .chat-form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        padding: 10px;
+        border-top: 1px solid rgba(255, 255, 255, .08);
+      }
+      .chat-name small {
+        grid-column: 1 / -1;
+        min-height: 16px;
+        color: #ffd76b;
+      }
+      .messages {
+        min-height: 160px;
+        max-height: 300px;
+        overflow: auto;
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        padding: 10px;
+      }
+      .message {
+        max-width: 86%;
+        padding: 9px 10px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.08);
+      }
+      .message.player {
+        justify-self: end;
+        background: rgba(82, 239, 159, .14);
+        border-color: rgba(82, 239, 159, .26);
+      }
+      .message span {
+        display: block;
+        margin-bottom: 3px;
+        color: #ffd76b;
+        font-size: .68rem;
+        font-weight: 900;
+      }
+      .message p {
+        margin: 0;
+        line-height: 1.35;
+      }
+      @media (max-width: 390px) {
+        .login-card { padding: 18px; }
+        .button-row,
+        .chat-name,
+        .chat-form { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="login-shell">
+      <section class="login-card" aria-label="South Diamond player login">
+        <a class="brand" href="/" aria-label="South Diamond">
+          <span class="brand-mark">SD</span>
+          <span>South Diamond</span>
+        </a>
+        <h1>Player Login</h1>
+        <p>Log in to enter the South Diamond games. Need help? Start chat before you sign in.</p>
+        <form class="login-form" data-player-login>
+          <label for="player-email">Username or email</label>
+          <input id="player-email" name="email" type="text" autocomplete="username" required />
+          <label for="player-password">Password</label>
+          <input id="player-password" name="password" type="password" autocomplete="current-password" required />
+          <div class="button-row">
+            <button class="primary" type="submit">Log In</button>
+            <button class="secondary" type="button" data-chat-open>Chat</button>
+          </div>
+        </form>
+        <p class="status" data-status role="alert"></p>
+      </section>
+    </main>
+
+    <section class="chat-panel hidden" data-chat-panel aria-label="South Diamond support chat">
+      <div class="chat-head">
+        <strong>Support Chat</strong>
+        <button class="secondary" type="button" data-chat-close>Close</button>
+      </div>
+      <form class="chat-name" data-chat-name-form>
+        <input name="name" type="text" autocomplete="name" maxlength="60" placeholder="Enter your name" />
+        <button class="primary" type="submit">Start Chat</button>
+        <small data-chat-name-status></small>
+      </form>
+      <div class="messages" data-messages></div>
+      <form class="chat-form" data-chat-form>
+        <input name="message" type="text" autocomplete="off" placeholder="Message support..." disabled />
+        <button class="primary" type="submit">Send</button>
+      </form>
+    </section>
+
+    <script>
+      (() => {
+        const status = document.querySelector("[data-status]");
+        const chatPanel = document.querySelector("[data-chat-panel]");
+        const nameForm = document.querySelector("[data-chat-name-form]");
+        const nameStatus = document.querySelector("[data-chat-name-status]");
+        const chatForm = document.querySelector("[data-chat-form]");
+        const messages = document.querySelector("[data-messages]");
+        const storageKey = "sd_player_login_guest_name";
+        let guestName = "";
+
+        async function api(path, options = {}) {
+          const response = await fetch(path, {
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: options.body ? { "Content-Type": "application/json" } : undefined,
+            ...options,
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || "South Diamond request failed.");
+          return data;
+        }
+
+        function setStatus(message, good = false) {
+          status.textContent = message || "";
+          status.style.color = good ? "#52ef9f" : "#ffd76b";
+        }
+
+        function savedName() {
+          if (guestName) return guestName;
+          try { guestName = localStorage.getItem(storageKey) || ""; } catch (error) {}
+          return guestName.trim().slice(0, 60);
+        }
+
+        function setName(name) {
+          guestName = String(name || "").trim().slice(0, 60);
+          try { if (guestName) localStorage.setItem(storageKey, guestName); } catch (error) {}
+        }
+
+        function renderMessages(items = []) {
+          messages.innerHTML = "";
+          const shown = items.length ? items : [{ author: "operator", text: savedName() ? "Send your message to South Diamond support." : "Enter your name to start chat." }];
+          shown.forEach((item) => {
+            const el = document.createElement("article");
+            el.className = `message ${item.author === "operator" ? "operator" : "player"}`;
+            const who = document.createElement("span");
+            who.textContent = item.author === "operator" ? "Support" : "You";
+            const text = document.createElement("p");
+            text.textContent = item.text || "";
+            el.append(who, text);
+            messages.appendChild(el);
+          });
+          messages.scrollTop = messages.scrollHeight;
+        }
+
+        function updateChatState() {
+          const hasName = Boolean(savedName());
+          nameForm.classList.toggle("hidden", hasName);
+          chatForm.elements.message.disabled = !hasName;
+          if (!hasName) nameForm.elements.namedItem("name")?.focus();
+        }
+
+        async function refreshGuestChat() {
+          const data = await api("/api/chats/guest-message");
+          renderMessages(data.chat?.messages || []);
+        }
+
+        function openChat() {
+          chatPanel.classList.remove("hidden");
+          updateChatState();
+          refreshGuestChat().catch(() => renderMessages([]));
+        }
+
+        document.querySelector("[data-player-login]").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          setStatus("Checking login...");
+          const form = event.currentTarget;
+          try {
+            await api("/api/player/login", {
+              method: "POST",
+              body: JSON.stringify({
+                email: form.elements.email.value.trim(),
+                password: form.elements.password.value,
+              }),
+            });
+            setStatus("Login accepted. Opening games...", true);
+            window.location.href = "/slots-arcade.html";
+          } catch (error) {
+            setStatus(error.message || "Could not log in.");
+          }
+        });
+
+        document.querySelector("[data-chat-open]").addEventListener("click", openChat);
+        document.querySelector("[data-chat-close]").addEventListener("click", () => chatPanel.classList.add("hidden"));
+
+        nameForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const input = nameForm.elements.namedItem("name");
+          const name = input?.value.trim() || "";
+          if (!name) {
+            nameStatus.textContent = "Please enter your name first.";
+            input?.focus();
+            return;
+          }
+          setName(name);
+          nameStatus.textContent = "";
+          updateChatState();
+          renderMessages([]);
+          chatForm.elements.message.focus();
+        });
+
+        chatForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (!savedName()) return updateChatState();
+          const input = chatForm.elements.message;
+          const text = input.value.trim();
+          if (!text) return;
+          input.value = "";
+          try {
+            const data = await api("/api/chats/guest-message", {
+              method: "POST",
+              body: JSON.stringify({ name: savedName(), text }),
+            });
+            renderMessages(data.chat?.messages || []);
+          } catch (error) {
+            renderMessages([{ author: "operator", text: error.message || "Could not send message." }]);
+          }
+        });
+
+        api("/api/player/me")
+          .then(() => { window.location.href = "/slots-arcade.html"; })
+          .catch(() => {});
+      })();
+    </script>
+  </body>
+</html>

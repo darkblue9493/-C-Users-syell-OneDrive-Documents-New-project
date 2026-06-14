@@ -2017,8 +2017,10 @@ function readBody(request) {
 function publicFilePath(urlPath) {
   const cleanPath = decodeURIComponent(urlPath.split("?")[0]);
   const routeMap = {
-    "/": "slots-arcade.html",
-    "/index.html": "slots-arcade.html",
+    "/": "player-login.html",
+    "/index.html": "player-login.html",
+    "/player-login": "player-login.html",
+    "/player-login.html": "player-login.html",
     "/website-backup": "index-website-backup.html",
     "/website-backup.html": "index-website-backup.html",
     [adminPath]: "admin.html",
@@ -2028,6 +2030,7 @@ function publicFilePath(urlPath) {
     "/maintenance.html": "maintenance.html",
   };
   const allowedPublicFiles = new Set([
+    "/player-login.html",
     "/styles.css",
     "/script.js",
     "/slots-arcade.html",
