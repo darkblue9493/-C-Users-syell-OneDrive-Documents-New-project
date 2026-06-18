@@ -1987,29 +1987,89 @@ function openArcadeChat({ guest = false } = {}) {
   refreshArcadeChat().catch(() => {});
 }
 
+// ----- Daily free spin wheel -----
+// Physical wheel layout, clockwise starting from the TOP (under the pointer).
+// Each prize value matches a real prize the server can award (0/1/3/5/10).
+// The most common prize (1) appears most often so the wheel feels fair.
+const DAILY_SPIN_SEGMENTS = [10, 1, 3, 1, 5, 1, 3, 0];
+const DAILY_SPIN_COLORS = {
+  10: "#ffb000",
+  5: "#16a34a",
+  3: "#1f7ae0",
+  1: "#7a2ff2",
+  0: "#c0203a",
+};
+const DAILY_SPIN_SEG_DEG = 360 / DAILY_SPIN_SEGMENTS.length;
+let dailySpinRotation = 0;
+let dailySpinBuilt = false;
+let dailySpinSpinning = false;
+
+// Convert an angle measured clockwise from the top into SVG x/y on a circle.
+function spinWheelXY(cx, cy, r, angleDeg) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
+}
+
+function buildDailySpinWheel() {
+  const wheel = document.querySelector("[data-arcade-spin-wheel]");
+  if (!wheel || dailySpinBuilt) return;
+  const cx = 100, cy = 100, r = 96, labelR = 60;
+  let paths = "";
+  let labels = "";
+  DAILY_SPIN_SEGMENTS.forEach((prize, i) => {
+    const a0 = i * DAILY_SPIN_SEG_DEG;
+    const a1 = a0 + DAILY_SPIN_SEG_DEG;
+    const p0 = spinWheelXY(cx, cy, r, a0);
+    const p1 = spinWheelXY(cx, cy, r, a1);
+    paths += `<path d="M${cx} ${cy} L${p0.x.toFixed(2)} ${p0.y.toFixed(2)} A${r} ${r} 0 0 1 ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} Z" fill="${DAILY_SPIN_COLORS[prize] || "#444"}" stroke="rgba(0,0,0,.35)" stroke-width="1"/>`;
+    const c = spinWheelXY(cx, cy, labelR, a0 + DAILY_SPIN_SEG_DEG / 2);
+    const text = prize > 0 ? String(prize) : "—";
+    labels += `<text x="${c.x.toFixed(2)}" y="${c.y.toFixed(2)}" text-anchor="middle" dominant-baseline="central" font-size="${prize > 0 ? 26 : 20}" font-weight="900" fill="#fff" style="paint-order:stroke;stroke:rgba(0,0,0,.55);stroke-width:3px">${text}</text>`;
+  });
+  wheel.innerHTML =
+    `<svg viewBox="0 0 200 200" width="100%" height="100%" aria-hidden="true">` +
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#08020d"/>` +
+    paths + labels +
+    `</svg>`;
+  dailySpinBuilt = true;
+}
+
 function formatSpinWait(value) {
-  if (!value) return "Daily spin is not ready yet.";
+  if (!value) return "Come back tomorrow for your next free spin.";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Daily spin is not ready yet.";
-  return `Next spin opens ${date.toLocaleString()}.`;
+  if (Number.isNaN(date.getTime())) return "Come back tomorrow for your next free spin.";
+  const ms = date.getTime() - Date.now();
+  if (ms <= 0) return "Your daily spin is ready.";
+  const hrs = Math.floor(ms / 3600000);
+  const mins = Math.ceil((ms % 3600000) / 60000);
+  if (hrs > 0) return `Next free spin in ${hrs}h ${mins}m.`;
+  return `Next free spin in ${mins}m.`;
 }
 
 async function refreshDailySpinStatus({ updateResult = true } = {}) {
-  if (!State.player) return;
+  if (!State.player) return null;
   const status = await arcadeApi("/api/player/spin-status", { timeoutMs: 8000 });
-  const button = document.querySelector("[data-arcade-spin-open]");
+  const menuBtn = document.querySelector("[data-arcade-spin-open]");
+  const runBtn = document.querySelector("[data-arcade-spin-run]");
   const result = document.querySelector("[data-arcade-spin-result]");
-  if (button) {
-    button.disabled = false;
-    button.classList.toggle("is-ready", Boolean(status.eligible));
+  if (menuBtn) menuBtn.classList.toggle("is-ready", Boolean(status.eligible));
+  if (runBtn && !dailySpinSpinning) {
+    runBtn.disabled = !status.eligible;
+    runBtn.textContent = status.eligible ? "SPIN" : "Come Back Tomorrow";
   }
-  if (result && updateResult) result.textContent = status.eligible ? "Your daily spin is ready." : formatSpinWait(status.nextSpinAt);
+  if (result && updateResult && !dailySpinSpinning) {
+    result.textContent = status.eligible ? "Your daily spin is ready — tap SPIN!" : formatSpinWait(status.nextSpinAt);
+  }
+  return status;
 }
 
 function openArcadeSpin() {
   if (!State.player) return showArcadeAuth("Sign in to use daily spin.");
+  // Close the menu panel if it's open so the wheel is front and centre.
+  document.querySelector("[data-arcade-menu-panel]")?.classList.add("hidden");
   const modal = document.querySelector("[data-arcade-spin-modal]");
   if (!modal) return;
+  buildDailySpinWheel();
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
   refreshDailySpinStatus().catch((error) => {
@@ -2019,35 +2079,74 @@ function openArcadeSpin() {
 }
 
 function closeArcadeSpin() {
+  if (dailySpinSpinning) return; // don't let the player close mid-spin
   const modal = document.querySelector("[data-arcade-spin-modal]");
   modal?.classList.add("hidden");
   modal?.setAttribute("aria-hidden", "true");
 }
 
+// Spin the wheel so it lands exactly on a segment matching the server prize.
 async function runArcadeDailySpin() {
   const button = document.querySelector("[data-arcade-spin-run]");
   const result = document.querySelector("[data-arcade-spin-result]");
   const wheel = document.querySelector("[data-arcade-spin-wheel]");
-  if (!button || !State.player) return;
+  if (!button || !State.player || dailySpinSpinning) return;
+  buildDailySpinWheel();
+  dailySpinSpinning = true;
   button.disabled = true;
-  if (result) result.textContent = "Spinning...";
+  button.textContent = "Spinning...";
+  if (result) result.textContent = "Good luck! 🍀";
   try {
     const data = await arcadeApi("/api/player/spin", { method: "POST", body: JSON.stringify({}), timeoutMs: 12000 });
-    if (wheel) wheel.style.transform = `rotate(${720 + Math.floor(Math.random() * 360)}deg)`;
+    const prize = Number(data.prize) || 0;
+
+    // Choose one physical segment that shows this prize, then rotate so that
+    // segment's centre stops under the pointer at the top.
+    const matches = DAILY_SPIN_SEGMENTS.map((p, i) => (p === prize ? i : -1)).filter((i) => i >= 0);
+    const segIndex = matches.length ? matches[Math.floor(Math.random() * matches.length)] : 0;
+    const center = segIndex * DAILY_SPIN_SEG_DEG + DAILY_SPIN_SEG_DEG / 2;
+    const jitter = (Math.random() * 2 - 1) * (DAILY_SPIN_SEG_DEG / 2 - 6); // stay inside the wedge
+    const targetMod = (360 - (center % 360)) % 360;
+    const current = dailySpinRotation;
+    let base = current - (current % 360) + targetMod;
+    while (base < current + 360 * 6) base += 360; // always at least 6 full turns forward
+    dailySpinRotation = base + jitter;
+
+    if (wheel) {
+      wheel.style.transition = "transform 5s cubic-bezier(.12,.67,.12,1)";
+      // Force a reflow so the new transition/transform always animates.
+      void wheel.offsetWidth;
+      wheel.style.transform = `rotate(${dailySpinRotation}deg)`;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 5200));
+
     State.player = data.user;
     State.credits = Number(data.user?.points) || State.credits;
     updateDisplays();
     updateArcadeAccountUi();
     if (result) {
-      result.textContent = data.prize > 0
-        ? `You won ${data.prize} point${data.prize === 1 ? "" : "s"}.`
-        : "Better luck next time. Come back tomorrow.";
+      result.innerHTML = prize > 0
+        ? `🎉 The wheel landed on <strong>${prize}</strong> — you won <strong>${prize} point${prize === 1 ? "" : "s"}</strong>!<br><span class="arcade-spin-balance">New balance: ${fmt(State.credits)} pts</span>`
+        : "The wheel landed on —. Better luck tomorrow!";
     }
+    Audio.win(prize >= 5, null);
   } catch (error) {
     if (result) result.textContent = `${error.message} ${formatSpinWait(error.nextSpinAt)}`.trim();
   } finally {
-    button.disabled = false;
+    dailySpinSpinning = false;
     refreshDailySpinStatus({ updateResult: false }).catch(() => {});
+  }
+}
+
+// On game open, pop the wheel automatically when the 24h timer has elapsed.
+async function maybeAutoOpenDailySpin() {
+  if (!State.player) return;
+  try {
+    const status = await arcadeApi("/api/player/spin-status", { timeoutMs: 8000 });
+    if (status && status.eligible) openArcadeSpin();
+  } catch (err) {
+    // Never block the game if the status check fails.
   }
 }
 
@@ -2670,10 +2769,16 @@ async function spinGame() {
       }),
     });
     grid = Array.isArray(settlement.grid) ? settlement.grid : generateGrid(game);
+    // The server may attach a daily must-drop jackpot on top of the normal win.
+    // It is bet-independent and separate from RTP — fold it into the displayed
+    // total and flag the tier so the jackpot celebration fires.
+    const jackpotWin = Number(settlement.jackpotWin) || 0;
+    const jackpotTier = jackpotWin > 0 ? (settlement.jackpotTier || null) : null;
     result = {
       wins: Array.isArray(settlement.wins) ? settlement.wins : [],
-      totalPay: Number(settlement.win) || 0,
-      jpHit: null,
+      totalPay: (Number(settlement.win) || 0) + jackpotWin,
+      jpHit: jackpotTier,
+      jackpotWin,
       anticipation: settlement.anticipation === true,
       freeSpinsAwarded: Number(settlement.freeSpinsAwarded) || 0,
     };
@@ -2830,7 +2935,9 @@ async function spinGame() {
   }
   saveState();
   if (typeof SlotsConfig !== "undefined") {
-    try { SlotsConfig.recordSpin(State.activeGame, isFreeSpin ? 0 : State.bet, result.totalPay || 0); } catch (err) {}
+    // Record only the normal (RTP) win for client stats; the jackpot is a
+    // separate must-drop pool and must not skew the RTP display.
+    try { SlotsConfig.recordSpin(State.activeGame, isFreeSpin ? 0 : State.bet, Math.max(0, (result.totalPay || 0) - (result.jackpotWin || 0))); } catch (err) {}
   }
   State.isSpinning = false;
   if (State._spinSafetyTimer) { clearTimeout(State._spinSafetyTimer); State._spinSafetyTimer = null; }
@@ -3182,6 +3289,10 @@ async function bootstrap() {
     const g = u.get("game");
     if (g && GAMES[g]) await renderGameView(g);
   } catch (err) {}
+  // Pop the daily free spin automatically when the 24h timer has elapsed.
+  if (State.player) {
+    setTimeout(() => { maybeAutoOpenDailySpin().catch(() => {}); }, 900);
+  }
 }
 
 if (document.readyState === "loading") {
@@ -3189,3 +3300,4 @@ if (document.readyState === "loading") {
 } else {
   bootstrap();
 }
+// End of arcade client (daily free spin wheel included).

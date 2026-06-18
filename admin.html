@@ -251,6 +251,27 @@
                         <small>Maximum slot winnings one player can receive today.</small>
                       </label>
                     </div>
+                    <div class="sga-control">
+                      <span style="font-weight:600;">Daily Jackpots (shared across all 24 games)</span>
+                      <small>Whatever you set drops in full to ONE player that day, on top of normal wins, no matter how small their bet. Separate from RTP and the payout limits above. Set 0 for a tier that should not drop.</small>
+                    </div>
+                    <div class="sga-control sga-grid-2">
+                      <label>
+                        <span>Minor Jackpot (daily)</span>
+                        <input type="number" min="0" step="1" value="0" data-slots-jackpot-minor />
+                        <small data-slots-jackpot-minor-status>Not dropped yet today.</small>
+                      </label>
+                      <label>
+                        <span>Major Jackpot (daily)</span>
+                        <input type="number" min="0" step="1" value="0" data-slots-jackpot-major />
+                        <small data-slots-jackpot-major-status>Not dropped yet today.</small>
+                      </label>
+                      <label>
+                        <span>Mega Jackpot (daily)</span>
+                        <input type="number" min="0" step="1" value="0" data-slots-jackpot-mega />
+                        <small data-slots-jackpot-mega-status>Not dropped yet today.</small>
+                      </label>
+                    </div>
                     <div class="slots-master-actions">
                       <button type="button" class="button primary" data-slots-save-all>Save All Changes</button>
                       <button type="button" class="button secondary" data-slots-reset-stats>Reset Today's Stats</button>

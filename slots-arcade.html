@@ -47,6 +47,7 @@
       </div>
       <button class="arcade-pill-button" type="button" data-arcade-menu-close>Close</button>
     </div>
+    <button class="arcade-pill-button primary arcade-menu-spin" type="button" data-arcade-spin-open>🎡 Daily Free Spin</button>
     <form class="arcade-menu-form" data-arcade-password-form>
       <span>Change Password</span>
       <input name="currentPassword" type="password" autocomplete="current-password" placeholder="Current password" required />
@@ -56,6 +57,21 @@
     </form>
     <button class="arcade-pill-button danger" type="button" data-arcade-logout>Sign Out</button>
   </section>
+
+  <!-- Daily free spin wheel modal -->
+  <div class="arcade-spin-modal hidden" data-arcade-spin-modal aria-hidden="true" role="dialog" aria-label="Daily free spin">
+    <div class="arcade-spin-card">
+      <button class="arcade-spin-close" type="button" data-arcade-spin-close aria-label="Close daily spin">×</button>
+      <strong>Daily Free Spin</strong>
+      <div class="arcade-spin-stage">
+        <div class="arcade-spin-pointer" aria-hidden="true"></div>
+        <div class="arcade-spin-wheel" data-arcade-spin-wheel></div>
+        <div class="arcade-spin-hub" aria-hidden="true">SD</div>
+      </div>
+      <p data-arcade-spin-result>Your daily spin is ready.</p>
+      <button class="arcade-spin-run" type="button" data-arcade-spin-run>SPIN</button>
+    </div>
+  </div>
 
   <section class="arcade-chat-drawer hidden" data-arcade-chat aria-label="South Diamond player chat">
     <div class="arcade-chat-head">

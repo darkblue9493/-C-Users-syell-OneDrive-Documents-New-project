@@ -42,6 +42,7 @@
 
   let pendingConfig = null;
   let pendingSlotSettings = null;
+  let jackpotDropStatus = null;
   let saveTimer = null;
   let liveRefreshTimer = null;
   let liveStream = null;
@@ -148,9 +149,11 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Could not load payout limits.");
-      pendingSlotSettings = data.settings || { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8 };
+      pendingSlotSettings = data.settings || { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8, jackpotMinor: 0, jackpotMajor: 0, jackpotMega: 0 };
+      jackpotDropStatus = data.jackpot || null;
     } catch (error) {
-      pendingSlotSettings = { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8 };
+      pendingSlotSettings = { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8, jackpotMinor: 0, jackpotMajor: 0, jackpotMega: 0 };
+      jackpotDropStatus = null;
     }
   }
 
@@ -165,7 +168,21 @@
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "Could not save payout limits.");
     pendingSlotSettings = data.settings || pendingSlotSettings;
+    if (data.jackpot) { jackpotDropStatus = data.jackpot; renderJackpotStatus(); }
     return pendingSlotSettings;
+  }
+
+  function renderJackpotStatus() {
+    ["minor", "major", "mega"].forEach((tier) => {
+      const el = $(`[data-slots-jackpot-${tier}-status]`);
+      if (!el) return;
+      const st = jackpotDropStatus && jackpotDropStatus[tier];
+      if (st && st.dropped) {
+        el.textContent = `Dropped today: ${st.amount} to ${st.winnerName || "a player"}.`;
+      } else {
+        el.textContent = "Not dropped yet today.";
+      }
+    });
   }
 
   function bindMasterControls() {
@@ -207,6 +224,20 @@
         queueLiveSave("Per-player payout limit saved live.");
       });
     }
+    [
+      ["minor", "[data-slots-jackpot-minor]", "jackpotMinor"],
+      ["major", "[data-slots-jackpot-major]", "jackpotMajor"],
+      ["mega",  "[data-slots-jackpot-mega]",  "jackpotMega"],
+    ].forEach(([tier, selector, key]) => {
+      const input = $(selector);
+      if (!input) return;
+      input.value = pendingSlotSettings?.[key] ?? 0;
+      input.addEventListener("input", () => {
+        pendingSlotSettings[key] = Math.max(0, Number(input.value) || 0);
+        queueLiveSave(`${tier.charAt(0).toUpperCase() + tier.slice(1)} jackpot saved live.`);
+      });
+    });
+    renderJackpotStatus();
     $("[data-slots-save-all]")?.addEventListener("click", saveAll);
     $("[data-slots-reset-stats]")?.addEventListener("click", () => {
       if (confirm("Reset today's slot statistics for ALL games? Player credits are not affected.")) {
@@ -466,9 +497,15 @@
     if (defaultBet) pendingConfig.defaultBet = Math.max(0.01, numberFromInput(defaultBet, pendingConfig.defaultBet ?? 0.25));
     const dailyPayout = $("[data-slots-daily-payout-limit]");
     const playerPayout = $("[data-slots-player-payout-limit]");
-    pendingSlotSettings = pendingSlotSettings || { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8 };
+    pendingSlotSettings = pendingSlotSettings || { dailyPayoutLimit: 25, playerDailyPayoutLimit: 8, jackpotMinor: 0, jackpotMajor: 0, jackpotMega: 0 };
     if (dailyPayout) pendingSlotSettings.dailyPayoutLimit = Math.max(0, numberFromInput(dailyPayout, pendingSlotSettings.dailyPayoutLimit));
     if (playerPayout) pendingSlotSettings.playerDailyPayoutLimit = Math.max(0, numberFromInput(playerPayout, pendingSlotSettings.playerDailyPayoutLimit));
+    const jpMinor = $("[data-slots-jackpot-minor]");
+    const jpMajor = $("[data-slots-jackpot-major]");
+    const jpMega = $("[data-slots-jackpot-mega]");
+    if (jpMinor) pendingSlotSettings.jackpotMinor = Math.max(0, numberFromInput(jpMinor, pendingSlotSettings.jackpotMinor ?? 0));
+    if (jpMajor) pendingSlotSettings.jackpotMajor = Math.max(0, numberFromInput(jpMajor, pendingSlotSettings.jackpotMajor ?? 0));
+    if (jpMega) pendingSlotSettings.jackpotMega = Math.max(0, numberFromInput(jpMega, pendingSlotSettings.jackpotMega ?? 0));
   }
 
   function syncGameCardFromDom(card) {

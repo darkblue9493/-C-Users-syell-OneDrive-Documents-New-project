@@ -62,6 +62,13 @@ const defaultSpinLimits = {
 const defaultSlotSettings = {
   dailyPayoutLimit: 25,
   playerDailyPayoutLimit: 8,
+  // Daily must-drop jackpots. These are SEPARATE from RTP and the daily payout
+  // limits above: whatever amount is set for a tier is guaranteed to drop in
+  // full to exactly ONE player that day, shared across all 24 games, and is
+  // awarded regardless of the player's bet size. 0 = that tier does not drop.
+  jackpotMinor: 0,
+  jackpotMajor: 0,
+  jackpotMega: 0,
 };
 const slotGameNames = {
   buffalo: "Buffalo Rush",
@@ -1244,10 +1251,71 @@ function normalizeSlotSettings(settings) {
   const source = settings && typeof settings === "object" ? settings : {};
   const limit = roundPoints(source.dailyPayoutLimit ?? defaultSlotSettings.dailyPayoutLimit);
   const playerLimit = roundPoints(source.playerDailyPayoutLimit ?? Math.min(defaultSlotSettings.playerDailyPayoutLimit, limit));
+  const jpTier = (key) => Math.max(0, Math.min(roundPoints(source[key] ?? defaultSlotSettings[key]), 1000000));
   return {
     dailyPayoutLimit: Math.max(0, Math.min(limit, 100000)),
     playerDailyPayoutLimit: Math.max(0, Math.min(playerLimit, 100000)),
+    // Daily must-drop jackpot pools (separate from RTP / the limits above).
+    jackpotMinor: jpTier("jackpotMinor"),
+    jackpotMajor: jpTier("jackpotMajor"),
+    jackpotMega: jpTier("jackpotMega"),
   };
+}
+
+// Per-tier daily drop tracking. targetFrac is a random point in the day [0,0.85)
+// at which the tier becomes eligible to drop on the next eligible spin, so the
+// jackpot doesn't always land on the very first spin of the day. Once dropped,
+// it pays the full configured amount to one player and will not drop again
+// until the next day.
+const JACKPOT_TIERS = ["minor", "major", "mega"];
+
+function freshJackpotTierState() {
+  return {
+    targetFrac: Math.round(Math.random() * 0.85 * 1e6) / 1e6,
+    dropped: false,
+    amount: 0,
+    winnerId: null,
+    winnerName: null,
+    at: null,
+  };
+}
+
+function normalizeJackpotDropState(state) {
+  const source = state && typeof state === "object" ? state : {};
+  const out = {};
+  for (const tier of JACKPOT_TIERS) {
+    const t = source[tier] && typeof source[tier] === "object" ? source[tier] : {};
+    const frac = Number(t.targetFrac);
+    out[tier] = {
+      targetFrac: Number.isFinite(frac) ? Math.max(0, Math.min(0.999, frac)) : Math.round(Math.random() * 0.85 * 1e6) / 1e6,
+      dropped: t.dropped === true,
+      amount: Math.max(0, roundPoints(t.amount)),
+      winnerId: t.winnerId || null,
+      winnerName: t.winnerName || null,
+      at: t.at || null,
+    };
+  }
+  return out;
+}
+
+function freshJackpotDropState() {
+  return Object.fromEntries(JACKPOT_TIERS.map((tier) => [tier, freshJackpotTierState()]));
+}
+
+// Fraction [0,1) of the current slot day (America/New_York) that has elapsed.
+function spinDayFraction(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const get = (type) => Number(parts.find((part) => part.type === type)?.value || 0);
+  let hour = get("hour");
+  if (hour >= 24) hour = 0;
+  const seconds = hour * 3600 + get("minute") * 60 + get("second");
+  return Math.max(0, Math.min(0.999999, seconds / 86400));
 }
 
 function normalizeSlotPayout(slotPayout) {
@@ -1256,6 +1324,8 @@ function normalizeSlotPayout(slotPayout) {
     date: typeof payout.date === "string" && payout.date ? payout.date : currentSpinDateKey(),
     paidOut: roundPoints(payout.paidOut),
     spins: Array.isArray(payout.spins) ? payout.spins : [],
+    // Daily must-drop jackpot tracking (separate from paidOut / RTP).
+    jackpot: normalizeJackpotDropState(payout.jackpot),
   };
 }
 
@@ -1478,7 +1548,7 @@ function ensureSlotPayoutToday(data) {
   data.slotSettings = normalizeSlotSettings(data.slotSettings);
   data.slotPayout = normalizeSlotPayout(data.slotPayout);
   if (data.slotPayout.date !== today) {
-    data.slotPayout = { date: today, paidOut: 0, spins: [] };
+    data.slotPayout = { date: today, paidOut: 0, spins: [], jackpot: freshJackpotDropState() };
     return true;
   }
   return false;
@@ -2884,6 +2954,7 @@ async function handleApi(request, response, urlPath, url) {
       settings,
       payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + (Number(spin.win) || 0)), 0) },
       date: data.slotPayout.date,
+      jackpot: data.slotPayout.jackpot,
       spins: spins.slice(0, 120),
     });
   }
@@ -2903,7 +2974,7 @@ async function handleApi(request, response, urlPath, url) {
       data.subAdminSlotsConfig[op.id] = normalizeArcadeSlotsConfig({ ...current, _slotSettings: nextSettings });
     }
     const settings = op.role === "admin" ? data.slotSettings : nextSettings;
-    addActivity(data, "slots-settings", "Updated South Diamond Slots daily payout limit", { ...settings, operator: op.role, operatorId: op.id });
+    addActivity(data, "slots-settings", "Updated South Diamond Slots daily payout & jackpot controls", { ...settings, operator: op.role, operatorId: op.id });
     await writeDatabase(data);
     sendSlotLiveEvent({ type: "slot-settings", settings, operator: op.role, operatorId: op.id });
     const spinFilter = slotControlSpinFilterForOperator(op, data);
@@ -2912,6 +2983,7 @@ async function handleApi(request, response, urlPath, url) {
       settings,
       payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + (Number(spin.win) || 0)), 0) },
       date: data.slotPayout.date,
+      jackpot: data.slotPayout.jackpot,
       spins: spins.slice(0, 120),
     });
   }
@@ -3579,6 +3651,42 @@ async function handleApi(request, response, urlPath, url) {
     const createdAt = new Date().toISOString();
     const transactions = [];
 
+    // -----------------------------------------------------------------
+    // Daily must-drop jackpot (separate from RTP and the payout limits).
+    // Each funded tier (Minor/Major/Mega) is a single global pool shared by
+    // all 24 games. Whatever the admin sets for a tier is guaranteed to drop
+    // in FULL to exactly one player that day, regardless of bet size. The
+    // jackpot is added on top of the normal win and is NOT recorded in
+    // spin.win, so it never affects RTP, per-game caps, or the daily payout
+    // limits. Free spins are not eligible (they cost no points).
+    let jackpotWin = 0;
+    let jackpotTier = null;
+    if (!isFreeSpin) {
+      const jpSettings = normalizeSlotSettings(data.slotSettings);
+      const jpState = data.slotPayout.jackpot || (data.slotPayout.jackpot = freshJackpotDropState());
+      const frac = spinDayFraction();
+      const tierAmount = { minor: jpSettings.jackpotMinor, major: jpSettings.jackpotMajor, mega: jpSettings.jackpotMega };
+      // Check biggest first so the most overdue prize lands; only one tier
+      // can drop on a single spin.
+      for (const tier of ["mega", "major", "minor"]) {
+        const amount = roundPoints(tierAmount[tier]);
+        const st = jpState[tier];
+        if (!st || st.dropped || amount <= 0) continue;
+        const due = frac >= st.targetFrac;
+        const forcedBeforeMidnight = frac >= 0.97; // safety net: guarantee it drops today
+        if (due || forcedBeforeMidnight) {
+          jackpotWin = amount;
+          jackpotTier = tier;
+          st.dropped = true;
+          st.amount = amount;
+          st.winnerId = storedUser.id;
+          st.winnerName = storedUser.username;
+          st.at = createdAt;
+          break;
+        }
+      }
+    }
+
     if (!isFreeSpin) {
       storedUser.points = roundPoints((Number(storedUser.points) || 0) - bet);
       const betTransaction = createPointTransaction(
@@ -3604,6 +3712,20 @@ async function handleApi(request, response, urlPath, url) {
       data.pointTransactions.unshift(winTransaction);
       transactions.push(winTransaction);
     }
+
+    if (jackpotWin > 0) {
+      storedUser.points = roundPoints((Number(storedUser.points) || 0) + jackpotWin);
+      const jackpotTransaction = createPointTransaction(
+        storedUser,
+        "add",
+        jackpotWin,
+        `South Diamond Slots ${jackpotTier.toUpperCase()} JACKPOT - ${arcadeSlotGameNames[gameKey]}`,
+        createdAt
+      );
+      data.pointTransactions.unshift(jackpotTransaction);
+      transactions.push(jackpotTransaction);
+    }
+
     if (freeSpinsAwarded > 0) {
       storedUser.slotFreeSpins = { gameKey, remaining: freeSpinsAwarded, triggerBet: settlementBet };
     }
@@ -3620,6 +3742,8 @@ async function handleApi(request, response, urlPath, url) {
       bet,
       triggerBet: isFreeSpin ? triggerBet : bet,
       win,
+      jackpotWin,
+      jackpotTier,
       requestedWin,
       serverWin: win,
       freeSpin: isFreeSpin,
@@ -3635,8 +3759,8 @@ async function handleApi(request, response, urlPath, url) {
     addActivity(
       data,
       "slots-arcade-spin",
-      `${storedUser.username} opened ${arcadeSlotGameNames[gameKey]} for ${bet} points${win ? ` and earned ${win}` : ""}`,
-      { userId: storedUser.id, username: storedUser.username, gameKey, bet, win, requestedWin }
+      `${storedUser.username} opened ${arcadeSlotGameNames[gameKey]} for ${bet} points${win ? ` and earned ${win}` : ""}${jackpotWin ? ` + ${jackpotTier.toUpperCase()} JACKPOT ${jackpotWin}` : ""}`,
+      { userId: storedUser.id, username: storedUser.username, gameKey, bet, win, jackpotWin, jackpotTier, requestedWin }
     );
     await writeDatabase(data);
     sendSlotLiveEvent({
@@ -3654,6 +3778,8 @@ async function handleApi(request, response, urlPath, url) {
       grid,
       wins: serverResult.wins,
       win,
+      jackpotWin,
+      jackpotTier,
       requestedWin,
       anticipation,
       freeSpinsAwarded,
