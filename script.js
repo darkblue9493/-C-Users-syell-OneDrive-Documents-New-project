@@ -1822,10 +1822,11 @@ let adminSearchRenderTimer = null;
 let adminLiveStream = null;
 let adminLiveRefreshTimer = null;
 const adminBroadcastExcludedUserIds = new Set();
-const adminIdleLimitMs = 2 * 60 * 60 * 1000;
+const adminIdleLimitMs = 12 * 60 * 60 * 1000;
 const adminKeepAliveMs = 5 * 60 * 1000;
 let adminLastActivityAt = Date.now();
 let adminLastKeepAliveAt = 0;
+let adminNotificationsReady = false;
 
 const adminPanelTitles = {
   overview: "Overview",
@@ -1888,6 +1889,7 @@ async function requireAdminSession() {
   try {
     const data = await api("/api/admin/me");
     window.__sdAdminSessionRole = data?.role === "sub_admin" ? "sub_admin" : "admin";
+    requestAdminNotificationPermission();
     return;
   } catch {
   }
@@ -1898,6 +1900,7 @@ async function requireAdminSession() {
     const data = await response.json().catch(() => ({}));
     if (data?.loggedIn === false) throw new Error("Sub-admin login is required.");
     window.__sdAdminSessionRole = data?.role === "admin" ? "admin" : "sub_admin";
+    requestAdminNotificationPermission();
     return;
   } catch {
   }
@@ -1923,7 +1926,10 @@ function markAdminActivity() {
 function setupAdminIdleLogout() {
   if (!isAdminPage || !canUseApi) return;
   ["click", "keydown", "pointerdown", "touchstart", "input", "scroll"].forEach((eventName) => {
-    window.addEventListener(eventName, markAdminActivity, { passive: true });
+    window.addEventListener(eventName, () => {
+      markAdminActivity();
+      requestAdminNotificationPermission();
+    }, { passive: true });
   });
   setInterval(async () => {
     const idleFor = Date.now() - adminLastActivityAt;
@@ -1976,6 +1982,36 @@ function playAdminAlert() {
     oscillator.stop(context.currentTime + 0.24);
   } catch {
     // Browser may block sound until the page has user interaction.
+  }
+}
+
+function requestAdminNotificationPermission() {
+  if (!isAdminPage || adminNotificationsReady || !("Notification" in window)) return;
+  adminNotificationsReady = true;
+  if (Notification.permission === "default") {
+    Notification.requestPermission().catch(() => {});
+  }
+}
+
+function showAdminChatNotification(chats = []) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const unreadChats = chats.filter((chat) => (Number(chat.unreadForAdmin) || 0) > 0);
+  const latest = unreadChats.sort((a, b) => latestChatTime(b) - latestChatTime(a))[0];
+  if (!latest) return;
+  const lastMessage = latest.messages?.[latest.messages.length - 1];
+  const messageText = String(lastMessage?.text || "New player message").slice(0, 120);
+  try {
+    const note = new Notification(`New chat from ${latest.name || "Player"}`, {
+      body: messageText,
+      tag: `south-diamond-chat-${latest.id}`,
+      renotify: true,
+    });
+    note.onclick = () => {
+      window.focus();
+      activeAdminThread = latest.id;
+      renderAdmin();
+    };
+  } catch {
   }
 }
 
@@ -2459,7 +2495,7 @@ function queueAdminLiveRefresh() {
       document.activeElement?.matches("input, textarea, select, button") ||
       document.activeElement?.closest("form") ||
       playerModal?.classList.contains("is-open");
-    if (!document.hidden && !isWorking) renderAdmin({ forceLists: true });
+    if (!isWorking) renderAdmin({ forceLists: !document.hidden });
   }, 250);
 }
 
@@ -2563,7 +2599,10 @@ async function renderAdmin(options = {}) {
     badge.classList.toggle("is-hidden", unreadTotal <= 0);
   });
   document.title = unreadTotal > 0 ? `(${unreadTotal}) South Diamond Admin` : "South Diamond Admin";
-  if (adminHasRenderedOnce && unreadTotal > lastAdminUnreadTotal) playAdminAlert();
+  if (adminHasRenderedOnce && unreadTotal > lastAdminUnreadTotal) {
+    playAdminAlert();
+    showAdminChatNotification(chats);
+  }
   lastAdminUnreadTotal = unreadTotal;
   adminHasRenderedOnce = true;
 
@@ -2954,7 +2993,7 @@ if (adminInbox && adminForm) {
       document.activeElement?.matches("input, textarea, select, button") ||
       document.activeElement?.closest("form") ||
       playerModal?.classList.contains("is-open");
-    if (!document.hidden && !isWorking) renderAdmin();
+    if (!isWorking) renderAdmin();
   }, 30000);
 }
 

@@ -39,11 +39,11 @@ let localDbCacheReady = false;
 let localDbWriteQueue = Promise.resolve();
 let localStartupBackupCreated = false;
 let supabaseSafetyBackupCreated = false;
-const subAdminSessionMaxAge = 60 * 60 * 8; // sub-admins: 8 hours per login
+const subAdminSessionMaxAge = 60 * 60 * 12; // sub-admins: 12 hours per login
 const slotLiveClients = new Set();
 const maxJsonBodyBytes = 8_000_000;
 const playerSessionMaxAge = 60 * 60 * 24 * 400;
-const adminSessionMaxAge = 60 * 60 * 2;
+const adminSessionMaxAge = 60 * 60 * 12; // main admin: 12 hours per login
 const retentionMs = {
   pointTransactions: 30 * 24 * 60 * 60 * 1000,
   activityLog: 30 * 24 * 60 * 60 * 1000,
@@ -439,9 +439,9 @@ function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {
   // Payout-cap / RTP-controller state (admin controls feed straight into this).
   // rtpError > 0 means we are paying out MORE than the admin's target RTP.
   const overMax = cfg.dailyMaxPayout > 0 && stats.won >= cfg.dailyMaxPayout;
-  const warm = stats.spins > 15;
+  const warm = stats.spins > 5;
   const rtpError = warm ? currentRtp - cfg.targetRtp : 0;
-  const underMin = stats.spins > 50 && stats.won < cfg.dailyMinPayout && stats.wagered > 0;
+  const underMin = stats.spins > 50 && stats.won < cfg.dailyMinPayout && stats.wagered > 0 && currentRtp < cfg.targetRtp;
   const over = warm && rtpError > 0.01;
   const under = (warm && rtpError < -0.01) || underMin;
 
@@ -470,13 +470,17 @@ function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {
   if (overMax) {
     return pick(losses) || pick(smalls) || candidates[0];
   }
+  if (warm && currentRtp >= cfg.targetRtp * 1.25) {
+    const loss = pick(losses);
+    if (loss) return loss;
+  }
 
   // Proportional RTP controller: the volatility profile sets the base win
   // frequency; we then scale it by how far realized RTP has drifted from the
   // admin's target, so the house edge stays honest over time. Paying too much
   // -> fewer/smaller wins; paying too little -> more/bigger wins.
   let winChance = profile.hitFrequency;
-  if (warm) winChance *= Math.max(0.15, Math.min(1.9, 1 - rtpError * 6));
+  if (warm) winChance *= Math.max(0.01, Math.min(1.9, 1 - rtpError * 8));
   winChance = Math.max(0.02, Math.min(0.7, winChance));
 
   if (arcadeRng() >= winChance) {
@@ -499,7 +503,7 @@ function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {
   const allowBig = (under && arcadeRng() < profile.bigWinChance * 1.6)
                 || (!over && arcadeRng() < profile.bigWinChance);
   const chosen = over
-    ? (pick(smalls) || pick(mediums) || pick(losses) || pick(bigs) || candidates[0])
+    ? (pick(losses) || pick(smalls) || candidates[0])
     : ((allowBig ? pick(bigs) : null) || pick(mediums) || pick(smalls) || pick(bigs) || pick(losses) || candidates[0]);
   // Mark sizable wins so the client slows the final reel for a dramatic reveal.
   if (chosen && chosen.result.totalPay >= bet * 8) chosen.anticipation = true;
@@ -1674,12 +1678,13 @@ function arcadePayoutMultiplier(gameConfig, gameStats) {
     multiplier *= 0.35;
   }
   if (stats.spins > 50 && stats.won < cfg.dailyMinPayout && stats.wagered > 0) {
-    multiplier *= 1.25;
+    const currentRtp = stats.won / stats.wagered;
+    if (currentRtp < cfg.targetRtp) multiplier *= 1.25;
   }
   if (stats.wagered > 0) {
     const currentRtp = stats.won / stats.wagered;
     if (currentRtp > cfg.targetRtp + 0.05) {
-      multiplier *= Math.max(0.15, cfg.targetRtp / Math.max(currentRtp, 0.01));
+      multiplier *= Math.max(0.02, Math.pow(cfg.targetRtp / Math.max(currentRtp, 0.01), 2));
     } else if (currentRtp < cfg.targetRtp - 0.05) {
       multiplier *= Math.min(1.35, cfg.targetRtp / Math.max(currentRtp, 0.25));
     }
@@ -3931,25 +3936,28 @@ async function handleApi(request, response, urlPath, url) {
       const jpState = data.slotPayout.jackpot || (data.slotPayout.jackpot = freshJackpotDropState());
       const frac = spinDayFraction();
       const tierAmount = { minor: jpSettings.jackpotMinor, major: jpSettings.jackpotMajor, mega: jpSettings.jackpotMega };
+      const currentGameRtp = arcadeGameStats.wagered > 0 ? arcadeGameStats.won / arcadeGameStats.wagered : arcadeGameConfig.targetRtp;
       // Check biggest first so the most overdue prize lands; only one tier
       // can drop on a single spin.
-      for (const tier of ["mega", "major", "minor"]) {
-        const amount = roundPoints(tierAmount[tier]);
-        const st = jpState[tier];
-        if (!st || st.dropped || amount <= 0) continue;
-        const remainingAfterNormalWin = Math.max(0, roundPoints(payoutCaps.maxWin - win));
-        if (amount > remainingAfterNormalWin) continue;
-        const due = frac >= st.targetFrac;
-        const forcedBeforeMidnight = frac >= 0.97; // safety net: guarantee it drops today
-        if (due || forcedBeforeMidnight) {
-          jackpotWin = amount;
-          jackpotTier = tier;
-          st.dropped = true;
-          st.amount = amount;
-          st.winnerId = storedUser.id;
-          st.winnerName = storedUser.username;
-          st.at = createdAt;
-          break;
+      if (currentGameRtp <= arcadeGameConfig.targetRtp && payoutCaps.maxWin > win) {
+        for (const tier of ["mega", "major", "minor"]) {
+          const amount = roundPoints(tierAmount[tier]);
+          const st = jpState[tier];
+          if (!st || st.dropped || amount <= 0) continue;
+          const remainingAfterNormalWin = Math.max(0, roundPoints(payoutCaps.maxWin - win));
+          if (amount > remainingAfterNormalWin) continue;
+          const due = frac >= st.targetFrac;
+          const forcedBeforeMidnight = frac >= 0.97; // safety net: guarantee it drops today
+          if (due || forcedBeforeMidnight) {
+            jackpotWin = amount;
+            jackpotTier = tier;
+            st.dropped = true;
+            st.amount = amount;
+            st.winnerId = storedUser.id;
+            st.winnerName = storedUser.username;
+            st.at = createdAt;
+            break;
+          }
         }
       }
     }
