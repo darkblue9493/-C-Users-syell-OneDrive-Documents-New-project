@@ -8,6 +8,7 @@ const root = __dirname;
 const dataDir = process.env.DATA_DIR || path.join(root, "data");
 const dbPath = path.join(dataDir, "chats.json");
 const uploadDir = path.join(dataDir, "uploads");
+const backupDir = path.join(dataDir, "backups");
 const adminUsername = process.env.ADMIN_USERNAME || "admin";
 const adminPassword = process.env.ADMIN_PASSWORD || "southdiamond";
 const adminPath = "/admin9493";
@@ -36,6 +37,7 @@ const pendingAdminLogins = new Map();
 let localDbCache = null;
 let localDbCacheReady = false;
 let localDbWriteQueue = Promise.resolve();
+let localStartupBackupCreated = false;
 const subAdminSessionMaxAge = 60 * 60 * 8; // sub-admins: 8 hours per login
 const slotLiveClients = new Set();
 const maxJsonBodyBytes = 8_000_000;
@@ -981,6 +983,56 @@ function ensurePlayerChatThread(data, savedUser) {
 function ensureLocalStorage() {
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+}
+
+function safeBackupStamp(date = new Date()) {
+  return date.toISOString().replace(/[:.]/g, "-");
+}
+
+function listLocalBackups() {
+  ensureLocalStorage();
+  return fs.readdirSync(backupDir)
+    .filter((name) => /^(chats|startup)-\d{4}-\d{2}-\d{2}T.*\.json$/.test(name))
+    .map((name) => {
+      const fullPath = path.join(backupDir, name);
+      const stat = fs.statSync(fullPath);
+      return { name, fullPath, mtimeMs: stat.mtimeMs, size: stat.size };
+    })
+    .sort((a, b) => b.mtimeMs - a.mtimeMs);
+}
+
+function restoreLatestLocalBackupIfMissing() {
+  ensureLocalStorage();
+  if (fs.existsSync(dbPath)) return false;
+  const latest = listLocalBackups()[0];
+  if (!latest) return false;
+  fs.copyFileSync(latest.fullPath, dbPath);
+  console.warn(`Restored South Diamond database from local backup: ${latest.name}`);
+  return true;
+}
+
+function createStartupLocalBackup(data) {
+  if (localStartupBackupCreated) return;
+  localStartupBackupCreated = true;
+  try {
+    ensureLocalStorage();
+    const fileName = `startup-${safeBackupStamp()}.json`;
+    fs.writeFileSync(path.join(backupDir, fileName), JSON.stringify(normalizeDatabase(data), null, 2));
+  } catch (error) {
+    console.error("South Diamond startup backup failed:", error.message);
+  }
+}
+
+async function writeLocalDatabaseBackup(data) {
+  ensureLocalStorage();
+  const fileName = `chats-${safeBackupStamp()}.json`;
+  const payload = JSON.stringify(normalizeDatabase(data), null, 2);
+  await fs.promises.writeFile(path.join(backupDir, fileName), payload);
+  const backups = listLocalBackups();
+  await Promise.all(
+    backups.slice(30).map((backup) => fs.promises.unlink(backup.fullPath).catch(() => {}))
+  );
 }
 
 async function supabaseRequest(pathname, options = {}) {
@@ -1046,6 +1098,7 @@ async function ensureDatabase() {
     }
   }
 
+  restoreLatestLocalBackupIfMissing();
   if (!fs.existsSync(dbPath)) {
     fs.writeFileSync(dbPath, JSON.stringify(starterDatabase(), null, 2));
     localDbCache = normalizeDatabase(starterDatabase());
@@ -1054,6 +1107,7 @@ async function ensureDatabase() {
   }
 
   const data = JSON.parse(fs.readFileSync(dbPath, "utf8"));
+  createStartupLocalBackup(data);
   let changed = false;
   if (!Array.isArray(data.chats)) {
     data.chats = starterChats;
@@ -1117,7 +1171,10 @@ async function writeDatabase(data) {
   const payload = JSON.stringify(normalized, null, 2);
   localDbWriteQueue = localDbWriteQueue
     .catch(() => {})
-    .then(() => fs.promises.writeFile(dbPath, payload))
+    .then(async () => {
+      await writeLocalDatabaseBackup(normalized);
+      await fs.promises.writeFile(dbPath, payload);
+    })
     .catch((error) => console.error("South Diamond database write failed:", error.message));
   sendSlotLiveEvent({ type: "data-updated" });
 }

@@ -123,6 +123,29 @@ Opening `index.html` directly with `file:///` still works for preview, but real 
 
 Render's free plan does not keep local files forever. To keep registered players and chats after changes/redeploys, use Supabase.
 
+Important rule:
+
+```text
+Do not rely on Render's local data/chats.json for live players.
+Use Supabase for live player accounts before making regular updates.
+```
+
+The app also creates rolling local backups in:
+
+```text
+data/backups/
+```
+
+Those backups help when running locally or on a host with persistent storage. They do not protect a free Render service if Render deletes its local files during redeploy.
+
+Before any live update, download the admin backup:
+
+```text
+https://southdiamond.online/api/admin/backup
+```
+
+Keep that JSON file until you confirm the updated site still shows all players.
+
 In Supabase:
 
 1. Open your project.
