@@ -3631,6 +3631,12 @@ body.is-pseudo-fullscreen .game-view {
 }
 
 .game-view .reels-frame {
+  --game-reels: 5;
+  --game-rows: 3;
+  --cabinet-gap: clamp(5px, .9vw, 10px);
+  max-width: min(100%, 640px);
+  margin-left: auto;
+  margin-right: auto;
   border-radius: 14px;
   padding: clamp(8px, 1.5vw, 16px);
   background:
@@ -3645,6 +3651,14 @@ body.is-pseudo-fullscreen .game-view {
     0 0 0 1px rgba(255,255,255,.06),
     0 12px 36px rgba(0,0,0,.75),
     0 0 30px color-mix(in srgb, var(--accent, #ffd76b) 52%, transparent);
+}
+
+.game-view[data-reels="3"] .reels-frame {
+  max-width: min(100%, 410px);
+}
+
+.game-view[data-rows="4"] .reels-frame {
+  max-width: min(100%, 670px);
 }
 
 .game-view .reels-frame::before {
@@ -3676,10 +3690,12 @@ body.is-pseudo-fullscreen .game-view {
 }
 
 .game-view .reel-strip {
-  gap: clamp(5px, .9vw, 10px);
+  gap: var(--cabinet-gap);
+  align-items: stretch;
 }
 
 .game-view .reel {
+  height: calc(var(--cell-base, 90px) * var(--game-rows, var(--rows, 3)));
   gap: clamp(4px, .7vw, 8px);
   padding: clamp(4px, .8vw, 8px);
   border-radius: 10px;
@@ -3726,7 +3742,10 @@ body.is-pseudo-fullscreen .game-view {
 
 .game-view .sym-cell.sym-image .sym-inner img,
 .game-view .sym-cell.sym-svg .sym-inner svg {
-  transform: scale(1.08);
+  transform: scale(1.04);
+  width: 96%;
+  height: 96%;
+  object-fit: contain;
 }
 
 .game-view .sym-cell.is-winning {

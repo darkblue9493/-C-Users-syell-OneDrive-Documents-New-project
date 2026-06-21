@@ -286,11 +286,31 @@ function arcadeWeightedPick(reelIndex, reels) {
   return arcadeSymbolKeys[arcadeSymbolKeys.length - 1];
 }
 
+function arcadeLiveReelStrips(reels) {
+  const fiveReelStrips = [
+    ["S6","S3","S5","S1","S6","S4","S2","S5","SCATTER","S6","S1","S5","S3","S6","WILD","S4","S2","S5","S6","S1","S5","S4"],
+    ["S5","S2","S6","S3","WILD","S5","S1","S6","S4","SCATTER","S5","S2","S6","S3","S1","S5","S4","S6","S2","S5","S6","S3"],
+    ["S6","S4","S1","S5","S3","SCATTER","S6","S2","S5","WILD","S4","S1","S6","S5","S3","S2","S6","S4","S5","S1","S6","S2"],
+    ["S5","S1","S6","S4","S2","S5","WILD","S3","S6","S1","S5","SCATTER","S4","S6","S2","S5","S3","S6","S1","S5","S4","S6"],
+    ["S6","S2","S5","S4","S6","S1","S5","S3","S6","S4","S2","S5","SCATTER","S6","S1","S5","S3","WILD","S6","S4","S5","S2"],
+  ];
+  const threeReelStrips = [
+    ["S6","S3","S5","S1","S6","S4","S2","S5","WILD","S6","S1","S5","S3","SCATTER","S6","S4","S2","S5"],
+    ["S5","S2","S6","S3","WILD","S5","S1","S6","S4","S5","S2","SCATTER","S6","S3","S1","S5","S4","S6"],
+    ["S6","S4","S1","S5","S3","S6","S2","S5","WILD","S4","S1","S6","S5","S3","S2","SCATTER","S6","S4"],
+  ];
+  const source = reels === 3 ? threeReelStrips : fiveReelStrips;
+  return Array.from({ length: reels }, (_, reelIndex) => source[reelIndex % source.length] || arcadeSymbolKeys);
+}
+
 function arcadeGenerateGrid(gameKey) {
   const math = arcadeGameMath[gameKey] || arcadeGameMath.wildBuffalo;
-  return Array.from({ length: math.reels }, (_, reelIndex) =>
-    Array.from({ length: math.rows }, () => arcadeWeightedPick(reelIndex, math.reels))
-  );
+  const strips = arcadeLiveReelStrips(math.reels);
+  return Array.from({ length: math.reels }, (_, reelIndex) => {
+    const strip = strips[reelIndex] || arcadeSymbolKeys;
+    const start = Math.floor(arcadeRng() * strip.length);
+    return Array.from({ length: math.rows }, (_, rowIndex) => strip[(start + rowIndex) % strip.length] || arcadeWeightedPick(reelIndex, math.reels));
+  });
 }
 
 function arcadeSymbolPay(symbolKey, count) {
@@ -299,7 +319,63 @@ function arcadeSymbolPay(symbolKey, count) {
   return Number(pays[index]) || 0;
 }
 
-function arcadeEvaluatePayline(grid, line, wildMultiplier = 1) {
+function arcadeSymbolMatchGroup(gameKey, symbolKey) {
+  const groupedSymbols = {
+    triple777: {
+      S1: "SEVENS", S2: "SEVENS", S3: "SEVENS", S4: "SEVENS",
+    },
+    vegas7s: {
+      S1: "SEVENS", S2: "SEVENS",
+    },
+    blackjack: {
+      S1: "BLACKJACK", S2: "BLACKJACK", S3: "BLACKJACK", S4: "BLACKJACK",
+    },
+    gorillaGold: {
+      S1: "GORILLA", S2: "GORILLA",
+    },
+    goldWolf: {
+      S1: "WOLF", S2: "WOLF", S3: "WOLF",
+    },
+    wildBull: {
+      S1: "BULL", S3: "BULL",
+    },
+    dragonEmpress: {
+      S1: "DRAGON", S2: "DRAGON", S3: "DRAGON", S4: "DRAGON",
+    },
+    mammothRush: {
+      S1: "MAMMOTH", S2: "MAMMOTH", S3: "MAMMOTH",
+    },
+    luckyPanda: {
+      S1: "PANDA", S2: "PANDA", S3: "PANDA", S4: "PANDA",
+    },
+    lionsPride: {
+      S1: "LION", S2: "LION", S3: "LION", S4: "LION", S5: "LION",
+    },
+    piratesTreasure: {
+      S1: "PIRATE", S2: "PIRATE",
+    },
+    aztecEmpire: {
+      S1: "EMERALD", S6: "EMERALD",
+    },
+    luckyCharms: {
+      S1: "CLOVER", S2: "CLOVER",
+    },
+  };
+  return groupedSymbols[gameKey]?.[symbolKey] || symbolKey;
+}
+
+function arcadeGroupedSymbolPay(gameKey, target, count, mixedGroup) {
+  if (!mixedGroup) return arcadeSymbolPay(target, count);
+  const group = arcadeSymbolMatchGroup(gameKey, target);
+  const groupPays = arcadeSymbolKeys
+    .filter((key) => key !== "WILD" && key !== "SCATTER" && arcadeSymbolMatchGroup(gameKey, key) === group)
+    .map((key) => arcadeSymbolPay(key, count))
+    .filter((pay) => pay > 0);
+  const lowPay = groupPays.length ? Math.min(...groupPays) : arcadeSymbolPay(target, count);
+  return lowPay > 0 ? 1 : 0;
+}
+
+function arcadeEvaluatePayline(gameKey, grid, line, wildMultiplier = 1) {
   const candidates = new Set();
   for (let reel = 0; reel < line.length; reel += 1) {
     const symbol = grid[reel]?.[line[reel]];
@@ -309,15 +385,17 @@ function arcadeEvaluatePayline(grid, line, wildMultiplier = 1) {
   candidates.forEach((target) => {
     let count = 0;
     let wildCount = 0;
+    let mixedGroup = false;
     for (let reel = 0; reel < line.length; reel += 1) {
       const symbol = grid[reel]?.[line[reel]];
       if (!symbol || symbol === "SCATTER") break;
       if (symbol === target) count += 1;
+      else if (arcadeSymbolMatchGroup(gameKey, symbol) === arcadeSymbolMatchGroup(gameKey, target)) { count += 1; mixedGroup = true; }
       else if (symbol === "WILD") { count += 1; wildCount += 1; }
       else break;
     }
     if (count < 3) return;
-    const basePay = arcadeSymbolPay(target, count);
+    const basePay = arcadeGroupedSymbolPay(gameKey, target, count, mixedGroup);
     if (!basePay) return;
     // A line carried by a wild pays a multiplier — the classic "wild win" boost.
     const multiplier = wildCount > 0 && wildMultiplier > 1 ? wildMultiplier : 1;
@@ -357,7 +435,7 @@ function arcadeEvaluateSpin(gameKey, grid, bet, wildMultiplier = 1) {
   const wins = [];
   let totalPay = 0;
   lines.forEach((line, lineIndex) => {
-    const win = arcadeEvaluatePayline(grid, line, wildMultiplier);
+    const win = arcadeEvaluatePayline(gameKey, grid, line, wildMultiplier);
     if (!win) return;
     const amount = roundPoints(win.pay * coinValue);
     if (amount <= 0) return;

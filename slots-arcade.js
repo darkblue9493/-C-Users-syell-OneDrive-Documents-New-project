@@ -88,6 +88,21 @@ function symbolMinWinningCount(sym, reels) {
 function topSymbolPay(sym, count) {
   return symbolPayForCount(sym, count) || Math.max(0, ...((sym?.pay || []).filter((pay) => Number.isFinite(pay))));
 }
+function symbolMatchGroup(game, symKey) {
+  const sym = game?.symbols?.[symKey];
+  return sym?.matchGroup || symKey;
+}
+function groupedSymbolPay(game, targetSym, count, mixedGroup) {
+  const target = game?.symbols?.[targetSym];
+  if (!mixedGroup) return symbolPayForCount(target, count);
+  const group = symbolMatchGroup(game, targetSym);
+  const groupPays = Object.entries(game?.symbols || {})
+    .filter(([key, sym]) => sym && !sym.scatter && !sym.wild && symbolMatchGroup(game, key) === group)
+    .map(([, sym]) => symbolPayForCount(sym, count))
+    .filter((pay) => pay > 0);
+  const lowPay = groupPays.length ? Math.min(...groupPays) : symbolPayForCount(target, count);
+  return lowPay > 0 ? 1 : 0;
+}
 
 
 // ============================================================
@@ -1111,6 +1126,7 @@ function generatedSymbol(gameKey, entry, index) {
   const [key, file, label, role] = entry;
   const isWild = role === "wild";
   const isScatter = role === "scatter";
+  const matchGroup = generatedSymbolMatchGroup(gameKey, key, label);
   const payoutTiers = [
     [0,0,0,50,100,500],
     [0,0,0,5,20,100],
@@ -1125,9 +1141,32 @@ function generatedSymbol(gameKey, entry, index) {
     ...imageSym(`${GENERATED_SYMBOL_PACKS[gameKey] || "assets-1"}/${gameKey}/${file}?v=hd1`, label),
     weight: isWild ? 3 : isScatter ? 2 : index < 4 ? 7 : index < 6 ? 10 : 14,
     pay: payoutTiers[index] || payoutTiers[payoutTiers.length - 1],
+    ...(matchGroup ? { matchGroup } : {}),
     ...(isWild ? { wild: true } : {}),
     ...(isScatter ? { scatter: true } : {}),
   };
+}
+
+function generatedSymbolMatchGroup(gameKey, key, label) {
+  const text = String(label || "").toUpperCase();
+  const familyRules = [
+    ["SEVENS", ["777"]],
+    ["BLACKJACK", ["BLACKJACK"]],
+    ["WOLF", ["WOLF"]],
+    ["DRAGON", ["DRAGON"]],
+    ["MAMMOTH", ["MAMMOTH"]],
+    ["PANDA", ["PANDA"]],
+    ["LION", ["LION"]],
+    ["PIRATE", ["PIRATE"]],
+    ["CLOVER", ["CLOVER"]],
+    ["GORILLA", ["GORILLA"]],
+    ["BULL", ["BULL"]],
+    ["EMERALD", ["EMERALD"]],
+  ];
+  for (const [group, needles] of familyRules) {
+    if (needles.some((needle) => text.includes(needle))) return `${gameKey}:${group}`;
+  }
+  return "";
 }
 
 function applyGeneratedSymbolSets() {
@@ -1502,12 +1541,43 @@ function weightedPickReel(game, reelIndex) {
   return keys[keys.length - 1];
 }
 
+function buildLiveReelStrips(game) {
+  if (Array.isArray(game._cachedLiveReelStrips) && game._cachedLiveReelStrips.length === game.reels) {
+    return game._cachedLiveReelStrips;
+  }
+  const has = (key) => Object.prototype.hasOwnProperty.call(game.symbols || {}, key);
+  const fallback = Object.keys(game.symbols || {});
+  const clean = (strip) => strip.filter(has);
+  const fiveReelStrips = [
+    ["S6","S3","S5","S1","S6","S4","S2","S5","SCATTER","S6","S1","S5","S3","S6","WILD","S4","S2","S5","S6","S1","S5","S4"],
+    ["S5","S2","S6","S3","WILD","S5","S1","S6","S4","SCATTER","S5","S2","S6","S3","S1","S5","S4","S6","S2","S5","S6","S3"],
+    ["S6","S4","S1","S5","S3","SCATTER","S6","S2","S5","WILD","S4","S1","S6","S5","S3","S2","S6","S4","S5","S1","S6","S2"],
+    ["S5","S1","S6","S4","S2","S5","WILD","S3","S6","S1","S5","SCATTER","S4","S6","S2","S5","S3","S6","S1","S5","S4","S6"],
+    ["S6","S2","S5","S4","S6","S1","S5","S3","S6","S4","S2","S5","SCATTER","S6","S1","S5","S3","WILD","S6","S4","S5","S2"],
+  ];
+  const threeReelStrips = [
+    ["S6","S3","S5","S1","S6","S4","S2","S5","WILD","S6","S1","S5","S3","SCATTER","S6","S4","S2","S5"],
+    ["S5","S2","S6","S3","WILD","S5","S1","S6","S4","S5","S2","SCATTER","S6","S3","S1","S5","S4","S6"],
+    ["S6","S4","S1","S5","S3","S6","S2","S5","WILD","S4","S1","S6","S5","S3","S2","SCATTER","S6","S4"],
+  ];
+  const source = game.reels === 3 ? threeReelStrips : fiveReelStrips;
+  const strips = Array.from({ length: game.reels }, (_, reelIndex) => {
+    const strip = clean(source[reelIndex % source.length]);
+    return strip.length ? strip : fallback;
+  });
+  game._cachedLiveReelStrips = strips;
+  return strips;
+}
+
 function _generateGridRaw(game) {
   const grid = [];
+  const strips = buildLiveReelStrips(game);
   for (let r = 0; r < game.reels; r++) {
     const reel = [];
+    const strip = strips[r] || [];
+    const start = strip.length ? Math.floor(rng() * strip.length) : 0;
     for (let row = 0; row < game.rows; row++) {
-      reel.push(weightedPickReel(game, r));
+      reel.push(strip.length ? strip[(start + row) % strip.length] : weightedPickReel(game, r));
     }
     grid.push(reel);
   }
@@ -1574,16 +1644,18 @@ function evaluatePayline(game, grid, payline) {
     if (!target || target.scatter) return;
     let count = 0;
     let wildCount = 0;
+    let mixedGroup = false;
     for (let i = 0; i < payline.length; i++) {
       const symKey = grid[i]?.[payline[i]];
       const sym = game.symbols[symKey];
       if (!symKey || sym?.scatter) break;
       if (symKey === targetSym) { count++; }
+      else if (symbolMatchGroup(game, symKey) === symbolMatchGroup(game, targetSym)) { count++; mixedGroup = true; }
       else if (sym?.wild) { count++; wildCount++; }
       else break;
     }
     if (count < symbolMinWinningCount(target, game.reels)) return;
-    const basePay = symbolPayForCount(target, count);
+    const basePay = groupedSymbolPay(game, targetSym, count, mixedGroup);
     if (!basePay) return;
     let mult = 1;
     if (wildCount > 0 && game.wildMultiplier) {
@@ -2419,6 +2491,8 @@ async function renderGameView(gameKey) {
   // Apply theme + layout classes
   const layout = game.layout || "default";
   root.className = `game-view theme-${game.theme} ${game.sceneClass} layout-${layout}`;
+  root.dataset.reels = String(game.reels);
+  root.dataset.rows = String(game.rows);
   root.style.setProperty("--accent", game.accent);
   root.style.setProperty("--accent2", game.accent2 || game.accent);
 
@@ -2467,7 +2541,13 @@ async function renderGameView(gameKey) {
   // Build reels with scrolling strip structure
   const reelStrip = $("[data-reel-strip]");
   reelStrip.style.gridTemplateColumns = `repeat(${game.reels}, 1fr)`;
+  const reelsFrame = reelStrip.closest(".reels-frame");
+  if (reelsFrame) {
+    reelsFrame.style.setProperty("--game-reels", game.reels);
+    reelsFrame.style.setProperty("--game-rows", game.rows);
+  }
   reelStrip.style.setProperty("--game-rows", game.rows);
+  reelStrip.style.setProperty("--game-reels", game.reels);
   reelStrip.innerHTML = "";
   for (let r = 0; r < game.reels; r++) {
     const reel = document.createElement("div");
