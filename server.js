@@ -286,31 +286,11 @@ function arcadeWeightedPick(reelIndex, reels) {
   return arcadeSymbolKeys[arcadeSymbolKeys.length - 1];
 }
 
-function arcadeLiveReelStrips(reels) {
-  const fiveReelStrips = [
-    ["S6","S3","S5","S1","S6","S4","S2","S5","SCATTER","S6","S1","S5","S3","S6","WILD","S4","S2","S5","S6","S1","S5","S4"],
-    ["S5","S2","S6","S3","WILD","S5","S1","S6","S4","SCATTER","S5","S2","S6","S3","S1","S5","S4","S6","S2","S5","S6","S3"],
-    ["S6","S4","S1","S5","S3","SCATTER","S6","S2","S5","WILD","S4","S1","S6","S5","S3","S2","S6","S4","S5","S1","S6","S2"],
-    ["S5","S1","S6","S4","S2","S5","WILD","S3","S6","S1","S5","SCATTER","S4","S6","S2","S5","S3","S6","S1","S5","S4","S6"],
-    ["S6","S2","S5","S4","S6","S1","S5","S3","S6","S4","S2","S5","SCATTER","S6","S1","S5","S3","WILD","S6","S4","S5","S2"],
-  ];
-  const threeReelStrips = [
-    ["S6","S3","S5","S1","S6","S4","S2","S5","WILD","S6","S1","S5","S3","SCATTER","S6","S4","S2","S5"],
-    ["S5","S2","S6","S3","WILD","S5","S1","S6","S4","S5","S2","SCATTER","S6","S3","S1","S5","S4","S6"],
-    ["S6","S4","S1","S5","S3","S6","S2","S5","WILD","S4","S1","S6","S5","S3","S2","SCATTER","S6","S4"],
-  ];
-  const source = reels === 3 ? threeReelStrips : fiveReelStrips;
-  return Array.from({ length: reels }, (_, reelIndex) => source[reelIndex % source.length] || arcadeSymbolKeys);
-}
-
 function arcadeGenerateGrid(gameKey) {
   const math = arcadeGameMath[gameKey] || arcadeGameMath.wildBuffalo;
-  const strips = arcadeLiveReelStrips(math.reels);
-  return Array.from({ length: math.reels }, (_, reelIndex) => {
-    const strip = strips[reelIndex] || arcadeSymbolKeys;
-    const start = Math.floor(arcadeRng() * strip.length);
-    return Array.from({ length: math.rows }, (_, rowIndex) => strip[(start + rowIndex) % strip.length] || arcadeWeightedPick(reelIndex, math.reels));
-  });
+  return Array.from({ length: math.reels }, (_, reelIndex) =>
+    Array.from({ length: math.rows }, () => arcadeWeightedPick(reelIndex, math.reels))
+  );
 }
 
 function arcadeSymbolPay(symbolKey, count) {
@@ -372,7 +352,7 @@ function arcadeGroupedSymbolPay(gameKey, target, count, mixedGroup) {
     .map((key) => arcadeSymbolPay(key, count))
     .filter((pay) => pay > 0);
   const lowPay = groupPays.length ? Math.min(...groupPays) : arcadeSymbolPay(target, count);
-  return lowPay > 0 ? 1 : 0;
+  return Math.max(1, Math.round(lowPay * 0.35));
 }
 
 function arcadeEvaluatePayline(gameKey, grid, line, wildMultiplier = 1) {

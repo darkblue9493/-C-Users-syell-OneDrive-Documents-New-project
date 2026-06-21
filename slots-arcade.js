@@ -101,7 +101,7 @@ function groupedSymbolPay(game, targetSym, count, mixedGroup) {
     .map(([, sym]) => symbolPayForCount(sym, count))
     .filter((pay) => pay > 0);
   const lowPay = groupPays.length ? Math.min(...groupPays) : symbolPayForCount(target, count);
-  return lowPay > 0 ? 1 : 0;
+  return Math.max(1, Math.round(lowPay * 0.35));
 }
 
 
@@ -1541,43 +1541,12 @@ function weightedPickReel(game, reelIndex) {
   return keys[keys.length - 1];
 }
 
-function buildLiveReelStrips(game) {
-  if (Array.isArray(game._cachedLiveReelStrips) && game._cachedLiveReelStrips.length === game.reels) {
-    return game._cachedLiveReelStrips;
-  }
-  const has = (key) => Object.prototype.hasOwnProperty.call(game.symbols || {}, key);
-  const fallback = Object.keys(game.symbols || {});
-  const clean = (strip) => strip.filter(has);
-  const fiveReelStrips = [
-    ["S6","S3","S5","S1","S6","S4","S2","S5","SCATTER","S6","S1","S5","S3","S6","WILD","S4","S2","S5","S6","S1","S5","S4"],
-    ["S5","S2","S6","S3","WILD","S5","S1","S6","S4","SCATTER","S5","S2","S6","S3","S1","S5","S4","S6","S2","S5","S6","S3"],
-    ["S6","S4","S1","S5","S3","SCATTER","S6","S2","S5","WILD","S4","S1","S6","S5","S3","S2","S6","S4","S5","S1","S6","S2"],
-    ["S5","S1","S6","S4","S2","S5","WILD","S3","S6","S1","S5","SCATTER","S4","S6","S2","S5","S3","S6","S1","S5","S4","S6"],
-    ["S6","S2","S5","S4","S6","S1","S5","S3","S6","S4","S2","S5","SCATTER","S6","S1","S5","S3","WILD","S6","S4","S5","S2"],
-  ];
-  const threeReelStrips = [
-    ["S6","S3","S5","S1","S6","S4","S2","S5","WILD","S6","S1","S5","S3","SCATTER","S6","S4","S2","S5"],
-    ["S5","S2","S6","S3","WILD","S5","S1","S6","S4","S5","S2","SCATTER","S6","S3","S1","S5","S4","S6"],
-    ["S6","S4","S1","S5","S3","S6","S2","S5","WILD","S4","S1","S6","S5","S3","S2","SCATTER","S6","S4"],
-  ];
-  const source = game.reels === 3 ? threeReelStrips : fiveReelStrips;
-  const strips = Array.from({ length: game.reels }, (_, reelIndex) => {
-    const strip = clean(source[reelIndex % source.length]);
-    return strip.length ? strip : fallback;
-  });
-  game._cachedLiveReelStrips = strips;
-  return strips;
-}
-
 function _generateGridRaw(game) {
   const grid = [];
-  const strips = buildLiveReelStrips(game);
   for (let r = 0; r < game.reels; r++) {
     const reel = [];
-    const strip = strips[r] || [];
-    const start = strip.length ? Math.floor(rng() * strip.length) : 0;
     for (let row = 0; row < game.rows; row++) {
-      reel.push(strip.length ? strip[(start + row) % strip.length] : weightedPickReel(game, r));
+      reel.push(weightedPickReel(game, r));
     }
     grid.push(reel);
   }
