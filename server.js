@@ -149,6 +149,14 @@ const arcadePaylines5x3 = [
   [0,1,0,1,0], [2,1,2,1,2], [1,1,0,1,1], [1,1,2,1,1], [0,0,2,0,0],
   [2,2,0,2,2], [1,0,2,0,1], [1,2,0,2,1], [0,2,2,2,0], [2,0,0,0,2],
 ];
+const arcadePaylines5x3Fifty = [
+  ...arcadePaylines5x3,
+  [0,0,0,1,2], [2,2,2,1,0], [0,1,1,2,2], [2,1,1,0,0], [1,0,1,2,2],
+  [1,2,1,0,0], [0,2,1,1,0], [2,0,1,1,2], [1,1,1,0,2], [1,1,1,2,0],
+  [0,1,2,2,1], [2,1,0,0,1], [0,0,1,1,2], [2,2,1,1,0], [1,0,0,1,2],
+  [1,2,2,1,0], [0,1,0,2,1], [2,1,2,0,1], [0,2,2,1,1], [2,0,0,1,1],
+  [1,0,1,1,2], [1,2,1,1,0], [0,1,1,0,2], [2,1,1,2,0], [1,0,2,1,0],
+];
 const arcadePaylines3x3 = [[1,1,1], [0,0,0], [2,2,2], [0,1,2], [2,1,0]];
 const arcadePaylines5x4 = [
   [1,1,1,1,1], [2,2,2,2,2], [0,0,0,0,0], [3,3,3,3,3],
@@ -158,30 +166,30 @@ const arcadePaylines5x4 = [
   [0,2,0,2,0], [3,1,3,1,3], [1,1,2,1,1], [2,2,1,2,2],
 ];
 const arcadeGameMath = {
-  wildBuffalo:     { rows: 3, reels: 5, lines: arcadePaylines5x3 },
-  kingKong:        { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 25) },
+  wildBuffalo:     { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
+  kingKong:        { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
   triple777:       { rows: 3, reels: 3, lines: arcadePaylines3x3 },
   blackjack:       { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 20) },
   gorillaGold:     { rows: 4, reels: 5, lines: arcadePaylines5x4 },
-  goldWolf:        { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 25) },
+  goldWolf:        { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
   wildBull:        { rows: 3, reels: 3, lines: arcadePaylines3x3 },
-  dragonEmpress:   { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 25) },
+  dragonEmpress:   { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
   mammothRush:     { rows: 4, reels: 5, lines: arcadePaylines5x4 },
   pharaoh:         { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 20) },
-  oceanTreasure:   { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 25) },
+  oceanTreasure:   { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
   vegas7s:         { rows: 3, reels: 3, lines: arcadePaylines3x3 },
-  luckyPanda:      { rows: 3, reels: 5, lines: arcadePaylines5x3 },
-  lionsPride:      { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  luckyPanda:      { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
+  lionsPride:      { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
   piratesTreasure: { rows: 4, reels: 5, lines: arcadePaylines5x4 },
-  zeusThunder:     { rows: 3, reels: 5, lines: arcadePaylines5x3 },
-  cleopatra:       { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 20) },
-  frozenRiches:    { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  zeusThunder:     { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
+  cleopatra:       { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
+  frozenRiches:    { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
   galaxyStars:     { rows: 4, reels: 5, lines: arcadePaylines5x4 },
   fruitMania:      { rows: 3, reels: 3, lines: arcadePaylines3x3 },
-  vikingGlory:     { rows: 3, reels: 5, lines: arcadePaylines5x3 },
+  vikingGlory:     { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
   aztecEmpire:     { rows: 4, reels: 5, lines: arcadePaylines5x4 },
-  halloweenHunt:   { rows: 3, reels: 5, lines: arcadePaylines5x3 },
-  luckyCharms:     { rows: 3, reels: 5, lines: arcadePaylines5x3.slice(0, 20) },
+  halloweenHunt:   { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
+  luckyCharms:     { rows: 3, reels: 5, lines: arcadePaylines5x3Fifty },
 };
 const arcadeSymbolKeys = ["WILD", "SCATTER", "S1", "S2", "S3", "S4", "S5", "S6"];
 const arcadeSymbolWeights = { WILD: 3, SCATTER: 2, S1: 7, S2: 7, S3: 7, S4: 7, S5: 10, S6: 14 };
@@ -362,9 +370,9 @@ function arcadeEvaluateSpin(gameKey, grid, bet, wildMultiplier = 1) {
     const amount = roundPoints(scatter.pay * bet);
     wins.push({ ...scatter, lineIndex: -1, amount });
     totalPay = roundPoints(totalPay + amount);
-    if (scatter.count >= 5) freeSpinsAwarded = 20;
-    else if (scatter.count === 4) freeSpinsAwarded = 15;
-    else if (scatter.count === 3) freeSpinsAwarded = 10;
+    if (scatter.count >= 5) freeSpinsAwarded = 15;
+    else if (scatter.count === 4) freeSpinsAwarded = 12;
+    else if (scatter.count === 3) freeSpinsAwarded = 8;
   }
   return { wins, totalPay, freeSpinsAwarded };
 }
@@ -432,7 +440,7 @@ function arcadePickVariedWin(candidates, bet) {
 function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {}) {
   const cfg = normalizeArcadeGameConfig(gameConfig);
   const profile = arcadeProfile(gameKey);
-  const wildMult = profile.wildMultiplier;
+  const wildMult = options.freeSpin ? Math.max(5, profile.wildMultiplier) : profile.wildMultiplier;
   const stats = gameStats || { wagered: 0, won: 0, spins: 0 };
   const currentRtp = stats.wagered > 0 ? stats.won / stats.wagered : cfg.targetRtp;
 

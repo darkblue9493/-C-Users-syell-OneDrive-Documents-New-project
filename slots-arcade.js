@@ -210,6 +210,15 @@ const PAYLINES_5x3 = [
   [2,0,0,0,2], // 25
 ];
 
+const PAYLINES_5x3_50 = [
+  ...PAYLINES_5x3,
+  [0,1,2,2,1], [2,1,0,0,1], [1,0,1,1,2], [1,2,1,1,0], [0,2,1,0,1],
+  [2,0,1,2,1], [0,1,2,0,2], [2,1,0,2,0], [1,0,0,1,2], [1,2,2,1,0],
+  [0,0,1,1,2], [2,2,1,1,0], [0,1,0,2,2], [2,1,2,0,0], [1,0,2,2,0],
+  [1,2,0,0,2], [0,2,1,2,0], [2,0,1,0,2], [0,0,0,1,2], [2,2,2,1,0],
+  [0,1,1,2,2], [2,1,1,0,0], [1,1,0,0,1], [1,1,2,2,1], [0,2,2,1,0],
+];
+
 const PAYLINES_3x3 = [
   [1,1,1], [0,0,0], [2,2,2], [0,1,2], [2,1,0]
 ];
@@ -237,7 +246,7 @@ const GAMES = {
     theme: "buffalo",
     accent: "#ff8533",
     accent2: "#ffd76b",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "&#129708;", // 🦬
     sceneClass: "scene-prairie",
     bgEmoji: ["&#127956;","&#127797;","&#127765;","&#9728;&#65039;"], // mountain, cactus, sun-elements
@@ -266,7 +275,7 @@ const GAMES = {
     theme: "kingkong",
     accent: "#ff3030",
     accent2: "#1a0d06",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 25),
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "&#129421;", // 🦍
     sceneClass: "scene-skyscraper",
     bgEmoji: ["&#127968;","&#127747;","&#127769;","&#9889;"],
@@ -388,7 +397,7 @@ const GAMES = {
     theme: "wolf",
     accent: "#95e3ff",
     accent2: "#ffd76b",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 25),
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "&#128058;",
     sceneClass: "scene-snow",
     bgEmoji: ["&#127956;","&#10052;&#65039;","&#127794;","&#127769;"],
@@ -448,7 +457,7 @@ const GAMES = {
     theme: "dragon",
     accent: "#d4002a",
     accent2: "#ffd200",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 25),
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "&#128009;",
     sceneClass: "scene-temple",
     bgEmoji: ["&#127982;","&#128293;","&#127777;","&#128241;"],
@@ -541,7 +550,7 @@ const GAMES = {
     theme: "ocean",
     accent: "#00b4d8",
     accent2: "#ffd76b",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 25),
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "&#129416;",
     sceneClass: "scene-ocean",
     bgEmoji: ["&#127754;","&#128031;","&#129408;","&#129410;"],
@@ -601,7 +610,7 @@ const GAMES = {
     theme: "panda88",
     accent: "#e8222e",
     accent2: "#ffd200",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 30) || PAYLINES_5x3,
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "\uD83D\uDC3C",
     sceneClass: "scene-panda",
     bgEmoji: ["\uD83C\uDF8B","\uD83C\uDFEE","\uD83E\uDD8C","\u9670\uFE0F"],
@@ -632,7 +641,7 @@ const GAMES = {
     theme: "lion",
     accent: "#ff7530",
     accent2: "#ffce6a",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "\uD83E\uDD81",
     sceneClass: "scene-savanna",
     bgEmoji: ["\uD83E\uDD8A","\uD83D\uDC18","\uD83E\uDD92","\u2600\uFE0F"],
@@ -694,7 +703,7 @@ const GAMES = {
     theme: "zeus",
     accent: "#2dd6f5",
     accent2: "#ffd76b",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "\u26A1",
     sceneClass: "scene-olympus",
     bgEmoji: ["\u26A1","\u2601\uFE0F","\uD83C\uDFDB\uFE0F","\uD83D\uDC09"],
@@ -725,7 +734,7 @@ const GAMES = {
     theme: "cleopatra",
     accent: "#ffd200",
     accent2: "#4ec5e1",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 20),
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "\uD83D\uDC51",
     sceneClass: "scene-cleo",
     bgEmoji: ["\uD83D\uDC51","\uD83D\uDD3A","\uD83D\uDC0D","\u2600\uFE0F"],
@@ -756,7 +765,7 @@ const GAMES = {
     theme: "arctic",
     accent: "#5dd0f5",
     accent2: "#c8e8ff",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "\uD83D\uDC3B\u200D\u2744\uFE0F",
     sceneClass: "scene-arctic",
     bgEmoji: ["\u2744\uFE0F","\uD83C\uDFD4\uFE0F","\uD83D\uDC27","\uD83D\uDC1F"],
@@ -847,7 +856,7 @@ const GAMES = {
     theme: "viking",
     accent: "#4682b4",
     accent2: "#ffd76b",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "\u2694\uFE0F",
     sceneClass: "scene-viking",
     bgEmoji: ["\u26F5","\u2694\uFE0F","\uD83D\uDEE1\uFE0F","\uD83D\uDC3A"],
@@ -909,7 +918,7 @@ const GAMES = {
     theme: "halloween",
     accent: "#ff7530",
     accent2: "#9c5cff",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3,
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "\uD83C\uDF83",
     sceneClass: "scene-halloween",
     bgEmoji: ["\uD83D\uDC7B","\uD83E\uDDD9\u200D\u2640\uFE0F","\uD83E\uDD87","\uD83C\uDF83"],
@@ -940,7 +949,7 @@ const GAMES = {
     theme: "irish",
     accent: "#2dd55b",
     accent2: "#ffd200",
-    rows: 3, reels: 5, paylines: PAYLINES_5x3.slice(0, 20),
+    rows: 3, reels: 5, paylines: PAYLINES_5x3_50,
     mascot: "\uD83C\uDF40",
     sceneClass: "scene-irish",
     bgEmoji: ["\uD83C\uDF08","\uD83C\uDF40","\uD83D\uDCB0","\uD83C\uDFB6"],
@@ -1160,7 +1169,7 @@ const State = {
   appliedDefaultBet: null,
   // ---- ADVANCED ENGINE STATE ----
   freeSpinsRemaining: 0,        // counts down each free spin
-  freeSpinMultiplier: 2,         // applied to wins during free spins
+  freeSpinMultiplier: 5,         // applied to wins during free spins
   freeSpinTotalWin: 0,           // accumulated win over a free-spin session
   freeSpinTriggerBet: 0,         // bet level when free spins were triggered
 };
@@ -1411,7 +1420,7 @@ function saveState() {
 //   - Per-reel weighted reel strips (industry-standard)
 //   - Wild multipliers (game.wildMultiplier: 2 / 3)
 //   - 243 / 1024 ways-to-win evaluation (game.wayMode = "ways")
-//   - Free-spin bonus rounds (3+ scatters: 10 / 15 / 20 spins, 2x multiplier)
+//   - Free-spin bonus rounds (3+ scatters: 8 / 12 / 15 spins, 5x multiplier)
 //   - RTP governor (uses admin SlotsConfig.computeRtpMultiplier)
 //   - Live progressive jackpots (unchanged)
 //   - All existing image / paytable / symbol contracts preserved
@@ -1688,13 +1697,13 @@ function evaluateSpin(game, grid, bet) {
     const amount = Math.round(scatter.pay * bet * 100) / 100;
     wins.push({ ...scatter, lineIndex: -1, amount });
     totalPay += amount;
-    if (scatter.count >= 5) freeSpinsAwarded = 20;
-    else if (scatter.count === 4) freeSpinsAwarded = 15;
-    else if (scatter.count === 3) freeSpinsAwarded = 10;
+    if (scatter.count >= 5) freeSpinsAwarded = 15;
+    else if (scatter.count === 4) freeSpinsAwarded = 12;
+    else if (scatter.count === 3) freeSpinsAwarded = 8;
   }
 
   if (State.freeSpinsRemaining > 0) {
-    const fsMult = Number(State.freeSpinMultiplier) || 2;
+    const fsMult = Number(State.freeSpinMultiplier) || 5;
     if (fsMult !== 1) {
       totalPay = Math.round(totalPay * fsMult * 100) / 100;
       wins.forEach((w) => { w.amount = Math.round(w.amount * fsMult * 100) / 100; });
@@ -1794,10 +1803,66 @@ const Audio = {
       osc.start(); osc.stop(ctx.currentTime + dur + 0.02);
     } catch (err) {}
   },
-  click() { this.tone(520, 0.06, 0.16, "square"); },
-  reelStop() { this.tone(180 + Math.random() * 120, 0.09, 0.18, "triangle"); },
+  sweep(startFreq, endFreq, dur = 0.2, vol = 0.14, type = "sawtooth") {
+    const ctx = this.ensure();
+    if (!ctx || !State.soundOn) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(startFreq, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), ctx.currentTime + dur);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start();
+      osc.stop(ctx.currentTime + dur + 0.03);
+    } catch (err) {}
+  },
+  noiseBurst(dur = 0.08, vol = 0.16) {
+    const ctx = this.ensure();
+    if (!ctx || !State.soundOn) return;
+    try {
+      const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * dur)), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const src = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      src.buffer = buffer;
+      gain.gain.setValueAtTime(vol, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      src.connect(gain);
+      gain.connect(this.sfxGain);
+      src.start();
+    } catch (err) {}
+  },
+  click() {
+    this.tone(620, 0.045, 0.14, "square");
+    setTimeout(() => this.tone(940, 0.035, 0.08, "triangle"), 24);
+  },
+  reelStop() {
+    this.noiseBurst(0.035, 0.08);
+    this.tone(170 + Math.random() * 90, 0.07, 0.13, "triangle");
+    setTimeout(() => this.tone(420 + Math.random() * 160, 0.05, 0.1, "square"), 36);
+  },
   spinStart() {
-    [220, 330, 440, 660, 880].forEach((f, i) => setTimeout(() => this.tone(f, 0.09, 0.2, i % 2 ? "sawtooth" : "square"), i * 42));
+    this.noiseBurst(0.16, 0.12);
+    this.sweep(160, 920, 0.32, 0.15, "sawtooth");
+    [220, 330, 440, 660, 880, 1175].forEach((f, i) => setTimeout(() => this.tone(f, 0.07, 0.18, i % 2 ? "sawtooth" : "square"), i * 34));
+  },
+  coinCascade(big = false) {
+    const notes = big ? [988, 1175, 1318, 1568, 1976, 2349] : [784, 988, 1175, 1568];
+    notes.forEach((f, i) => setTimeout(() => {
+      this.tone(f, 0.09, big ? 0.2 : 0.14, "triangle");
+      this.tone(f * 1.5, 0.045, big ? 0.08 : 0.05, "sine");
+    }, i * (big ? 52 : 68)));
+  },
+  freeSpin() {
+    this.noiseBurst(0.18, 0.12);
+    [523, 659, 784, 1047, 1318, 1568, 2093].forEach((f, i) => setTimeout(() => this.tone(f, 0.18, 0.28, i % 2 ? "sawtooth" : "triangle"), i * 58));
+    setTimeout(() => this.sweep(420, 1680, 0.42, 0.12, "sine"), 120);
   },
   win(big = false, game = null) {
     // Theme-aware win fanfare: use the game's musical scale so the celebratory
@@ -1812,12 +1877,16 @@ const Audio = {
       idx++;
     }
     if (big) {
+      this.coinCascade(true);
       baseScale.slice(0, 8).forEach((f, i) => setTimeout(() => this.tone(f, 0.22, 0.34, i % 2 ? "sawtooth" : "triangle"), i * 70));
     } else {
+      this.coinCascade(false);
       baseScale.slice(0, 5).forEach((f, i) => setTimeout(() => this.tone(f, 0.18, 0.28, "triangle"), i * 65));
     }
   },
   jackpot() {
+    this.noiseBurst(0.3, 0.18);
+    this.sweep(220, 2200, 0.65, 0.16, "sawtooth");
     const notes = [523, 659, 784, 1047, 880, 1047, 1318, 1568, 1318, 1568, 1976, 2093];
     notes.forEach((f, i) => setTimeout(() => this.tone(f, 0.28, 0.4, i % 2 ? "sawtooth" : "triangle"), i * 85));
   },
@@ -2506,7 +2575,7 @@ function renderFreeSpinBadge() {
       badge.setAttribute("data-free-spin-badge", "");
       gameView.appendChild(badge);
     }
-    const mult = Number(State.freeSpinMultiplier) || 2;
+    const mult = Number(State.freeSpinMultiplier) || 5;
     badge.innerHTML = `
       <div class="fsb-title">FREE SPINS</div>
       <div class="fsb-count">${State.freeSpinsRemaining}</div>
@@ -2914,6 +2983,7 @@ async function spinGame() {
     State.freeSpinTriggerBet = State.bet;
     State.freeSpinTotalWin = 0;
     await showAnticipation("big", 900);
+    Audio.freeSpin();
     setWinMessage(`${result.freeSpinsAwarded} FREE SPINS UNLOCKED! Tap SPIN to play.`);
   }
   // End-of-session summary
