@@ -302,6 +302,10 @@ const profileStatus = document.querySelector("[data-profile-status]");
 const profileUsername = document.querySelector("[data-profile-username]");
 const profileEmail = document.querySelector("[data-profile-email]");
 const profileVipBadge = document.querySelector("[data-profile-vip-badge]");
+const vipLevelName = document.querySelector("[data-vip-level-name]");
+const vipLevelCopy = document.querySelector("[data-vip-level-copy]");
+const vipLevelProgress = document.querySelector("[data-vip-level-progress]");
+const vipLevelNext = document.querySelector("[data-vip-level-next]");
 const profileAvatarPreview = document.querySelector("[data-player-avatar-preview]");
 const playerPointTransactions = document.querySelector("[data-player-point-transactions]");
 const avatarForm = document.querySelector("[data-avatar-form]");
@@ -326,6 +330,9 @@ const referralLoginNote = document.querySelector("[data-referral-login-note]");
 const referralLinkInput = document.querySelector("[data-referral-link]");
 const copyReferralButton = document.querySelector("[data-copy-referral]");
 const referralStatus = document.querySelector("[data-referral-status]");
+const loginStreakDisplay = document.querySelector("[data-login-streak]");
+const loginStreakNote = document.querySelector("[data-login-streak-note]");
+const loginBonusSummary = document.querySelector("[data-login-bonus-summary]");
 const spinTriggers = document.querySelectorAll("[data-spin-trigger]");
 const spinModal = document.querySelector("[data-spin-modal]");
 const spinClose = document.querySelector("[data-spin-close]");
@@ -404,15 +411,62 @@ function setAuthMessage(text, isSuccess = false) {
 }
 
 function updatePlayerVipBadges(user) {
-  const isVip = Boolean(user?.isVip);
-  playerVipBadge?.classList.toggle("is-hidden", !isVip);
-  profileVipBadge?.classList.toggle("is-hidden", !isVip);
+  const levelName = user?.vipLevel?.name || (user?.isVip ? "Diamond" : "Bronze");
+  [playerVipBadge, profileVipBadge].forEach((badge) => {
+    if (!badge) return;
+    badge.textContent = `${levelName} VIP`;
+    badge.classList.remove("is-hidden");
+    badge.dataset.vipLevel = String(user?.vipLevel?.key || levelName).toLowerCase();
+  });
+  if (!user) {
+    playerVipBadge?.classList.add("is-hidden");
+    profileVipBadge?.classList.add("is-hidden");
+  }
+}
+
+function updateVipLevelDisplay(user) {
+  const vip = user?.vipLevel || {};
+  const levelName = vip.name || "Bronze";
+  if (vipLevelName) vipLevelName.textContent = `${levelName} VIP`;
+  if (vipLevelProgress) vipLevelProgress.style.width = `${Math.max(0, Math.min(100, Number(vip.progressPercent) || 0))}%`;
+  if (vipLevelCopy) {
+    vipLevelCopy.textContent = vip.manualVip
+      ? "Diamond VIP is active on your account."
+      : `${formatPoints(vip.lifetimePoints || 0)} lifetime points earned.`;
+  }
+  if (vipLevelNext) {
+    vipLevelNext.textContent = vip.nextLevel
+      ? `${formatPoints(vip.progressNeeded || 0)} more lifetime points to reach ${vip.nextLevel.name}.`
+      : "Highest VIP level reached.";
+  }
 }
 
 function referralUrlFor(user) {
   if (!user?.referralCode) return "";
   const baseUrl = window.location.protocol === "file:" ? window.location.href.split(/[?#]/)[0] : `${window.location.origin}${window.location.pathname}`;
   return `${baseUrl}?ref=${encodeURIComponent(user.referralCode)}`;
+}
+
+function pointLabel(value) {
+  const number = Number(value) || 0;
+  const formatted = Number.isInteger(number) ? formatPoints(number) : number.toFixed(2);
+  return `${formatted} point${number === 1 ? "" : "s"}`;
+}
+
+function updateDailyLoginDisplay(user, bonus = null) {
+  const streak = Math.max(0, Number(user?.dailyLoginStreak) || 0);
+  const nextReward = bonus?.nextReward || (streak > 0 ? Math.min((streak + 1) * 0.5, 3) : 0.5);
+  if (loginStreakDisplay) loginStreakDisplay.textContent = String(streak);
+  if (loginStreakNote) {
+    loginStreakNote.textContent = bonus?.awarded
+      ? `Today: +${pointLabel(bonus.points)}. Miss a day and streak points expire.`
+      : `Next login bonus: ${pointLabel(nextReward)}.`;
+  }
+  if (loginBonusSummary) {
+    loginBonusSummary.textContent = streak > 0
+      ? `${streak}-day login streak. Next bonus: ${pointLabel(nextReward)}.`
+      : "Log in daily to start your streak.";
+  }
 }
 
 function showPlayerApp(user) {
@@ -432,6 +486,7 @@ function showPlayerApp(user) {
   playerPointsDisplay.forEach((item) => {
     item.textContent = formatPoints(user.points);
   });
+  updateDailyLoginDisplay(user);
   renderProfile(user);
   refreshPlayerChat();
   window.setTimeout(requestPlayerNotificationPermission, 1200);
@@ -484,12 +539,14 @@ function renderProfile(user) {
       playerAvatarNav.classList.add("is-hidden");
       playerAvatarNav.removeAttribute("src");
     }
+    updateVipLevelDisplay(null);
     return;
   }
 
   profileUsername.textContent = user.username;
   profileEmail.textContent = user.email;
   updatePlayerVipBadges(user);
+  updateVipLevelDisplay(user);
   if (referralLinkInput) referralLinkInput.value = referralUrlFor(user);
   if (referralStatus) referralStatus.textContent = "";
   if (profilePhone) profilePhone.value = user.phone || "";
@@ -1105,6 +1162,7 @@ function updateCurrentPlayer(user) {
   playerPointsDisplay.forEach((item) => {
     item.textContent = formatPoints(user.points);
   });
+  updateDailyLoginDisplay(user);
   renderProfile(user);
 }
 
@@ -1309,6 +1367,16 @@ if (playerLogin) {
       playerLogin.reset();
       shouldShowWelcome = false;
       showPlayerApp(data.user);
+      updateDailyLoginDisplay(data.user, data.dailyLoginBonus);
+      if (data.dailyLoginBonus?.awarded) {
+        const expired = Number(data.dailyLoginBonus.expiredPoints) > 0
+          ? ` ${pointLabel(data.dailyLoginBonus.removedPoints || data.dailyLoginBonus.expiredPoints)} expired after the missed streak.`
+          : "";
+        const message = `Daily login bonus: +${pointLabel(data.dailyLoginBonus.points)}. ${data.dailyLoginBonus.streak}-day streak.${expired}`;
+        setAuthMessage(message, true);
+        showPlayerToast(message);
+        refreshPlayerPointTransactions();
+      }
       requestPlayerNotificationPermission();
     } catch (error) {
       setAuthMessage(error.message);
@@ -1913,13 +1981,16 @@ function playAdminAlert() {
 
 function createAdminPlayerRow(user) {
   const presence = playerPresence(user);
+  const vip = user.vipLevel || {};
+  const hasVipLevel = Boolean(user.isVip || (vip.key && vip.key !== "bronze"));
   const item = document.createElement("article");
-  item.className = `registered-player admin-player-row${user.isVip ? " is-vip-player" : ""}`;
+  item.className = `registered-player admin-player-row${hasVipLevel ? " is-vip-player" : ""}`;
   item.innerHTML = `
     <div class="registered-player-identity">
       <span class="player-presence-dot"></span>
       <button class="vip-star-button" type="button" data-toggle-vip aria-label="Toggle VIP player"></button>
       <button class="registered-player-name" type="button" data-view-user></button>
+      <span class="admin-vip-level"></span>
     </div>
     <span class="admin-player-email"></span>
     <span class="admin-player-phone"></span>
@@ -1944,6 +2015,9 @@ function createAdminPlayerRow(user) {
   vipButton.classList.toggle("is-vip", Boolean(user.isVip));
   vipButton.title = user.isVip ? "Remove from VIP players" : "Add to VIP players";
   item.querySelector(".registered-player-name").textContent = user.username;
+  const vipLevel = item.querySelector(".admin-vip-level");
+  vipLevel.textContent = `${vip.name || "Bronze"} VIP`;
+  vipLevel.dataset.vipLevel = String(vip.key || "bronze");
   item.querySelector(".admin-player-email").textContent = user.email;
   item.querySelector(".admin-player-phone").textContent = user.phone || "-";
   item.querySelector(".admin-player-points").textContent = formatPoints(user.points);
@@ -1979,6 +2053,7 @@ function renderUsers(users) {
     user.lastActiveAt,
     user.adminNote,
     user.ownerName,
+    user.vipLevel?.name,
   ]);
   adminUserCount.textContent = `${visibleUsers.length}/${users.length} player${users.length === 1 ? "" : "s"}`;
   adminUsers.innerHTML = "";
@@ -2009,7 +2084,7 @@ function renderUsers(users) {
 
 function renderVipUsers(users) {
   if (!adminVipUsers) return;
-  const vipUsers = users.filter((user) => user.isVip);
+  const vipUsers = users.filter((user) => user.isVip || (user.vipLevel?.key && user.vipLevel.key !== "bronze"));
   const visibleUsers = filterItems(vipUsers, adminSearchState.vip, (user) => [
     user.username,
     user.email,
@@ -2017,11 +2092,12 @@ function renderVipUsers(users) {
     user.points,
     user.createdAt,
     user.ownerName,
+    user.vipLevel?.name,
   ]);
-  if (adminVipCount) adminVipCount.textContent = `${visibleUsers.length}/${vipUsers.length} VIP player${vipUsers.length === 1 ? "" : "s"}`;
+  if (adminVipCount) adminVipCount.textContent = `${visibleUsers.length}/${vipUsers.length} VIP level player${vipUsers.length === 1 ? "" : "s"}`;
   adminVipUsers.innerHTML = "";
   if (!visibleUsers.length) {
-    adminVipUsers.innerHTML = `<div class="admin-player-empty">No VIP players yet. Click the star beside a player to add them here.</div>`;
+    adminVipUsers.innerHTML = `<div class="admin-player-empty">No VIP level players yet. Players appear here at Silver and above, or when starred.</div>`;
     return;
   }
   const table = document.createElement("div");

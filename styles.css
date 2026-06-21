@@ -6161,7 +6161,9 @@ body.is-player-logged-in [data-guest-only] {
   overflow: auto;
 }
 
-.referral-card {
+.referral-card,
+.streak-card,
+.vip-level-card {
   display: grid;
   gap: 12px;
   margin-top: 20px;
@@ -6173,7 +6175,21 @@ body.is-player-logged-in [data-guest-only] {
     linear-gradient(135deg, rgba(255, 214, 64, 0.12), rgba(0, 0, 0, 0.26));
 }
 
-.referral-card span {
+.streak-card {
+  background:
+    radial-gradient(circle at 88% 18%, rgba(82, 239, 159, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(82, 239, 159, 0.11), rgba(0, 0, 0, 0.26));
+}
+
+.vip-level-card {
+  background:
+    radial-gradient(circle at 88% 18%, rgba(123, 232, 255, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(123, 232, 255, 0.1), rgba(0, 0, 0, 0.26));
+}
+
+.referral-card span,
+.streak-card span,
+.vip-level-card span {
   color: #ffe9a0;
   font-size: 0.78rem;
   font-weight: 900;
@@ -6181,16 +6197,39 @@ body.is-player-logged-in [data-guest-only] {
   text-transform: uppercase;
 }
 
-.referral-card strong {
+.referral-card strong,
+.streak-card strong,
+.vip-level-card strong {
   color: #fff8df;
   font-size: 1.25rem;
 }
 
 .referral-card p,
-.referral-card small {
+.referral-card small,
+.streak-card p,
+.streak-card small,
+.vip-level-card p,
+.vip-level-card small {
   margin: 0;
   color: #d8c99b;
   font-weight: 700;
+}
+
+.vip-level-meter {
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 214, 64, 0.2);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.vip-level-meter i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #52ef9f, #7be8ff, #ffdf8b);
+  transition: width 0.3s ease;
 }
 
 .referral-link-row {
@@ -6570,6 +6609,20 @@ body.is-player-logged-in [data-guest-only] {
 .vip-star-button.is-vip {
   color: #190f04;
   background: linear-gradient(135deg, #f6c85f, #ffdf8b);
+}
+
+.admin-vip-level {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 214, 64, 0.22);
+  border-radius: 999px;
+  color: #ffe9a0;
+  background: rgba(255, 214, 64, 0.08);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .registered-player.is-vip-player {

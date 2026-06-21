@@ -53,6 +53,14 @@ const maxActivityLogEntries = 5000;
 const signupBonusPoints = 0;
 const referralBonusPoints = 0;
 const spinCooldownMs = 24 * 60 * 60 * 1000;
+const dailyLoginRewards = [0.5, 1, 1.5, 2, 2.5, 3];
+const vipLevels = [
+  { key: "bronze", name: "Bronze", minPoints: 0 },
+  { key: "silver", name: "Silver", minPoints: 100 },
+  { key: "gold", name: "Gold", minPoints: 250 },
+  { key: "platinum", name: "Platinum", minPoints: 500 },
+  { key: "diamond", name: "Diamond", minPoints: 1000 },
+];
 const defaultSpinLimits = {
   10: 1,
   5: 2,
@@ -845,6 +853,10 @@ function normalizeDatabase(data) {
     referralCode: normalizeReferralCode(user.referralCode) || createReferralCode(user),
     referredBy: user.referredBy || null,
     spinLastAt: user.spinLastAt || null,
+    dailyLoginLastDate: user.dailyLoginLastDate || null,
+    dailyLoginStreak: Math.max(0, Math.floor(Number(user.dailyLoginStreak) || 0)),
+    dailyLoginTotalClaims: Math.max(0, Math.floor(Number(user.dailyLoginTotalClaims) || 0)),
+    dailyLoginBank: Math.max(0, roundPoints(user.dailyLoginBank)),
     // Every existing player belongs to the main admin until reassigned.
     // New players created via /api/admin/players will get the creator's id here.
     parentAdminId: user.parentAdminId || "admin",
@@ -1219,6 +1231,10 @@ function currentSpinDateKey(date = new Date()) {
   }).formatToParts(date);
   const get = (type) => parts.find((part) => part.type === type)?.value || "";
   return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function previousSpinDateKey(date = new Date()) {
+  return currentSpinDateKey(new Date(date.getTime() - 24 * 60 * 60 * 1000));
 }
 
 function roundPoints(value) {
@@ -1597,6 +1613,82 @@ function spinStatusForUser(data, user) {
     nextSpinAt: eligible ? null : nextSpinAt,
     settings: data.spinSettings,
     counts: spinAwardCounts(data),
+  };
+}
+
+function claimDailyLoginBonus(data, user, now = new Date()) {
+  const today = currentSpinDateKey(now);
+  const yesterday = previousSpinDateKey(now);
+  const lastDate = user.dailyLoginLastDate || null;
+  const currentStreak = Math.max(0, Math.floor(Number(user.dailyLoginStreak) || 0));
+  const rewardForStreak = (streak) => dailyLoginRewards[Math.min(Math.max(1, streak) - 1, dailyLoginRewards.length - 1)];
+  if (lastDate === today) {
+    const streak = currentStreak || 1;
+    return {
+      awarded: false,
+      points: 0,
+      streak,
+      lastDate,
+      nextReward: rewardForStreak(streak + 1),
+    };
+  }
+
+  const brokeStreak = Boolean(lastDate && lastDate !== yesterday);
+  const expiredPoints = brokeStreak ? Math.max(0, roundPoints(user.dailyLoginBank)) : 0;
+  let expiredTransaction = null;
+  if (expiredPoints > 0) {
+    const removedPoints = Math.min(roundPoints(user.points), expiredPoints);
+    if (removedPoints > 0) {
+      user.points = roundPoints((Number(user.points) || 0) - removedPoints);
+      expiredTransaction = createPointTransaction(
+        user,
+        "redeem",
+        removedPoints,
+        "Expired daily login streak points",
+        now.toISOString()
+      );
+      data.pointTransactions.unshift(expiredTransaction);
+    }
+    addActivity(
+      data,
+      "daily-login-expired",
+      `${user.username}'s daily login streak expired ${expiredPoints} point${expiredPoints === 1 ? "" : "s"}`,
+      { userId: user.id, username: user.username, points: expiredPoints, removedPoints }
+    );
+  }
+
+  const nextStreak = lastDate === yesterday ? currentStreak + 1 : 1;
+  const points = rewardForStreak(nextStreak);
+  const createdAt = now.toISOString();
+  user.dailyLoginLastDate = today;
+  user.dailyLoginStreak = nextStreak;
+  user.dailyLoginTotalClaims = Math.max(0, Math.floor(Number(user.dailyLoginTotalClaims) || 0)) + 1;
+  user.dailyLoginBank = roundPoints(brokeStreak ? points : (Number(user.dailyLoginBank) || 0) + points);
+  user.points = roundPoints((Number(user.points) || 0) + points);
+  const transaction = createPointTransaction(
+    user,
+    "add",
+    points,
+    `Daily login streak reward - day ${nextStreak}`,
+    createdAt
+  );
+  data.pointTransactions.unshift(transaction);
+  addActivity(
+    data,
+    "daily-login-bonus",
+    `${user.username} claimed ${points} point${points === 1 ? "" : "s"} for a ${nextStreak}-day login streak`,
+    { userId: user.id, username: user.username, points, streak: nextStreak }
+  );
+  return {
+    awarded: true,
+    points,
+    streak: nextStreak,
+    lastDate: today,
+    nextReward: rewardForStreak(nextStreak + 1),
+    expiredPoints,
+    removedPoints: expiredTransaction ? expiredTransaction.points : 0,
+    expiredTransaction,
+    transaction,
   };
 }
 
@@ -2144,6 +2236,32 @@ function sanitizeActivity(item) {
   };
 }
 
+function vipProgressForUser(user, data = null) {
+  const transactions = Array.isArray(data?.pointTransactions) ? data.pointTransactions : [];
+  const lifetimePoints = transactions
+    .filter((transaction) => transaction.userId === user.id && transaction.type === "add")
+    .reduce((total, transaction) => roundPoints(total + Math.max(0, Number(transaction.points) || 0)), 0);
+  const earnedLevel = vipLevels.reduce((current, level) => (lifetimePoints >= level.minPoints ? level : current), vipLevels[0]);
+  const level = user.isVip ? vipLevels[vipLevels.length - 1] : earnedLevel;
+  const levelIndex = vipLevels.findIndex((item) => item.key === level.key);
+  const nextLevel = vipLevels[levelIndex + 1] || null;
+  const progressBase = level.minPoints;
+  const progressTarget = nextLevel ? nextLevel.minPoints : level.minPoints;
+  const progressNeeded = nextLevel ? Math.max(0, roundPoints(nextLevel.minPoints - lifetimePoints)) : 0;
+  const progressPercent = nextLevel
+    ? Math.max(0, Math.min(100, Math.round(((lifetimePoints - progressBase) / Math.max(1, progressTarget - progressBase)) * 100)))
+    : 100;
+  return {
+    key: level.key,
+    name: level.name,
+    lifetimePoints,
+    nextLevel,
+    progressNeeded,
+    progressPercent,
+    manualVip: Boolean(user.isVip),
+  };
+}
+
 function sanitizeUser(user, data = null) {
   if (!user) return null;
   return {
@@ -2154,6 +2272,7 @@ function sanitizeUser(user, data = null) {
     dateOfBirth: user.dateOfBirth || null,
     points: roundPoints(user.points),
     isVip: Boolean(user.isVip),
+    vipLevel: vipProgressForUser(user, data),
     avatarUrl: user.avatarUrl || null,
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt,
@@ -2163,6 +2282,10 @@ function sanitizeUser(user, data = null) {
     referralCode: user.referralCode || createReferralCode(user),
     referredBy: user.referredBy || null,
     spinLastAt: user.spinLastAt || null,
+    dailyLoginLastDate: user.dailyLoginLastDate || null,
+    dailyLoginStreak: Math.max(0, Math.floor(Number(user.dailyLoginStreak) || 0)),
+    dailyLoginTotalClaims: Math.max(0, Math.floor(Number(user.dailyLoginTotalClaims) || 0)),
+    dailyLoginBank: Math.max(0, roundPoints(user.dailyLoginBank)),
     parentAdminId: user.parentAdminId || "admin",
     ownerName: data ? ownerNameForUser(data, user) : user.ownerName || "",
   };
@@ -2766,6 +2889,10 @@ async function handleApi(request, response, urlPath, url) {
       referralCode: createReferralCode({ username, email }),
       referredBy: null,
       spinLastAt: null,
+      dailyLoginLastDate: null,
+      dailyLoginStreak: 0,
+      dailyLoginTotalClaims: 0,
+      dailyLoginBank: 0,
       playerSessionTokens: [],
     };
     data.users = [newUser, ...(data.users || [])];
@@ -3187,11 +3314,13 @@ async function handleApi(request, response, urlPath, url) {
     }
     const data = await readDatabase();
     const rows = [
-      ["Username", "Sub Admin", "VIP", "Phone", "Date of Birth", "Email", "Available Points", "Joined", "Last Login", "Chat ID"],
+      ["Username", "Sub Admin", "VIP", "VIP Level", "Lifetime VIP Points", "Phone", "Date of Birth", "Email", "Available Points", "Joined", "Last Login", "Chat ID"],
       ...data.users.map((user) => [
         user.username,
         ownerNameForUser(data, user),
         user.isVip ? "Yes" : "No",
+        vipProgressForUser(user, data).name,
+        vipProgressForUser(user, data).lifetimePoints,
         user.phone,
         user.dateOfBirth || "",
         user.email,
@@ -3270,7 +3399,7 @@ async function handleApi(request, response, urlPath, url) {
     user.passwordHash = hashPassword(password);
     addActivity(data, "password-reset", `Reset password for ${user.username}`, { userId: user.id, username: user.username, operator: op.role });
     await writeDatabase(data);
-    return sendJson(response, 200, { user: sanitizeUser(user) });
+    return sendJson(response, 200, { user: sanitizeUser(user, data) });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/user-note") {
@@ -3288,7 +3417,7 @@ async function handleApi(request, response, urlPath, url) {
     user.adminNote = note;
     addActivity(data, "player-note", `Updated notes for ${user.username}`, { userId: user.id, username: user.username, operator: op.role });
     await writeDatabase(data);
-    return sendJson(response, 200, { user: sanitizeUser(user) });
+    return sendJson(response, 200, { user: sanitizeUser(user, data) });
   }
 
   if (request.method === "POST" && urlPath === "/api/admin/player-vip") {
@@ -3311,7 +3440,7 @@ async function handleApi(request, response, urlPath, url) {
       isVip: user.isVip,
     });
     await writeDatabase(data);
-    return sendJson(response, 200, { user: sanitizeUser(user) });
+    return sendJson(response, 200, { user: sanitizeUser(user, data) });
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/player-game-history") {
@@ -3340,7 +3469,7 @@ async function handleApi(request, response, urlPath, url) {
       },
       { spins: 0, wagered: 0, won: 0 }
     );
-    return sendJson(response, 200, { user: sanitizeUser(user), history, totals });
+    return sendJson(response, 200, { user: sanitizeUser(user, data), history, totals });
   }
 
   if (request.method === "GET" && urlPath === "/api/admin/player-points-history") {
@@ -3368,7 +3497,7 @@ async function handleApi(request, response, urlPath, url) {
       },
       { added: 0, redeemed: 0, net: 0, currentBalance: roundPoints(user.points) }
     );
-    return sendJson(response, 200, { user: sanitizeUser(user), transactions, totals });
+    return sendJson(response, 200, { user: sanitizeUser(user, data), transactions, totals });
   }
 
   if (request.method === "GET" && urlPath === "/api/player/spin-status") {
@@ -3438,7 +3567,7 @@ async function handleApi(request, response, urlPath, url) {
     return sendJson(response, 200, {
       prize,
       label: prize > 0 ? `${prize} points` : "Better luck next time",
-      user: sanitizeUser(user),
+      user: sanitizeUser(user, data),
       transaction: transaction ? sanitizePointTransaction(transaction) : null,
       ...spinStatusForUser(data, user),
     });
@@ -3474,7 +3603,7 @@ async function handleApi(request, response, urlPath, url) {
     }
     user.points = roundPoints(user.points);
     if (user.points < bet) {
-      return sendJson(response, 400, { error: "Not enough available points for that bet.", user: sanitizeUser(user) });
+      return sendJson(response, 400, { error: "Not enough available points for that bet.", user: sanitizeUser(user, data) });
     }
 
     const createdAt = new Date().toISOString();
@@ -3569,7 +3698,7 @@ async function handleApi(request, response, urlPath, url) {
       remainingPayout: Math.max(0, roundPoints(payoutCaps.remainingDaily - win)),
       remainingPlayerPayout: Math.max(0, roundPoints(payoutCaps.remainingPlayer - win)),
       remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
-      user: sanitizeUser(user),
+      user: sanitizeUser(user, data),
       transactions: transactions.map(sanitizePointTransaction),
     });
   }
@@ -3788,7 +3917,7 @@ async function handleApi(request, response, urlPath, url) {
       remainingPayout: Math.max(0, roundPoints(payoutCaps.remainingDaily - win)),
       remainingPlayerPayout: Math.max(0, roundPoints(payoutCaps.remainingPlayer - win)),
       remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
-      user: sanitizeUser(storedUser),
+      user: sanitizeUser(storedUser, data),
     });
   }
 
@@ -3833,7 +3962,9 @@ async function handleApi(request, response, urlPath, url) {
       return sendJson(response, 401, { error: "Wrong username/email or password." });
     }
 
-    user.lastLoginAt = new Date().toISOString();
+    const loginAt = new Date();
+    const dailyLoginBonus = claimDailyLoginBonus(data, user, loginAt);
+    user.lastLoginAt = loginAt.toISOString();
     user.lastActiveAt = user.lastLoginAt;
 
     const token = `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
@@ -3880,7 +4011,16 @@ async function handleApi(request, response, urlPath, url) {
       "Set-Cookie": cookieParts,
       "Cache-Control": "no-store",
     });
-    response.end(JSON.stringify({ user: sanitizeUser(user) }));
+    response.end(JSON.stringify({
+      user: sanitizeUser(user, data),
+      dailyLoginBonus: {
+        ...dailyLoginBonus,
+        transaction: dailyLoginBonus.transaction ? sanitizePointTransaction(dailyLoginBonus.transaction) : null,
+        expiredTransaction: dailyLoginBonus.expiredTransaction
+          ? sanitizePointTransaction(dailyLoginBonus.expiredTransaction)
+          : null,
+      },
+    }));
     return;
   }
 
@@ -3917,7 +4057,7 @@ async function handleApi(request, response, urlPath, url) {
       user.lastActiveAt = new Date(now).toISOString();
       await writeDatabase(data);
     }
-    return sendJson(response, 200, { user: sanitizeUser(user) });
+    return sendJson(response, 200, { user: sanitizeUser(user, data) });
   }
 
   if (request.method === "GET" && urlPath === "/api/player/chat") {
@@ -3974,7 +4114,7 @@ async function handleApi(request, response, urlPath, url) {
       operatorId: user.parentAdminId || "admin",
     });
     await writeDatabase(data);
-    return sendJson(response, 200, { ok: true, user: sanitizeUser(user) });
+    return sendJson(response, 200, { ok: true, user: sanitizeUser(user, data) });
   }
 
   if (request.method === "POST" && urlPath === "/api/player/profile") {
@@ -3992,7 +4132,7 @@ async function handleApi(request, response, urlPath, url) {
     savedUser.phone = phone;
     if (password) savedUser.passwordHash = hashPassword(password);
     await writeDatabase(data);
-    return sendJson(response, 200, { user: sanitizeUser(savedUser) });
+    return sendJson(response, 200, { user: sanitizeUser(savedUser, data) });
   }
 
   if (request.method === "POST" && urlPath === "/api/player/tierlock-payment") {
@@ -4030,7 +4170,7 @@ async function handleApi(request, response, urlPath, url) {
     if (!savedUser) return sendJson(response, 401, { error: "Player login is required." });
     savedUser.avatarUrl = `/uploads/${fileName}`;
     await writeDatabase(data);
-    return sendJson(response, 200, { user: sanitizeUser(savedUser) });
+    return sendJson(response, 200, { user: sanitizeUser(savedUser, data) });
   }
 
   if (request.method === "GET" && urlPath === "/api/chats") {
