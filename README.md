@@ -169,6 +169,10 @@ Save, rebuild, and deploy
 
 Player accounts and chat records will then save in Supabase instead of only in Render's temporary files.
 
+The server also protects existing players, sub-admins, player chats, and guest chats during database writes. If a code change accidentally tries to save fewer records than Supabase already has, the saved records are kept instead of being removed.
+
+Slot payouts now count normal wins and jackpot wins together for RTP stats, daily payout limits, per-player payout limits, and per-game payout limits. Keep jackpot amounts at or below the remaining daily/player/game payout room, or they will wait instead of dropping.
+
 ## Deploy Online
 
 This can be deployed to services that run Node.js apps, such as Render, Railway, Fly.io, or a VPS.

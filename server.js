@@ -38,6 +38,7 @@ let localDbCache = null;
 let localDbCacheReady = false;
 let localDbWriteQueue = Promise.resolve();
 let localStartupBackupCreated = false;
+let supabaseSafetyBackupCreated = false;
 const subAdminSessionMaxAge = 60 * 60 * 8; // sub-admins: 8 hours per login
 const slotLiveClients = new Set();
 const maxJsonBodyBytes = 8_000_000;
@@ -49,6 +50,7 @@ const retentionMs = {
 };
 const maxPointTransactions = 5000;
 const maxActivityLogEntries = 5000;
+const maxLocalBackups = Math.max(30, Number(process.env.MAX_LOCAL_DB_BACKUPS) || 200);
 // Public self-signup has been removed. Players are now created by admin or sub-admin only,
 // so no automatic signup/referral bonuses are awarded. Set these back to a positive number
 // if you ever re-enable public signup.
@@ -72,10 +74,9 @@ const defaultSpinLimits = {
 const defaultSlotSettings = {
   dailyPayoutLimit: 25,
   playerDailyPayoutLimit: 8,
-  // Daily must-drop jackpots. These are SEPARATE from RTP and the daily payout
-  // limits above: whatever amount is set for a tier is guaranteed to drop in
-  // full to exactly ONE player that day, shared across all 24 games, and is
-  // awarded regardless of the player's bet size. 0 = that tier does not drop.
+  // Daily jackpots. These count toward RTP and the daily/player/game payout
+  // limits; a tier only drops when there is enough remaining payout room to
+  // pay it in full. 0 = that tier does not drop.
   jackpotMinor: 0,
   jackpotMajor: 0,
   jackpotMega: 0,
@@ -924,6 +925,43 @@ function normalizeDatabase(data) {
   return normalized;
 }
 
+function cloneDatabase(data) {
+  return JSON.parse(JSON.stringify(normalizeDatabase(data)));
+}
+
+function databaseRecordKey(item) {
+  if (!item || typeof item !== "object") return "";
+  return String(item.id || item.email || item.username || item.guestId || "");
+}
+
+function mergeProtectedRecords(incoming = [], saved = []) {
+  const merged = Array.isArray(incoming) ? [...incoming] : [];
+  const seen = new Set(merged.map(databaseRecordKey).filter(Boolean));
+  (Array.isArray(saved) ? saved : []).forEach((item) => {
+    const key = databaseRecordKey(item);
+    if (!key || seen.has(key)) return;
+    merged.push(item);
+    seen.add(key);
+  });
+  return merged;
+}
+
+function protectDatabaseCollections(incoming, saved, source = "database") {
+  if (!saved || typeof saved !== "object") return incoming;
+  const protectedCollections = ["users", "subAdmins", "chats", "guestChats"];
+  protectedCollections.forEach((name) => {
+    const incomingCount = Array.isArray(incoming[name]) ? incoming[name].length : 0;
+    const savedCount = Array.isArray(saved[name]) ? saved[name].length : 0;
+    if (savedCount > incomingCount) {
+      console.warn(
+        `Protected ${savedCount - incomingCount} ${name} record(s) from being removed during ${source} write.`
+      );
+      incoming[name] = mergeProtectedRecords(incoming[name], saved[name]);
+    }
+  });
+  return incoming;
+}
+
 function loadAdminSessions(data) {
   sessions.clear();
   (data.adminSessions || []).forEach((session) => {
@@ -1031,8 +1069,27 @@ async function writeLocalDatabaseBackup(data) {
   await fs.promises.writeFile(path.join(backupDir, fileName), payload);
   const backups = listLocalBackups();
   await Promise.all(
-    backups.slice(30).map((backup) => fs.promises.unlink(backup.fullPath).catch(() => {}))
+    backups.slice(maxLocalBackups).map((backup) => fs.promises.unlink(backup.fullPath).catch(() => {}))
   );
+}
+
+async function createSupabaseSafetyBackup(data, reason = "safety") {
+  if (!useSupabase || supabaseSafetyBackupCreated) return;
+  const backupId = `backup-${new Date().toISOString().slice(0, 10)}-${reason}`;
+  try {
+    await supabaseRequest("/app_state?on_conflict=id", {
+      method: "POST",
+      headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
+      body: JSON.stringify({
+        id: backupId,
+        data: cloneDatabase(data),
+        updated_at: new Date().toISOString(),
+      }),
+    });
+    supabaseSafetyBackupCreated = true;
+  } catch (error) {
+    console.error("South Diamond Supabase safety backup failed:", error.message);
+  }
 }
 
 async function supabaseRequest(pathname, options = {}) {
@@ -1132,6 +1189,7 @@ async function readDatabase() {
     try {
       const rows = await supabaseRequest("/app_state?id=eq.main&select=data");
       const data = normalizeDatabase(rows[0]?.data || starterDatabase());
+      createStartupLocalBackup(data);
       loadAdminSessions(data);
       return data;
     } catch (error) {
@@ -1149,11 +1207,15 @@ async function readDatabase() {
 
 async function writeDatabase(data) {
   await ensureDatabase();
-  const normalized = normalizeDatabase(data);
+  let normalized = normalizeDatabase(data);
   pruneDatabase(normalized);
   loadAdminSessions(normalized);
   if (useSupabase) {
     try {
+      const rows = await supabaseRequest("/app_state?id=eq.main&select=data");
+      const saved = cloneDatabase(rows[0]?.data || starterDatabase());
+      await createSupabaseSafetyBackup(saved, "before-write");
+      normalized = protectDatabaseCollections(normalized, saved, "Supabase");
       await supabaseRequest("/app_state?on_conflict=id", {
         method: "POST",
         headers: { Prefer: "resolution=merge-duplicates,return=representation" },
@@ -1166,6 +1228,14 @@ async function writeDatabase(data) {
     }
   }
 
+  if (fs.existsSync(dbPath)) {
+    try {
+      const saved = cloneDatabase(JSON.parse(fs.readFileSync(dbPath, "utf8")));
+      normalized = protectDatabaseCollections(normalized, saved, "local database");
+    } catch (error) {
+      console.error("South Diamond local database protection check failed:", error.message);
+    }
+  }
   localDbCache = normalized;
   localDbCacheReady = true;
   const payload = JSON.stringify(normalized, null, 2);
@@ -1328,7 +1398,7 @@ function normalizeSlotSettings(settings) {
   return {
     dailyPayoutLimit: Math.max(0, Math.min(limit, 100000)),
     playerDailyPayoutLimit: Math.max(0, Math.min(playerLimit, 100000)),
-    // Daily must-drop jackpot pools (separate from RTP / the limits above).
+    // Daily jackpot pools. Paid jackpots count toward RTP and payout limits.
     jackpotMinor: jpTier("jackpotMinor"),
     jackpotMajor: jpTier("jackpotMajor"),
     jackpotMega: jpTier("jackpotMega"),
@@ -1336,10 +1406,10 @@ function normalizeSlotSettings(settings) {
 }
 
 // Per-tier daily drop tracking. targetFrac is a random point in the day [0,0.85)
-// at which the tier becomes eligible to drop on the next eligible spin, so the
-// jackpot doesn't always land on the very first spin of the day. Once dropped,
-// it pays the full configured amount to one player and will not drop again
-// until the next day.
+// at which the tier becomes eligible to drop on the next eligible spin with
+// enough remaining payout room, so the jackpot does not always land on the very
+// first spin of the day. Once dropped, it pays the full configured amount to one
+// player and will not drop again until the next day.
 const JACKPOT_TIERS = ["minor", "major", "mega"];
 
 function freshJackpotTierState() {
@@ -1397,7 +1467,7 @@ function normalizeSlotPayout(slotPayout) {
     date: typeof payout.date === "string" && payout.date ? payout.date : currentSpinDateKey(),
     paidOut: roundPoints(payout.paidOut),
     spins: Array.isArray(payout.spins) ? payout.spins : [],
-    // Daily must-drop jackpot tracking (separate from paidOut / RTP).
+    // Daily jackpot tracking.
     jackpot: normalizeJackpotDropState(payout.jackpot),
   };
 }
@@ -1487,7 +1557,7 @@ function arcadeSlotsStatsFromPayout(slotPayout, spinFilter = null) {
     const gameKey = spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey);
     if (!Object.prototype.hasOwnProperty.call(arcadeSlotGameNames, gameKey)) continue;
     const bet = roundPoints(spin.bet);
-    const win = roundPoints(spin.win);
+    const win = slotSpinTotalWin(spin);
     const createdAt = spin.createdAt ? new Date(spin.createdAt).getTime() : 0;
     const game = stats.games[gameKey];
     game.wagered = roundPoints(game.wagered + bet);
@@ -1516,10 +1586,17 @@ function arcadeGameStatsFromPayout(slotPayout, gameKey, spinFilter = null) {
     const spinGameKey = spin.arcadeGameKey || arcadeKeyForLegacySlot(spin.gameKey);
     if (spinGameKey !== gameKey) continue;
     stats.wagered = roundPoints(stats.wagered + Math.max(0, roundPoints(spin.bet)));
-    stats.won = roundPoints(stats.won + Math.max(0, roundPoints(spin.win)));
+    stats.won = roundPoints(stats.won + slotSpinTotalWin(spin));
     stats.spins += 1;
   }
   return stats;
+}
+
+function slotSpinTotalWin(spin) {
+  return roundPoints(
+    Math.max(0, roundPoints(spin?.win)) +
+    Math.max(0, roundPoints(spin?.jackpotWin))
+  );
 }
 
 function scopedSpinFilterForOperator(operator, data) {
@@ -1612,7 +1689,7 @@ function arcadePayoutMultiplier(gameConfig, gameStats) {
 
 function recalculateSlotPaidOut(slotPayout) {
   const payout = normalizeSlotPayout(slotPayout);
-  payout.paidOut = roundPoints((payout.spins || []).reduce((total, spin) => total + Math.max(0, roundPoints(spin.win)), 0));
+  payout.paidOut = roundPoints((payout.spins || []).reduce((total, spin) => total + slotSpinTotalWin(spin), 0));
   return payout;
 }
 
@@ -1844,7 +1921,7 @@ function slotPayoutForUserToday(data, userId) {
   ensureSlotPayoutToday(data);
   return (data.slotPayout.spins || []).reduce((total, spin) => {
     if (spin.userId !== userId) return total;
-    return roundPoints(total + Math.max(0, Number(spin.win) || 0));
+    return roundPoints(total + slotSpinTotalWin(spin));
   }, 0);
 }
 
@@ -2277,6 +2354,9 @@ function sanitizeGameHistorySpin(spin) {
     gameName: spin.gameName || arcadeSlotGameNames[spin.arcadeGameKey] || slotGameNames[spin.gameKey] || "South Diamond Slots",
     bet: roundPoints(spin.bet),
     win: roundPoints(spin.win),
+    jackpotWin: Math.max(0, roundPoints(spin.jackpotWin)),
+    totalWin: slotSpinTotalWin(spin),
+    jackpotTier: spin.jackpotTier || null,
     requestedWin: spin.requestedWin == null ? null : roundPoints(spin.requestedWin),
     balanceAfter: spin.balanceAfter == null ? null : roundPoints(spin.balanceAfter),
     createdAt: spin.createdAt,
@@ -3136,7 +3216,7 @@ async function handleApi(request, response, urlPath, url) {
       : normalizeSlotSettings(scopedConfig._slotSettings || data.slotSettings);
     return sendJson(response, 200, {
       settings,
-      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + (Number(spin.win) || 0)), 0) },
+      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + slotSpinTotalWin(spin)), 0) },
       date: data.slotPayout.date,
       jackpot: data.slotPayout.jackpot,
       spins: spins.slice(0, 120),
@@ -3165,7 +3245,7 @@ async function handleApi(request, response, urlPath, url) {
     const spins = (data.slotPayout.spins || []).filter((spin) => !spinFilter || spinFilter(spin));
     return sendJson(response, 200, {
       settings,
-      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + (Number(spin.win) || 0)), 0) },
+      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + slotSpinTotalWin(spin)), 0) },
       date: data.slotPayout.date,
       jackpot: data.slotPayout.jackpot,
       spins: spins.slice(0, 120),
@@ -3244,7 +3324,7 @@ async function handleApi(request, response, urlPath, url) {
     const spins = (data.slotPayout.spins || []).filter((spin) => !spinFilter || spinFilter(spin));
     return sendJson(response, 200, {
       stats: arcadeSlotsStatsFromPayout(data.slotPayout, spinFilter),
-      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + (Number(spin.win) || 0)), 0) },
+      payout: { ...data.slotPayout, spins, paidOut: spins.reduce((total, spin) => roundPoints(total + slotSpinTotalWin(spin)), 0) },
     });
   }
 
@@ -3521,7 +3601,7 @@ async function handleApi(request, response, urlPath, url) {
       (summary, spin) => {
         summary.spins += 1;
         summary.wagered = roundPoints(summary.wagered + Math.max(0, Number(spin.bet) || 0));
-        summary.won = roundPoints(summary.won + Math.max(0, Number(spin.win) || 0));
+        summary.won = roundPoints(summary.won + slotSpinTotalWin(spin));
         return summary;
       },
       { spins: 0, wagered: 0, won: 0 }
@@ -3838,13 +3918,12 @@ async function handleApi(request, response, urlPath, url) {
     const transactions = [];
 
     // -----------------------------------------------------------------
-    // Daily must-drop jackpot (separate from RTP and the payout limits).
+    // Daily jackpot. It must fit inside the same payout controls as normal wins.
     // Each funded tier (Minor/Major/Mega) is a single global pool shared by
-    // all 24 games. Whatever the admin sets for a tier is guaranteed to drop
-    // in FULL to exactly one player that day, regardless of bet size. The
-    // jackpot is added on top of the normal win and is NOT recorded in
-    // spin.win, so it never affects RTP, per-game caps, or the daily payout
-    // limits. Free spins are not eligible (they cost no points).
+    // all 24 games. The admin amount drops in FULL to one player only when
+    // the remaining daily/player/game payout room can cover it. The
+    // Jackpot payouts are tracked separately on the spin record for display,
+    // but are counted in RTP, per-game caps, daily caps, and per-player caps.
     let jackpotWin = 0;
     let jackpotTier = null;
     if (!isFreeSpin) {
@@ -3858,6 +3937,8 @@ async function handleApi(request, response, urlPath, url) {
         const amount = roundPoints(tierAmount[tier]);
         const st = jpState[tier];
         if (!st || st.dropped || amount <= 0) continue;
+        const remainingAfterNormalWin = Math.max(0, roundPoints(payoutCaps.maxWin - win));
+        if (amount > remainingAfterNormalWin) continue;
         const due = frac >= st.targetFrac;
         const forcedBeforeMidnight = frac >= 0.97; // safety net: guarantee it drops today
         if (due || forcedBeforeMidnight) {
@@ -3917,7 +3998,7 @@ async function handleApi(request, response, urlPath, url) {
     }
 
     storedUser.lastActiveAt = createdAt;
-    data.slotPayout.paidOut = roundPoints(data.slotPayout.paidOut + win);
+    data.slotPayout.paidOut = roundPoints(data.slotPayout.paidOut + win + jackpotWin);
     const spinRecord = {
       id: `slot-arcade-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       userId: storedUser.id,
@@ -3971,9 +4052,9 @@ async function handleApi(request, response, urlPath, url) {
       freeSpinsAwarded,
       freeSpinsRemaining: Number(storedUser.slotFreeSpins?.remaining) || 0,
       capped: false,
-      remainingPayout: Math.max(0, roundPoints(payoutCaps.remainingDaily - win)),
-      remainingPlayerPayout: Math.max(0, roundPoints(payoutCaps.remainingPlayer - win)),
-      remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win)),
+      remainingPayout: Math.max(0, roundPoints(payoutCaps.remainingDaily - win - jackpotWin)),
+      remainingPlayerPayout: Math.max(0, roundPoints(payoutCaps.remainingPlayer - win - jackpotWin)),
+      remainingGamePayout: Math.max(0, roundPoints(arcadeGameConfig.dailyMaxPayout - gamePaidToday - win - jackpotWin)),
       user: sanitizeUser(storedUser, data),
     });
   }
