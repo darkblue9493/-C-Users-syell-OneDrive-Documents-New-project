@@ -465,23 +465,32 @@ function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {
   const mediums = ofClass("medium");
   const bigs = ofClass("big");
   const bonuses = candidates.filter((k) => k.result.freeSpinsAwarded > 0);
+  const winsOnly = candidates.filter((k) => k.result.totalPay > 0 && k.result.freeSpinsAwarded === 0);
+  const tinyWins = winsOnly.filter((k) => k.result.totalPay <= Math.max(bet * 2, 0.25));
+  const smallWins = winsOnly.filter((k) => k.result.totalPay > Math.max(bet * 2, 0.25) && k.result.totalPay <= bet * 6);
+  const mediumWins = winsOnly.filter((k) => k.result.totalPay > bet * 6 && k.result.totalPay <= bet * 14);
+  const bigWins = winsOnly.filter((k) => k.result.totalPay > bet * 14);
+  const currentRtpRatio = cfg.targetRtp > 0 ? currentRtp / cfg.targetRtp : 1;
+  const playerBalance = Number(options.playerBalance);
+  const lowBalance = !options.freeSpin && Number.isFinite(playerBalance) && playerBalance <= 2 && playerBalance >= 0;
 
   // Hard ceiling: at/over the daily payout cap, force a loss (tiny win at most).
   if (overMax) {
     return pick(losses) || pick(smalls) || candidates[0];
   }
-  if (warm && currentRtp >= cfg.targetRtp * 1.25) {
-    const loss = pick(losses);
-    if (loss) return loss;
-  }
-
   // Proportional RTP controller: the volatility profile sets the base win
   // frequency; we then scale it by how far realized RTP has drifted from the
   // admin's target, so the house edge stays honest over time. Paying too much
   // -> fewer/smaller wins; paying too little -> more/bigger wins.
   let winChance = profile.hitFrequency;
-  if (warm) winChance *= Math.max(0.01, Math.min(1.9, 1 - rtpError * 8));
-  winChance = Math.max(0.02, Math.min(0.7, winChance));
+  if (warm) {
+    if (currentRtpRatio >= 1.75) winChance *= 0.12;
+    else if (currentRtpRatio >= 1.25) winChance *= 0.22;
+    else if (over) winChance *= Math.max(0.35, 1 - rtpError * 3.5);
+    else if (under) winChance *= Math.min(1.65, 1 + Math.abs(rtpError) * 2.5);
+  }
+  if (lowBalance && currentRtpRatio <= 1.35) winChance = Math.max(winChance, 0.18);
+  winChance = Math.max(0.03, Math.min(0.62, winChance));
 
   if (arcadeRng() >= winChance) {
     // This spin is a loss — sometimes dress it up as a near-miss tease.
@@ -496,15 +505,41 @@ function arcadeSelectServerSpin(gameKey, bet, gameConfig, gameStats, options = {
   }
 
   // This spin pays. Occasionally award a free-spin bonus (not while running hot).
-  if (!over && bonuses.length && arcadeRng() < 0.06) return pick(bonuses);
+  if (!over && bonuses.length && arcadeRng() < 0.035) return pick(bonuses);
 
   // Win-size selection: keep it small when we're running hot, allow bigger
   // hits when we owe the player — shaped by the game's volatility.
-  const allowBig = (under && arcadeRng() < profile.bigWinChance * 1.6)
-                || (!over && arcadeRng() < profile.bigWinChance);
-  const chosen = over
-    ? (pick(losses) || pick(smalls) || candidates[0])
-    : ((allowBig ? pick(bigs) : null) || pick(mediums) || pick(smalls) || pick(bigs) || pick(losses) || candidates[0]);
+  if (lowBalance && currentRtpRatio <= 1.1 && arcadeRng() < 0.16) {
+    const topUpCap = Math.max(bet * 4, roundPoints(5 - playerBalance + bet));
+    const lowBalanceWins = winsOnly.filter((k) => k.result.totalPay >= bet && k.result.totalPay <= topUpCap);
+    const relief = pick(lowBalanceWins);
+    if (relief) return relief;
+  }
+
+  let chosen = null;
+  if (currentRtpRatio >= 1.75) {
+    chosen = pick(tinyWins) || pick(losses) || candidates[0];
+  } else if (over) {
+    chosen = pick(tinyWins) || (arcadeRng() < 0.25 ? pick(smallWins) : null) || pick(losses) || candidates[0];
+  } else if (under) {
+    const roll = arcadeRng();
+    chosen =
+      (roll < profile.bigWinChance * 0.75 ? pick(bigWins) : null) ||
+      (roll < 0.34 ? pick(mediumWins) : null) ||
+      pick(smallWins) ||
+      pick(tinyWins) ||
+      pick(losses) ||
+      candidates[0];
+  } else {
+    const roll = arcadeRng();
+    chosen =
+      (roll < 0.12 ? pick(mediumWins) : null) ||
+      (roll < 0.16 ? pick(bigWins) : null) ||
+      pick(smallWins) ||
+      pick(tinyWins) ||
+      pick(losses) ||
+      candidates[0];
+  }
   // Mark sizable wins so the client slows the final reel for a dramatic reveal.
   if (chosen && chosen.result.totalPay >= bet * 8) chosen.anticipation = true;
   return chosen;
@@ -3903,7 +3938,10 @@ async function handleApi(request, response, urlPath, url) {
     const arcadeGameStats = arcadeGameStatsFromPayout(data.slotPayout, gameKey, ownerSpinFilter);
     const gamePaidToday = arcadeGameStats.won;
     const payoutCaps = slotPayoutCaps(data, storedUser, effectiveArcadeConfig, gameKey, gamePaidToday);
-    const selectedSpin = arcadeSelectServerSpin(gameKey, settlementBet, arcadeGameConfig, arcadeGameStats, { freeSpin: isFreeSpin });
+    const selectedSpin = arcadeSelectServerSpin(gameKey, settlementBet, arcadeGameConfig, arcadeGameStats, {
+      freeSpin: isFreeSpin,
+      playerBalance: storedUser.points,
+    });
     const grid = selectedSpin.grid;
     const anticipation = selectedSpin.anticipation === true;
     const serverResult = {
